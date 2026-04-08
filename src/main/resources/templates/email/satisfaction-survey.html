@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>How was your experience?</title>
+</head>
+<body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+    <div style="background: #f8f9fa; border-radius: 8px; padding: 24px; margin-bottom: 20px; text-align: center;">
+        <h2 style="color: #1a1a1a; margin: 0 0 8px;">How was your experience?</h2>
+        <p style="color: #666; margin: 0;">
+            Ticket <strong th:text="${ticket.ticketNumber}">ESC-000001</strong> has been resolved.
+        </p>
+    </div>
+
+    <div style="text-align: center; padding: 24px;">
+        <p style="color: #4a5568; margin-bottom: 20px;">We'd love to hear your feedback:</p>
+        <a th:href="${surveyUrl}" style="display: inline-block; background: #4299e1; color: white; text-decoration: none; padding: 12px 24px; border-radius: 6px; font-weight: 600;">
+            Rate Your Experience
+        </a>
+    </div>
+
+    <div style="margin-top: 24px; text-align: center; color: #a0aec0; font-size: 12px;">
+        <p>Powered by Escalated</p>
+    </div>
+</body>
+</html>
