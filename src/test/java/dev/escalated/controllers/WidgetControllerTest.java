@@ -7,6 +7,7 @@ import dev.escalated.models.TicketStatus;
 import dev.escalated.services.KnowledgeBaseService;
 import dev.escalated.services.SatisfactionRatingService;
 import dev.escalated.services.TicketService;
+import dev.escalated.security.ApiTokenAuthenticationFilter;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -28,6 +29,9 @@ class WidgetControllerTest {
 
     @Autowired
     private MockMvc mockMvc;
+
+    @MockBean
+    private ApiTokenAuthenticationFilter apiTokenFilter;
 
     @MockBean
     private TicketService ticketService;

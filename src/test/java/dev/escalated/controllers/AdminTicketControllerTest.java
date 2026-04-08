@@ -5,6 +5,7 @@ import dev.escalated.models.Ticket;
 import dev.escalated.models.TicketPriority;
 import dev.escalated.models.TicketStatus;
 import dev.escalated.services.TicketService;
+import dev.escalated.security.ApiTokenAuthenticationFilter;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -32,6 +33,9 @@ class AdminTicketControllerTest {
 
     @Autowired
     private MockMvc mockMvc;
+
+    @MockBean
+    private ApiTokenAuthenticationFilter apiTokenFilter;
 
     @MockBean
     private TicketService ticketService;
