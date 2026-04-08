@@ -91,7 +91,7 @@ public class ChatSessionService {
         session.setAcceptedAt(Instant.now());
 
         Ticket ticket = ticketService.findById(session.getTicketId());
-        ticketService.assign(ticket.getId(), agentId);
+        ticketService.assign(ticket.getId(), agentId, "system");
 
         session = chatSessionRepository.save(session);
 
@@ -137,7 +137,7 @@ public class ChatSessionService {
         session.setStatus("ended");
         session.setEndedAt(Instant.now());
 
-        ticketService.changeStatus(session.getTicketId(), TicketStatus.RESOLVED);
+        ticketService.changeStatus(session.getTicketId(), TicketStatus.RESOLVED, "system");
 
         session = chatSessionRepository.save(session);
 
