@@ -17,51 +17,51 @@
 
 # Escalated Spring
 
-An embeddable helpdesk system for Spring Boot applications. Add a full-featured support desk to any Java application with a single dependency.
+Spring Boot uygulamaları için gömülebilir yardım masası sistemi. Tek bir bağımlılıkla herhangi bir Java uygulamasına tam özellikli bir destek masası ekleyin.
 
 ## Özellikler
 
-1. **Ticket CRUD** -- Full lifecycle management with statuses, priorities, and assignments
-2. **SLA Policies** -- Configurable SLAs with business hours support and holiday calendars
-3. **Automations** -- Time-based rules for auto-closing resolved tickets and auto-assignment
-4. **Escalation Rules** -- Automatic escalation on SLA breach with reassignment and notifications
-5. **Macros & Canned Responses** -- Pre-defined actions and response templates for agents
-6. **Custom Fields** -- Extensible ticket data with multiple field types
-7. **Knowledge Base** -- Articles and categories with search, view counts, and feedback
-8. **Webhooks** -- HMAC-signed webhook delivery with retry logic
-9. **API Tokens** -- SHA-256 hashed token authentication for API access
-10. **Roles & Permissions** -- Granular role-based access control
-11. **Audit Logging** -- Complete audit trail for all actions
-12. **Import System** -- Bulk ticket import from structured data
-13. **Side Conversations** -- Private threaded conversations within tickets
-14. **Ticket Merging & Linking** -- Merge duplicate tickets and link related ones
-15. **Ticket Splitting** -- Split complex tickets into separate issues
-16. **Ticket Snooze** -- Snooze tickets with automatic wake-up via `@Scheduled`
-17. **Email Threading** -- Branded HTML email templates via Thymeleaf with proper Message-ID threading
-18. **Saved Views** -- Custom filtered/sorted ticket views per agent
-19. **Widget API** -- Public REST endpoints for embedding a support widget
-20. **Real-time Broadcasting** -- WebSocket via STOMP/SockJS (opt-in)
-21. **Capacity Management** -- Track and enforce agent workload limits
-22. **Skill-based Routing** -- Route tickets to agents with matching skills
-23. **CSAT Ratings** -- Customer satisfaction surveys with token-based access
-24. **2FA (TOTP)** -- Time-based one-time password support for agent accounts
-25. **Guest Access** -- Token-based ticket access without authentication
+1. **Ticket CRUD** -- Durumlar, öncelikler ve atamalarla tam yaşam döngüsü yönetimi
+2. **SLA Policies** -- Çalışma saatleri desteği ve tatil takvimleri ile yapılandırılabilir SLA'lar
+3. **Automations** -- Çözülmüş taleplerin otomatik kapatılması ve otomatik atama için zaman tabanlı kurallar
+4. **Escalation Rules** -- SLA ihlalinde yeniden atama ve bildirimlerle otomatik yükseltme
+5. **Macros & Canned Responses** -- Temsilciler için önceden tanımlanmış eylemler ve yanıt şablonları
+6. **Custom Fields** -- Birden fazla alan türüyle genişletilebilir talep verileri
+7. **Knowledge Base** -- Arama, görüntüleme sayacı ve geri bildirimli makaleler ve kategoriler
+8. **Webhooks** -- Yeniden deneme mantığıyla HMAC imzalı webhook teslimatı
+9. **API Tokens** -- API erişimi için SHA-256 hashlenmiş token kimlik doğrulaması
+10. **Roles & Permissions** -- Ayrıntılı rol tabanlı erişim kontrolü
+11. **Audit Logging** -- Tüm eylemler için eksiksiz denetim izi
+12. **Import System** -- Yapılandırılmış verilerden toplu talep içe aktarma
+13. **Side Conversations** -- Talepler içinde özel iş parçacıklı konuşmalar
+14. **Ticket Merging & Linking** -- Yinelenen talepleri birleştirme ve ilişkileri bağlama
+15. **Ticket Splitting** -- Karmaşık talepleri ayrı sorunlara bölme
+16. **Ticket Snooze** -- `@Scheduled` ile otomatik uyandırmalı talep erteleme
+17. **Email Threading** -- Thymeleaf ile markalı HTML e-posta şablonları ve doğru Message-ID zincirleme
+18. **Saved Views** -- Temsilci başına özelleştirilmiş filtrelenmiş/sıralanmış talep görünümleri
+19. **Widget API** -- Destek widget'ı gömmek için genel REST uç noktaları
+20. **Real-time Broadcasting** -- STOMP/SockJS üzerinden WebSocket (isteğe bağlı)
+21. **Capacity Management** -- Temsilci iş yükü sınırlarını izleme ve uygulama
+22. **Skill-based Routing** -- Talepleri eşleşen becerilere sahip temsilcilere yönlendirme
+23. **CSAT Ratings** -- Token tabanlı erişimle müşteri memnuniyeti anketleri
+24. **2FA (TOTP)** -- Temsilci hesapları için zamana dayalı tek kullanımlık şifre desteği
+25. **Guest Access** -- Kimlik doğrulaması olmadan token tabanlı talep erişimi
 
 ## Gereksinimler
 
 - Java 17+
 - Spring Boot 3.2+
-- A relational database (PostgreSQL, MySQL, or H2 for development)
+- İlişkisel bir veritabanı (PostgreSQL, MySQL veya geliştirme için H2)
 
 ## Kurulum
 
-Add the dependency to your `build.gradle.kts`:
+Bağımlılığı `build.gradle.kts` dosyanıza ekleyin:
 
 ```kotlin
 implementation("dev.escalated:escalated-spring:0.1.0")
 ```
 
-Or `pom.xml`:
+Veya `pom.xml`:
 
 ```xml
 <dependency>
@@ -73,7 +73,7 @@ Or `pom.xml`:
 
 ## Yapılandırma
 
-Add to your `application.properties` or `application.yml`:
+`application.properties` veya `application.yml` dosyanıza ekleyin:
 
 ```properties
 # Enable/disable the helpdesk
@@ -106,92 +106,92 @@ spring.jpa.hibernate.ddl-auto=validate
 spring.flyway.enabled=true
 ```
 
-## Database Setup
+## Veritabanı Kurulumu
 
-Flyway migrations are included and run automatically. The migration creates all tables prefixed with `escalated_` and seeds default roles and permissions.
+Flyway göçleri dahildir ve otomatik olarak çalışır. Göç, `escalated_` önekiyle tüm tabloları oluşturur ve varsayılan rolleri ve izinleri başlatır.
 
-## API Endpoints
+## API Uç Noktaları
 
 ### Admin (`/escalated/api/admin/`)
-| Method | Path | Description |
+| Yöntem | Yol | Açıklama |
 |--------|------|-------------|
-| GET | `/tickets` | List tickets (paginated, filterable) |
-| POST | `/tickets` | Create ticket |
-| GET | `/tickets/{id}` | Get ticket |
-| PUT | `/tickets/{id}` | Update ticket |
-| POST | `/tickets/{id}/assign` | Assign ticket |
-| POST | `/tickets/{id}/status` | Change status |
-| POST | `/tickets/{id}/snooze` | Snooze ticket |
-| POST | `/tickets/{id}/merge` | Merge tickets |
-| POST | `/tickets/{id}/split` | Split ticket |
-| DELETE | `/tickets/{id}` | Delete ticket |
-| GET/POST | `/departments` | CRUD departments |
-| GET/POST | `/agents` | CRUD agents |
-| GET/POST | `/webhooks` | CRUD webhooks |
-| GET/POST | `/roles` | CRUD roles |
-| GET/POST | `/custom-fields` | CRUD custom fields |
-| GET/POST | `/settings` | Manage settings |
-| GET | `/audit-logs` | View audit logs |
-| POST | `/import/tickets` | Import tickets |
-| GET/POST | `/kb/categories` | Manage KB categories |
-| GET/POST | `/kb/articles` | Manage KB articles |
+| GET | `/tickets` | Talepleri listele (sayfalanmış, filtrelenebilir) |
+| POST | `/tickets` | Talep oluştur |
+| GET | `/tickets/{id}` | Talep getir |
+| PUT | `/tickets/{id}` | Talep güncelle |
+| POST | `/tickets/{id}/assign` | Talep ata |
+| POST | `/tickets/{id}/status` | Durum değiştir |
+| POST | `/tickets/{id}/snooze` | Talebi ertele |
+| POST | `/tickets/{id}/merge` | Talepleri birleştir |
+| POST | `/tickets/{id}/split` | Talebi böl |
+| DELETE | `/tickets/{id}` | Talebi sil |
+| GET/POST | `/departments` | Departmanları yönet |
+| GET/POST | `/agents` | Temsilcileri yönet |
+| GET/POST | `/webhooks` | Webhook'ları yönet |
+| GET/POST | `/roles` | Rolleri yönet |
+| GET/POST | `/custom-fields` | Özel alanları yönet |
+| GET/POST | `/settings` | Ayarları yönet |
+| GET | `/audit-logs` | Denetim günlüklerini görüntüle |
+| POST | `/import/tickets` | Talepleri içe aktar |
+| GET/POST | `/kb/categories` | KB kategorilerini yönet |
+| GET/POST | `/kb/articles` | KB makalelerini yönet |
 
 ### Agent (`/escalated/api/agent/`)
-| Method | Path | Description |
+| Yöntem | Yol | Açıklama |
 |--------|------|-------------|
-| GET | `/tickets` | List assigned/filtered tickets |
-| GET | `/tickets/{id}` | View ticket |
-| POST | `/tickets/{id}/replies` | Add reply |
-| POST | `/tickets/{id}/macro/{macroId}` | Apply macro |
-| POST | `/tickets/{id}/side-conversations` | Create side conversation |
-| POST | `/tickets/{id}/links` | Link tickets |
-| GET/POST | `/saved-views` | Manage saved views |
-| GET/POST | `/canned-responses` | Manage canned responses |
+| GET | `/tickets` | Atanmış/filtrelenmiş talepleri listele |
+| GET | `/tickets/{id}` | Talebi görüntüle |
+| POST | `/tickets/{id}/replies` | Yanıt ekle |
+| POST | `/tickets/{id}/macro/{macroId}` | Makro uygula |
+| POST | `/tickets/{id}/side-conversations` | Yan konuşma oluştur |
+| POST | `/tickets/{id}/links` | Talepleri bağla |
+| GET/POST | `/saved-views` | Kaydedilmiş görünümleri yönet |
+| GET/POST | `/canned-responses` | Hazır yanıtları yönet |
 
 ### Customer (`/escalated/api/customer/`)
-| Method | Path | Description |
+| Yöntem | Yol | Açıklama |
 |--------|------|-------------|
-| GET | `/tickets?email=` | List customer tickets |
-| POST | `/tickets` | Create ticket |
-| POST | `/tickets/{id}/replies` | Add reply |
+| GET | `/tickets?email=` | Müşteri taleplerini listele |
+| POST | `/tickets` | Talep oluştur |
+| POST | `/tickets/{id}/replies` | Yanıt ekle |
 
 ### Widget (`/escalated/api/widget/`)
-| Method | Path | Description |
+| Yöntem | Yol | Açıklama |
 |--------|------|-------------|
-| POST | `/tickets` | Create ticket (public) |
-| GET | `/tickets/{token}` | View ticket by guest token |
-| POST | `/tickets/{token}/replies` | Reply via guest token |
-| GET | `/kb/search?query=` | Search knowledge base |
-| POST | `/csat/{token}` | Submit satisfaction rating |
+| POST | `/tickets` | Talep oluştur (genel) |
+| GET | `/tickets/{token}` | Misafir tokeniyle talebi görüntüle |
+| POST | `/tickets/{token}/replies` | Misafir tokeniyle yanıtla |
+| GET | `/kb/search?query=` | Bilgi tabanında ara |
+| POST | `/csat/{token}` | Memnuniyet değerlendirmesi gönder |
 
 ### Guest (`/escalated/api/guest/`)
-| Method | Path | Description |
+| Yöntem | Yol | Açıklama |
 |--------|------|-------------|
-| GET | `/tickets/{token}` | View ticket |
-| GET | `/tickets/{token}/replies` | View replies |
-| POST | `/tickets/{token}/replies` | Add reply |
+| GET | `/tickets/{token}` | Talebi görüntüle |
+| GET | `/tickets/{token}/replies` | Yanıtları görüntüle |
+| POST | `/tickets/{token}/replies` | Yanıt ekle |
 
-## Architecture
+## Mimari
 
 ```
 dev.escalated/
-  config/              Auto-configuration, properties, WebSocket config
-  models/              JPA entities with full relationships
-  repositories/        Spring Data JPA repositories
-  services/            Business logic (transactional)
+  config/              Otomatik yapılandırma, özellikler, WebSocket yapılandırması
+  models/              Tam ilişkilere sahip JPA varlıkları
+  repositories/        Spring Data JPA depoları
+  services/            İş mantığı (işlemsel)
   controllers/
-    admin/             Admin REST API
-    agent/             Agent REST API
-    customer/          Customer REST API
-    widget/            Public widget API
-  events/              Spring application events + webhook listener
-  security/            API token auth filter, security config, 2FA
-  scheduling/          @Scheduled tasks (snooze, SLA, automations)
+    admin/             Yönetici REST API
+    agent/             Temsilci REST API
+    customer/          Müşteri REST API
+    widget/            Genel widget API
+  events/              Spring uygulama olayları + webhook dinleyicisi
+  security/            API token kimlik doğrulama filtresi, güvenlik yapılandırması, 2FA
+  scheduling/          @Scheduled görevleri (erteleme, SLA, otomasyonlar)
 ```
 
-## Authentication
+## Kimlik Doğrulama
 
-API endpoints use Bearer token authentication. Create tokens via the admin API:
+API uç noktaları Bearer token kimlik doğrulaması kullanır. Yönetici API'si aracılığıyla token oluşturun:
 
 ```bash
 curl -X POST /escalated/api/admin/tokens \
@@ -199,17 +199,17 @@ curl -X POST /escalated/api/admin/tokens \
   -d '{"name": "My API Token", "agent_id": 1}'
 ```
 
-The response includes the plain-text token (shown only once). Use it in subsequent requests:
+Yanıt, düz metin tokeni içerir (yalnızca bir kez gösterilir). Sonraki isteklerde kullanın:
 
 ```bash
 curl -H "Authorization: Bearer <token>" /escalated/api/agent/tickets
 ```
 
-## WebSocket (Real-time)
+## WebSocket (Gerçek zamanlı)
 
-Enable with `escalated.broadcasting.enabled=true`. Connect to `/escalated/ws` via SockJS/STOMP.
+`escalated.broadcasting.enabled=true` ile etkinleştirin. SockJS/STOMP aracılığıyla `/escalated/ws`'ye bağlanın.
 
-## Development
+## Geliştirme
 
 ```bash
 # Build
@@ -224,4 +224,4 @@ Enable with `escalated.broadcasting.enabled=true`. Connect to `/escalated/ws` vi
 
 ## Lisans
 
-MIT License. See [LICENSE](LICENSE) for details.
+MIT Lisansı. Ayrıntılar için [LICENSE](LICENSE) dosyasına bakın.

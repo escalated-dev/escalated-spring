@@ -17,51 +17,51 @@
 
 # Escalated Spring
 
-An embeddable helpdesk system for Spring Boot applications. Add a full-featured support desk to any Java application with a single dependency.
+Spring Bootアプリケーション向けの組み込み可能なヘルプデスクシステム。単一の依存関係でフル機能のサポートデスクを任意のJavaアプリケーションに追加できます。
 
 ## 機能
 
-1. **Ticket CRUD** -- Full lifecycle management with statuses, priorities, and assignments
-2. **SLA Policies** -- Configurable SLAs with business hours support and holiday calendars
-3. **Automations** -- Time-based rules for auto-closing resolved tickets and auto-assignment
-4. **Escalation Rules** -- Automatic escalation on SLA breach with reassignment and notifications
-5. **Macros & Canned Responses** -- Pre-defined actions and response templates for agents
-6. **Custom Fields** -- Extensible ticket data with multiple field types
-7. **Knowledge Base** -- Articles and categories with search, view counts, and feedback
-8. **Webhooks** -- HMAC-signed webhook delivery with retry logic
-9. **API Tokens** -- SHA-256 hashed token authentication for API access
-10. **Roles & Permissions** -- Granular role-based access control
-11. **Audit Logging** -- Complete audit trail for all actions
-12. **Import System** -- Bulk ticket import from structured data
-13. **Side Conversations** -- Private threaded conversations within tickets
-14. **Ticket Merging & Linking** -- Merge duplicate tickets and link related ones
-15. **Ticket Splitting** -- Split complex tickets into separate issues
-16. **Ticket Snooze** -- Snooze tickets with automatic wake-up via `@Scheduled`
-17. **Email Threading** -- Branded HTML email templates via Thymeleaf with proper Message-ID threading
-18. **Saved Views** -- Custom filtered/sorted ticket views per agent
-19. **Widget API** -- Public REST endpoints for embedding a support widget
-20. **Real-time Broadcasting** -- WebSocket via STOMP/SockJS (opt-in)
-21. **Capacity Management** -- Track and enforce agent workload limits
-22. **Skill-based Routing** -- Route tickets to agents with matching skills
-23. **CSAT Ratings** -- Customer satisfaction surveys with token-based access
-24. **2FA (TOTP)** -- Time-based one-time password support for agent accounts
-25. **Guest Access** -- Token-based ticket access without authentication
+1. **Ticket CRUD** -- ステータス、優先度、割り当てによる完全なライフサイクル管理
+2. **SLA Policies** -- 営業時間サポートと休日カレンダーを備えた設定可能なSLA
+3. **Automations** -- 解決済みチケットの自動クローズと自動割り当てのための時間ベースのルール
+4. **Escalation Rules** -- SLA違反時の再割り当てと通知による自動エスカレーション
+5. **Macros & Canned Responses** -- エージェント向けの定義済みアクションと応答テンプレート
+6. **Custom Fields** -- 複数のフィールドタイプによる拡張可能なチケットデータ
+7. **Knowledge Base** -- 検索、閲覧数、フィードバック付きの記事とカテゴリ
+8. **Webhooks** -- リトライロジック付きHMAC署名Webhook配信
+9. **API Tokens** -- APIアクセス用のSHA-256ハッシュトークン認証
+10. **Roles & Permissions** -- きめ細かなロールベースのアクセス制御
+11. **Audit Logging** -- すべてのアクションの完全な監査証跡
+12. **Import System** -- 構造化データからのチケット一括インポート
+13. **Side Conversations** -- チケット内のプライベートスレッド会話
+14. **Ticket Merging & Linking** -- 重複チケットの統合と関連チケットのリンク
+15. **Ticket Splitting** -- 複雑なチケットを個別の問題に分割
+16. **Ticket Snooze** -- `@Scheduled`による自動ウェイクアップ付きチケットスヌーズ
+17. **Email Threading** -- ThymeleafによるブランドHTMLメールテンプレートと正しいMessage-IDスレッディング
+18. **Saved Views** -- エージェントごとのカスタムフィルター/ソート済みチケットビュー
+19. **Widget API** -- サポートウィジェット埋め込み用のパブリックRESTエンドポイント
+20. **Real-time Broadcasting** -- STOMP/SockJS経由のWebSocket（オプトイン）
+21. **Capacity Management** -- エージェントのワークロード制限の追跡と適用
+22. **Skill-based Routing** -- マッチするスキルを持つエージェントへのチケットルーティング
+23. **CSAT Ratings** -- トークンベースのアクセスによる顧客満足度調査
+24. **2FA (TOTP)** -- エージェントアカウント用の時間ベースワンタイムパスワードサポート
+25. **Guest Access** -- 認証不要のトークンベースチケットアクセス
 
 ## 要件
 
 - Java 17+
 - Spring Boot 3.2+
-- A relational database (PostgreSQL, MySQL, or H2 for development)
+- リレーショナルデータベース（PostgreSQL、MySQL、または開発用H2）
 
 ## インストール
 
-Add the dependency to your `build.gradle.kts`:
+`build.gradle.kts`に依存関係を追加します：
 
 ```kotlin
 implementation("dev.escalated:escalated-spring:0.1.0")
 ```
 
-Or `pom.xml`:
+または`pom.xml`：
 
 ```xml
 <dependency>
@@ -73,7 +73,7 @@ Or `pom.xml`:
 
 ## 設定
 
-Add to your `application.properties` or `application.yml`:
+`application.properties`または`application.yml`に追加します：
 
 ```properties
 # Enable/disable the helpdesk
@@ -106,92 +106,92 @@ spring.jpa.hibernate.ddl-auto=validate
 spring.flyway.enabled=true
 ```
 
-## Database Setup
+## データベースセットアップ
 
-Flyway migrations are included and run automatically. The migration creates all tables prefixed with `escalated_` and seeds default roles and permissions.
+Flywayマイグレーションが含まれており、自動的に実行されます。マイグレーションは`escalated_`プレフィックス付きのすべてのテーブルを作成し、デフォルトのロールと権限をシードします。
 
-## API Endpoints
+## APIエンドポイント
 
 ### Admin (`/escalated/api/admin/`)
-| Method | Path | Description |
+| メソッド | パス | 説明 |
 |--------|------|-------------|
-| GET | `/tickets` | List tickets (paginated, filterable) |
-| POST | `/tickets` | Create ticket |
-| GET | `/tickets/{id}` | Get ticket |
-| PUT | `/tickets/{id}` | Update ticket |
-| POST | `/tickets/{id}/assign` | Assign ticket |
-| POST | `/tickets/{id}/status` | Change status |
-| POST | `/tickets/{id}/snooze` | Snooze ticket |
-| POST | `/tickets/{id}/merge` | Merge tickets |
-| POST | `/tickets/{id}/split` | Split ticket |
-| DELETE | `/tickets/{id}` | Delete ticket |
-| GET/POST | `/departments` | CRUD departments |
-| GET/POST | `/agents` | CRUD agents |
-| GET/POST | `/webhooks` | CRUD webhooks |
-| GET/POST | `/roles` | CRUD roles |
-| GET/POST | `/custom-fields` | CRUD custom fields |
-| GET/POST | `/settings` | Manage settings |
-| GET | `/audit-logs` | View audit logs |
-| POST | `/import/tickets` | Import tickets |
-| GET/POST | `/kb/categories` | Manage KB categories |
-| GET/POST | `/kb/articles` | Manage KB articles |
+| GET | `/tickets` | チケット一覧（ページネーション、フィルター可能） |
+| POST | `/tickets` | チケット作成 |
+| GET | `/tickets/{id}` | チケット取得 |
+| PUT | `/tickets/{id}` | チケット更新 |
+| POST | `/tickets/{id}/assign` | チケット割り当て |
+| POST | `/tickets/{id}/status` | ステータス変更 |
+| POST | `/tickets/{id}/snooze` | チケットスヌーズ |
+| POST | `/tickets/{id}/merge` | チケット統合 |
+| POST | `/tickets/{id}/split` | チケット分割 |
+| DELETE | `/tickets/{id}` | チケット削除 |
+| GET/POST | `/departments` | 部門管理 |
+| GET/POST | `/agents` | エージェント管理 |
+| GET/POST | `/webhooks` | Webhook管理 |
+| GET/POST | `/roles` | ロール管理 |
+| GET/POST | `/custom-fields` | カスタムフィールド管理 |
+| GET/POST | `/settings` | 設定管理 |
+| GET | `/audit-logs` | 監査ログ表示 |
+| POST | `/import/tickets` | チケットインポート |
+| GET/POST | `/kb/categories` | KBカテゴリ管理 |
+| GET/POST | `/kb/articles` | KB記事管理 |
 
 ### Agent (`/escalated/api/agent/`)
-| Method | Path | Description |
+| メソッド | パス | 説明 |
 |--------|------|-------------|
-| GET | `/tickets` | List assigned/filtered tickets |
-| GET | `/tickets/{id}` | View ticket |
-| POST | `/tickets/{id}/replies` | Add reply |
-| POST | `/tickets/{id}/macro/{macroId}` | Apply macro |
-| POST | `/tickets/{id}/side-conversations` | Create side conversation |
-| POST | `/tickets/{id}/links` | Link tickets |
-| GET/POST | `/saved-views` | Manage saved views |
-| GET/POST | `/canned-responses` | Manage canned responses |
+| GET | `/tickets` | 割り当て済み/フィルター済みチケット一覧 |
+| GET | `/tickets/{id}` | チケット表示 |
+| POST | `/tickets/{id}/replies` | 返信追加 |
+| POST | `/tickets/{id}/macro/{macroId}` | マクロ適用 |
+| POST | `/tickets/{id}/side-conversations` | サイドカンバセーション作成 |
+| POST | `/tickets/{id}/links` | チケットリンク |
+| GET/POST | `/saved-views` | 保存済みビュー管理 |
+| GET/POST | `/canned-responses` | 定型応答管理 |
 
 ### Customer (`/escalated/api/customer/`)
-| Method | Path | Description |
+| メソッド | パス | 説明 |
 |--------|------|-------------|
-| GET | `/tickets?email=` | List customer tickets |
-| POST | `/tickets` | Create ticket |
-| POST | `/tickets/{id}/replies` | Add reply |
+| GET | `/tickets?email=` | 顧客チケット一覧 |
+| POST | `/tickets` | チケット作成 |
+| POST | `/tickets/{id}/replies` | 返信追加 |
 
 ### Widget (`/escalated/api/widget/`)
-| Method | Path | Description |
+| メソッド | パス | 説明 |
 |--------|------|-------------|
-| POST | `/tickets` | Create ticket (public) |
-| GET | `/tickets/{token}` | View ticket by guest token |
-| POST | `/tickets/{token}/replies` | Reply via guest token |
-| GET | `/kb/search?query=` | Search knowledge base |
-| POST | `/csat/{token}` | Submit satisfaction rating |
+| POST | `/tickets` | チケット作成（公開） |
+| GET | `/tickets/{token}` | ゲストトークンでチケット表示 |
+| POST | `/tickets/{token}/replies` | ゲストトークンで返信 |
+| GET | `/kb/search?query=` | ナレッジベース検索 |
+| POST | `/csat/{token}` | 満足度評価送信 |
 
 ### Guest (`/escalated/api/guest/`)
-| Method | Path | Description |
+| メソッド | パス | 説明 |
 |--------|------|-------------|
-| GET | `/tickets/{token}` | View ticket |
-| GET | `/tickets/{token}/replies` | View replies |
-| POST | `/tickets/{token}/replies` | Add reply |
+| GET | `/tickets/{token}` | チケット表示 |
+| GET | `/tickets/{token}/replies` | 返信表示 |
+| POST | `/tickets/{token}/replies` | 返信追加 |
 
-## Architecture
+## アーキテクチャ
 
 ```
 dev.escalated/
-  config/              Auto-configuration, properties, WebSocket config
-  models/              JPA entities with full relationships
-  repositories/        Spring Data JPA repositories
-  services/            Business logic (transactional)
+  config/              自動設定、プロパティ、WebSocket設定
+  models/              完全なリレーション付きJPAエンティティ
+  repositories/        Spring Data JPAリポジトリ
+  services/            ビジネスロジック（トランザクション）
   controllers/
-    admin/             Admin REST API
-    agent/             Agent REST API
-    customer/          Customer REST API
-    widget/            Public widget API
-  events/              Spring application events + webhook listener
-  security/            API token auth filter, security config, 2FA
-  scheduling/          @Scheduled tasks (snooze, SLA, automations)
+    admin/             管理者REST API
+    agent/             エージェントREST API
+    customer/          顧客REST API
+    widget/            公開ウィジェットAPI
+  events/              Springアプリケーションイベント + Webhookリスナー
+  security/            APIトークン認証フィルター、セキュリティ設定、2FA
+  scheduling/          @Scheduledタスク（スヌーズ、SLA、自動化）
 ```
 
-## Authentication
+## 認証
 
-API endpoints use Bearer token authentication. Create tokens via the admin API:
+APIエンドポイントはBearerトークン認証を使用します。管理者APIでトークンを作成します：
 
 ```bash
 curl -X POST /escalated/api/admin/tokens \
@@ -199,17 +199,17 @@ curl -X POST /escalated/api/admin/tokens \
   -d '{"name": "My API Token", "agent_id": 1}'
 ```
 
-The response includes the plain-text token (shown only once). Use it in subsequent requests:
+レスポンスにはプレーンテキストのトークンが含まれます（一度だけ表示）。後続のリクエストで使用します：
 
 ```bash
 curl -H "Authorization: Bearer <token>" /escalated/api/agent/tickets
 ```
 
-## WebSocket (Real-time)
+## WebSocket（リアルタイム）
 
-Enable with `escalated.broadcasting.enabled=true`. Connect to `/escalated/ws` via SockJS/STOMP.
+`escalated.broadcasting.enabled=true`で有効化します。SockJS/STOMP経由で`/escalated/ws`に接続します。
 
-## Development
+## 開発
 
 ```bash
 # Build
@@ -224,4 +224,4 @@ Enable with `escalated.broadcasting.enabled=true`. Connect to `/escalated/ws` vi
 
 ## ライセンス
 
-MIT License. See [LICENSE](LICENSE) for details.
+MITライセンス。詳細は[LICENSE](LICENSE)を参照してください。
