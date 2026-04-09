@@ -1,25 +1,25 @@
 <p align="center">
-  <a href="docs/translations/README.ar.md">العربية</a> •
-  <a href="docs/translations/README.de.md">Deutsch</a> •
-  <b>English</b> •
-  <a href="docs/translations/README.es.md">Español</a> •
-  <a href="docs/translations/README.fr.md">Français</a> •
-  <a href="docs/translations/README.it.md">Italiano</a> •
-  <a href="docs/translations/README.ja.md">日本語</a> •
-  <a href="docs/translations/README.ko.md">한국어</a> •
-  <a href="docs/translations/README.nl.md">Nederlands</a> •
-  <a href="docs/translations/README.pl.md">Polski</a> •
-  <a href="docs/translations/README.pt-BR.md">Português (BR)</a> •
-  <a href="docs/translations/README.ru.md">Русский</a> •
-  <a href="docs/translations/README.tr.md">Türkçe</a> •
-  <a href="docs/translations/README.zh-CN.md">简体中文</a>
+  <a href="README.ar.md">العربية</a> •
+  <a href="README.de.md">Deutsch</a> •
+  <a href="../../README.md">English</a> •
+  <a href="README.es.md">Español</a> •
+  <a href="README.fr.md">Français</a> •
+  <a href="README.it.md">Italiano</a> •
+  <a href="README.ja.md">日本語</a> •
+  <a href="README.ko.md">한국어</a> •
+  <b>Nederlands</b> •
+  <a href="README.pl.md">Polski</a> •
+  <a href="README.pt-BR.md">Português (BR)</a> •
+  <a href="README.ru.md">Русский</a> •
+  <a href="README.tr.md">Türkçe</a> •
+  <a href="README.zh-CN.md">简体中文</a>
 </p>
 
 # Escalated Spring
 
 An embeddable helpdesk system for Spring Boot applications. Add a full-featured support desk to any Java application with a single dependency.
 
-## Features
+## Functies
 
 1. **Ticket CRUD** -- Full lifecycle management with statuses, priorities, and assignments
 2. **SLA Policies** -- Configurable SLAs with business hours support and holiday calendars
@@ -47,13 +47,13 @@ An embeddable helpdesk system for Spring Boot applications. Add a full-featured 
 24. **2FA (TOTP)** -- Time-based one-time password support for agent accounts
 25. **Guest Access** -- Token-based ticket access without authentication
 
-## Requirements
+## Vereisten
 
 - Java 17+
 - Spring Boot 3.2+
 - A relational database (PostgreSQL, MySQL, or H2 for development)
 
-## Installation
+## Installatie
 
 Add the dependency to your `build.gradle.kts`:
 
@@ -71,7 +71,7 @@ Or `pom.xml`:
 </dependency>
 ```
 
-## Configuration
+## Configuratie
 
 Add to your `application.properties` or `application.yml`:
 
@@ -222,6 +222,6 @@ Enable with `escalated.broadcasting.enabled=true`. Connect to `/escalated/ws` vi
 ./gradlew checkstyleMain checkstyleTest
 ```
 
-## License
+## Licentie
 
 MIT License. See [LICENSE](LICENSE) for details.
