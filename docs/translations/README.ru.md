@@ -17,51 +17,51 @@
 
 # Escalated Spring
 
-An embeddable helpdesk system for Spring Boot applications. Add a full-featured support desk to any Java application with a single dependency.
+Встраиваемая система helpdesk для приложений Spring Boot. Добавьте полнофункциональную службу поддержки в любое Java-приложение с помощью одной зависимости.
 
 ## Возможности
 
-1. **Ticket CRUD** -- Full lifecycle management with statuses, priorities, and assignments
-2. **SLA Policies** -- Configurable SLAs with business hours support and holiday calendars
-3. **Automations** -- Time-based rules for auto-closing resolved tickets and auto-assignment
-4. **Escalation Rules** -- Automatic escalation on SLA breach with reassignment and notifications
-5. **Macros & Canned Responses** -- Pre-defined actions and response templates for agents
-6. **Custom Fields** -- Extensible ticket data with multiple field types
-7. **Knowledge Base** -- Articles and categories with search, view counts, and feedback
-8. **Webhooks** -- HMAC-signed webhook delivery with retry logic
-9. **API Tokens** -- SHA-256 hashed token authentication for API access
-10. **Roles & Permissions** -- Granular role-based access control
-11. **Audit Logging** -- Complete audit trail for all actions
-12. **Import System** -- Bulk ticket import from structured data
-13. **Side Conversations** -- Private threaded conversations within tickets
-14. **Ticket Merging & Linking** -- Merge duplicate tickets and link related ones
-15. **Ticket Splitting** -- Split complex tickets into separate issues
-16. **Ticket Snooze** -- Snooze tickets with automatic wake-up via `@Scheduled`
-17. **Email Threading** -- Branded HTML email templates via Thymeleaf with proper Message-ID threading
-18. **Saved Views** -- Custom filtered/sorted ticket views per agent
-19. **Widget API** -- Public REST endpoints for embedding a support widget
-20. **Real-time Broadcasting** -- WebSocket via STOMP/SockJS (opt-in)
-21. **Capacity Management** -- Track and enforce agent workload limits
-22. **Skill-based Routing** -- Route tickets to agents with matching skills
-23. **CSAT Ratings** -- Customer satisfaction surveys with token-based access
-24. **2FA (TOTP)** -- Time-based one-time password support for agent accounts
-25. **Guest Access** -- Token-based ticket access without authentication
+1. **Ticket CRUD** -- Полное управление жизненным циклом со статусами, приоритетами и назначениями
+2. **SLA Policies** -- Настраиваемые SLA с поддержкой рабочего времени и календарями праздников
+3. **Automations** -- Временные правила для автоматического закрытия решённых заявок и автоназначения
+4. **Escalation Rules** -- Автоматическая эскалация при нарушении SLA с переназначением и уведомлениями
+5. **Macros & Canned Responses** -- Предопределённые действия и шаблоны ответов для агентов
+6. **Custom Fields** -- Расширяемые данные заявок с несколькими типами полей
+7. **Knowledge Base** -- Статьи и категории с поиском, счётчиком просмотров и обратной связью
+8. **Webhooks** -- HMAC-подписанная доставка webhook с логикой повторных попыток
+9. **API Tokens** -- SHA-256 хэшированная аутентификация токенов для доступа к API
+10. **Roles & Permissions** -- Детальное управление доступом на основе ролей
+11. **Audit Logging** -- Полный журнал аудита для всех действий
+12. **Import System** -- Массовый импорт заявок из структурированных данных
+13. **Side Conversations** -- Приватные цепочки разговоров внутри заявок
+14. **Ticket Merging & Linking** -- Объединение дублирующих заявок и связывание родственных
+15. **Ticket Splitting** -- Разделение сложных заявок на отдельные проблемы
+16. **Ticket Snooze** -- Откладывание заявок с автоматическим пробуждением через `@Scheduled`
+17. **Email Threading** -- Брендированные HTML-шаблоны электронной почты через Thymeleaf с правильной цепочкой Message-ID
+18. **Saved Views** -- Пользовательские фильтрованные/сортированные представления заявок для каждого агента
+19. **Widget API** -- Публичные REST-эндпоинты для встраивания виджета поддержки
+20. **Real-time Broadcasting** -- WebSocket через STOMP/SockJS (опционально)
+21. **Capacity Management** -- Отслеживание и применение ограничений рабочей нагрузки агентов
+22. **Skill-based Routing** -- Маршрутизация заявок к агентам с подходящими навыками
+23. **CSAT Ratings** -- Опросы удовлетворённости клиентов с доступом по токену
+24. **2FA (TOTP)** -- Поддержка одноразовых паролей на основе времени для учётных записей агентов
+25. **Guest Access** -- Доступ к заявкам по токену без аутентификации
 
 ## Требования
 
 - Java 17+
 - Spring Boot 3.2+
-- A relational database (PostgreSQL, MySQL, or H2 for development)
+- Реляционная база данных (PostgreSQL, MySQL или H2 для разработки)
 
 ## Установка
 
-Add the dependency to your `build.gradle.kts`:
+Добавьте зависимость в файл `build.gradle.kts`:
 
 ```kotlin
 implementation("dev.escalated:escalated-spring:0.1.0")
 ```
 
-Or `pom.xml`:
+Или `pom.xml`:
 
 ```xml
 <dependency>
@@ -73,7 +73,7 @@ Or `pom.xml`:
 
 ## Конфигурация
 
-Add to your `application.properties` or `application.yml`:
+Добавьте в файл `application.properties` или `application.yml`:
 
 ```properties
 # Enable/disable the helpdesk
@@ -106,92 +106,92 @@ spring.jpa.hibernate.ddl-auto=validate
 spring.flyway.enabled=true
 ```
 
-## Database Setup
+## Настройка базы данных
 
-Flyway migrations are included and run automatically. The migration creates all tables prefixed with `escalated_` and seeds default roles and permissions.
+Миграции Flyway включены и выполняются автоматически. Миграция создаёт все таблицы с префиксом `escalated_` и заполняет роли и разрешения по умолчанию.
 
-## API Endpoints
+## Эндпоинты API
 
 ### Admin (`/escalated/api/admin/`)
-| Method | Path | Description |
+| Метод | Путь | Описание |
 |--------|------|-------------|
-| GET | `/tickets` | List tickets (paginated, filterable) |
-| POST | `/tickets` | Create ticket |
-| GET | `/tickets/{id}` | Get ticket |
-| PUT | `/tickets/{id}` | Update ticket |
-| POST | `/tickets/{id}/assign` | Assign ticket |
-| POST | `/tickets/{id}/status` | Change status |
-| POST | `/tickets/{id}/snooze` | Snooze ticket |
-| POST | `/tickets/{id}/merge` | Merge tickets |
-| POST | `/tickets/{id}/split` | Split ticket |
-| DELETE | `/tickets/{id}` | Delete ticket |
-| GET/POST | `/departments` | CRUD departments |
-| GET/POST | `/agents` | CRUD agents |
-| GET/POST | `/webhooks` | CRUD webhooks |
-| GET/POST | `/roles` | CRUD roles |
-| GET/POST | `/custom-fields` | CRUD custom fields |
-| GET/POST | `/settings` | Manage settings |
-| GET | `/audit-logs` | View audit logs |
-| POST | `/import/tickets` | Import tickets |
-| GET/POST | `/kb/categories` | Manage KB categories |
-| GET/POST | `/kb/articles` | Manage KB articles |
+| GET | `/tickets` | Список заявок (с пагинацией, фильтрами) |
+| POST | `/tickets` | Создать заявку |
+| GET | `/tickets/{id}` | Получить заявку |
+| PUT | `/tickets/{id}` | Обновить заявку |
+| POST | `/tickets/{id}/assign` | Назначить заявку |
+| POST | `/tickets/{id}/status` | Изменить статус |
+| POST | `/tickets/{id}/snooze` | Отложить заявку |
+| POST | `/tickets/{id}/merge` | Объединить заявки |
+| POST | `/tickets/{id}/split` | Разделить заявку |
+| DELETE | `/tickets/{id}` | Удалить заявку |
+| GET/POST | `/departments` | Управление отделами |
+| GET/POST | `/agents` | Управление агентами |
+| GET/POST | `/webhooks` | Управление вебхуками |
+| GET/POST | `/roles` | Управление ролями |
+| GET/POST | `/custom-fields` | Управление пользовательскими полями |
+| GET/POST | `/settings` | Управление настройками |
+| GET | `/audit-logs` | Просмотр журналов аудита |
+| POST | `/import/tickets` | Импорт заявок |
+| GET/POST | `/kb/categories` | Управление категориями базы знаний |
+| GET/POST | `/kb/articles` | Управление статьями базы знаний |
 
 ### Agent (`/escalated/api/agent/`)
-| Method | Path | Description |
+| Метод | Путь | Описание |
 |--------|------|-------------|
-| GET | `/tickets` | List assigned/filtered tickets |
-| GET | `/tickets/{id}` | View ticket |
-| POST | `/tickets/{id}/replies` | Add reply |
-| POST | `/tickets/{id}/macro/{macroId}` | Apply macro |
-| POST | `/tickets/{id}/side-conversations` | Create side conversation |
-| POST | `/tickets/{id}/links` | Link tickets |
-| GET/POST | `/saved-views` | Manage saved views |
-| GET/POST | `/canned-responses` | Manage canned responses |
+| GET | `/tickets` | Список назначенных/отфильтрованных заявок |
+| GET | `/tickets/{id}` | Просмотр заявки |
+| POST | `/tickets/{id}/replies` | Добавить ответ |
+| POST | `/tickets/{id}/macro/{macroId}` | Применить макрос |
+| POST | `/tickets/{id}/side-conversations` | Создать побочную беседу |
+| POST | `/tickets/{id}/links` | Связать заявки |
+| GET/POST | `/saved-views` | Управление сохранёнными представлениями |
+| GET/POST | `/canned-responses` | Управление шаблонами ответов |
 
 ### Customer (`/escalated/api/customer/`)
-| Method | Path | Description |
+| Метод | Путь | Описание |
 |--------|------|-------------|
-| GET | `/tickets?email=` | List customer tickets |
-| POST | `/tickets` | Create ticket |
-| POST | `/tickets/{id}/replies` | Add reply |
+| GET | `/tickets?email=` | Список заявок клиента |
+| POST | `/tickets` | Создать заявку |
+| POST | `/tickets/{id}/replies` | Добавить ответ |
 
 ### Widget (`/escalated/api/widget/`)
-| Method | Path | Description |
+| Метод | Путь | Описание |
 |--------|------|-------------|
-| POST | `/tickets` | Create ticket (public) |
-| GET | `/tickets/{token}` | View ticket by guest token |
-| POST | `/tickets/{token}/replies` | Reply via guest token |
-| GET | `/kb/search?query=` | Search knowledge base |
-| POST | `/csat/{token}` | Submit satisfaction rating |
+| POST | `/tickets` | Создать заявку (публичную) |
+| GET | `/tickets/{token}` | Просмотр заявки по гостевому токену |
+| POST | `/tickets/{token}/replies` | Ответ через гостевой токен |
+| GET | `/kb/search?query=` | Поиск по базе знаний |
+| POST | `/csat/{token}` | Отправить оценку удовлетворённости |
 
 ### Guest (`/escalated/api/guest/`)
-| Method | Path | Description |
+| Метод | Путь | Описание |
 |--------|------|-------------|
-| GET | `/tickets/{token}` | View ticket |
-| GET | `/tickets/{token}/replies` | View replies |
-| POST | `/tickets/{token}/replies` | Add reply |
+| GET | `/tickets/{token}` | Просмотр заявки |
+| GET | `/tickets/{token}/replies` | Просмотр ответов |
+| POST | `/tickets/{token}/replies` | Добавить ответ |
 
-## Architecture
+## Архитектура
 
 ```
 dev.escalated/
-  config/              Auto-configuration, properties, WebSocket config
-  models/              JPA entities with full relationships
-  repositories/        Spring Data JPA repositories
-  services/            Business logic (transactional)
+  config/              Автоконфигурация, свойства, конфигурация WebSocket
+  models/              JPA-сущности с полными связями
+  repositories/        Репозитории Spring Data JPA
+  services/            Бизнес-логика (транзакционная)
   controllers/
-    admin/             Admin REST API
-    agent/             Agent REST API
-    customer/          Customer REST API
-    widget/            Public widget API
-  events/              Spring application events + webhook listener
-  security/            API token auth filter, security config, 2FA
-  scheduling/          @Scheduled tasks (snooze, SLA, automations)
+    admin/             REST API администратора
+    agent/             REST API агента
+    customer/          REST API клиента
+    widget/            Публичное API виджета
+  events/              События приложения Spring + слушатель вебхуков
+  security/            Фильтр аутентификации API-токенов, конфигурация безопасности, 2FA
+  scheduling/          Задачи @Scheduled (откладывание, SLA, автоматизации)
 ```
 
-## Authentication
+## Аутентификация
 
-API endpoints use Bearer token authentication. Create tokens via the admin API:
+Эндпоинты API используют аутентификацию Bearer-токенами. Создавайте токены через API администратора:
 
 ```bash
 curl -X POST /escalated/api/admin/tokens \
@@ -199,17 +199,17 @@ curl -X POST /escalated/api/admin/tokens \
   -d '{"name": "My API Token", "agent_id": 1}'
 ```
 
-The response includes the plain-text token (shown only once). Use it in subsequent requests:
+Ответ содержит токен в открытом виде (показывается только один раз). Используйте его в последующих запросах:
 
 ```bash
 curl -H "Authorization: Bearer <token>" /escalated/api/agent/tickets
 ```
 
-## WebSocket (Real-time)
+## WebSocket (Реальное время)
 
-Enable with `escalated.broadcasting.enabled=true`. Connect to `/escalated/ws` via SockJS/STOMP.
+Активируйте с помощью `escalated.broadcasting.enabled=true`. Подключитесь к `/escalated/ws` через SockJS/STOMP.
 
-## Development
+## Разработка
 
 ```bash
 # Build
@@ -224,4 +224,4 @@ Enable with `escalated.broadcasting.enabled=true`. Connect to `/escalated/ws` vi
 
 ## Лицензия
 
-MIT License. See [LICENSE](LICENSE) for details.
+Лицензия MIT. Подробности см. в [LICENSE](LICENSE).

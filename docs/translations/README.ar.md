@@ -17,51 +17,51 @@
 
 # Escalated Spring
 
-An embeddable helpdesk system for Spring Boot applications. Add a full-featured support desk to any Java application with a single dependency.
+نظام مكتب مساعدة قابل للتضمين لتطبيقات Spring Boot. أضف مكتب دعم كامل الميزات إلى أي تطبيق Java بتبعية واحدة.
 
 ## الميزات
 
-1. **Ticket CRUD** -- Full lifecycle management with statuses, priorities, and assignments
-2. **SLA Policies** -- Configurable SLAs with business hours support and holiday calendars
-3. **Automations** -- Time-based rules for auto-closing resolved tickets and auto-assignment
-4. **Escalation Rules** -- Automatic escalation on SLA breach with reassignment and notifications
-5. **Macros & Canned Responses** -- Pre-defined actions and response templates for agents
-6. **Custom Fields** -- Extensible ticket data with multiple field types
-7. **Knowledge Base** -- Articles and categories with search, view counts, and feedback
-8. **Webhooks** -- HMAC-signed webhook delivery with retry logic
-9. **API Tokens** -- SHA-256 hashed token authentication for API access
-10. **Roles & Permissions** -- Granular role-based access control
-11. **Audit Logging** -- Complete audit trail for all actions
-12. **Import System** -- Bulk ticket import from structured data
-13. **Side Conversations** -- Private threaded conversations within tickets
-14. **Ticket Merging & Linking** -- Merge duplicate tickets and link related ones
-15. **Ticket Splitting** -- Split complex tickets into separate issues
-16. **Ticket Snooze** -- Snooze tickets with automatic wake-up via `@Scheduled`
-17. **Email Threading** -- Branded HTML email templates via Thymeleaf with proper Message-ID threading
-18. **Saved Views** -- Custom filtered/sorted ticket views per agent
-19. **Widget API** -- Public REST endpoints for embedding a support widget
-20. **Real-time Broadcasting** -- WebSocket via STOMP/SockJS (opt-in)
-21. **Capacity Management** -- Track and enforce agent workload limits
-22. **Skill-based Routing** -- Route tickets to agents with matching skills
-23. **CSAT Ratings** -- Customer satisfaction surveys with token-based access
-24. **2FA (TOTP)** -- Time-based one-time password support for agent accounts
-25. **Guest Access** -- Token-based ticket access without authentication
+1. **Ticket CRUD** -- إدارة كاملة لدورة الحياة مع الحالات والأولويات والتعيينات
+2. **SLA Policies** -- اتفاقيات مستوى خدمة قابلة للتكوين مع دعم ساعات العمل وتقويمات العطلات
+3. **Automations** -- قواعد مبنية على الوقت لإغلاق التذاكر المحلولة تلقائياً والتعيين التلقائي
+4. **Escalation Rules** -- تصعيد تلقائي عند انتهاك SLA مع إعادة التعيين والإشعارات
+5. **Macros & Canned Responses** -- إجراءات محددة مسبقاً وقوالب استجابة للوكلاء
+6. **Custom Fields** -- بيانات تذاكر قابلة للتوسيع مع أنواع حقول متعددة
+7. **Knowledge Base** -- مقالات وفئات مع البحث وعدد المشاهدات والتعليقات
+8. **Webhooks** -- تسليم Webhook موقّع بـ HMAC مع منطق إعادة المحاولة
+9. **API Tokens** -- مصادقة بالرمز المميز المجزأ بـ SHA-256 للوصول إلى API
+10. **Roles & Permissions** -- تحكم دقيق في الوصول قائم على الأدوار
+11. **Audit Logging** -- سجل تدقيق كامل لجميع الإجراءات
+12. **Import System** -- استيراد جماعي للتذاكر من بيانات منظمة
+13. **Side Conversations** -- محادثات خاصة مترابطة داخل التذاكر
+14. **Ticket Merging & Linking** -- دمج التذاكر المكررة وربط التذاكر ذات الصلة
+15. **Ticket Splitting** -- تقسيم التذاكر المعقدة إلى مشكلات منفصلة
+16. **Ticket Snooze** -- تأجيل التذاكر مع إيقاظ تلقائي عبر `@Scheduled`
+17. **Email Threading** -- قوالب بريد إلكتروني HTML ذات علامة تجارية عبر Thymeleaf مع ترابط Message-ID صحيح
+18. **Saved Views** -- عروض تذاكر مخصصة مفلترة/مرتبة لكل وكيل
+19. **Widget API** -- نقاط نهاية REST عامة لتضمين أداة الدعم
+20. **Real-time Broadcasting** -- WebSocket عبر STOMP/SockJS (اختياري)
+21. **Capacity Management** -- تتبع وفرض حدود أعباء عمل الوكلاء
+22. **Skill-based Routing** -- توجيه التذاكر إلى وكلاء ذوي مهارات مطابقة
+23. **CSAT Ratings** -- استبيانات رضا العملاء مع وصول قائم على الرمز المميز
+24. **2FA (TOTP)** -- دعم كلمة مرور لمرة واحدة مبنية على الوقت لحسابات الوكلاء
+25. **Guest Access** -- وصول إلى التذاكر قائم على الرمز المميز بدون مصادقة
 
 ## المتطلبات
 
 - Java 17+
 - Spring Boot 3.2+
-- A relational database (PostgreSQL, MySQL, or H2 for development)
+- قاعدة بيانات علائقية (PostgreSQL أو MySQL أو H2 للتطوير)
 
 ## التثبيت
 
-Add the dependency to your `build.gradle.kts`:
+أضف التبعية إلى ملف `build.gradle.kts` الخاص بك:
 
 ```kotlin
 implementation("dev.escalated:escalated-spring:0.1.0")
 ```
 
-Or `pom.xml`:
+أو `pom.xml`:
 
 ```xml
 <dependency>
@@ -73,7 +73,7 @@ Or `pom.xml`:
 
 ## الإعدادات
 
-Add to your `application.properties` or `application.yml`:
+أضف إلى ملف `application.properties` أو `application.yml` الخاص بك:
 
 ```properties
 # Enable/disable the helpdesk
@@ -106,92 +106,92 @@ spring.jpa.hibernate.ddl-auto=validate
 spring.flyway.enabled=true
 ```
 
-## Database Setup
+## إعداد قاعدة البيانات
 
-Flyway migrations are included and run automatically. The migration creates all tables prefixed with `escalated_` and seeds default roles and permissions.
+ترحيلات Flyway مضمنة وتعمل تلقائياً. يقوم الترحيل بإنشاء جميع الجداول مع البادئة `escalated_` ويزرع الأدوار والأذونات الافتراضية.
 
-## API Endpoints
+## نقاط نهاية API
 
 ### Admin (`/escalated/api/admin/`)
-| Method | Path | Description |
+| الطريقة | المسار | الوصف |
 |--------|------|-------------|
-| GET | `/tickets` | List tickets (paginated, filterable) |
-| POST | `/tickets` | Create ticket |
-| GET | `/tickets/{id}` | Get ticket |
-| PUT | `/tickets/{id}` | Update ticket |
-| POST | `/tickets/{id}/assign` | Assign ticket |
-| POST | `/tickets/{id}/status` | Change status |
-| POST | `/tickets/{id}/snooze` | Snooze ticket |
-| POST | `/tickets/{id}/merge` | Merge tickets |
-| POST | `/tickets/{id}/split` | Split ticket |
-| DELETE | `/tickets/{id}` | Delete ticket |
-| GET/POST | `/departments` | CRUD departments |
-| GET/POST | `/agents` | CRUD agents |
-| GET/POST | `/webhooks` | CRUD webhooks |
-| GET/POST | `/roles` | CRUD roles |
-| GET/POST | `/custom-fields` | CRUD custom fields |
-| GET/POST | `/settings` | Manage settings |
-| GET | `/audit-logs` | View audit logs |
-| POST | `/import/tickets` | Import tickets |
-| GET/POST | `/kb/categories` | Manage KB categories |
-| GET/POST | `/kb/articles` | Manage KB articles |
+| GET | `/tickets` | عرض التذاكر (مع ترقيم وتصفية) |
+| POST | `/tickets` | إنشاء تذكرة |
+| GET | `/tickets/{id}` | الحصول على تذكرة |
+| PUT | `/tickets/{id}` | تحديث تذكرة |
+| POST | `/tickets/{id}/assign` | تعيين تذكرة |
+| POST | `/tickets/{id}/status` | تغيير الحالة |
+| POST | `/tickets/{id}/snooze` | تأجيل تذكرة |
+| POST | `/tickets/{id}/merge` | دمج التذاكر |
+| POST | `/tickets/{id}/split` | تقسيم تذكرة |
+| DELETE | `/tickets/{id}` | حذف تذكرة |
+| GET/POST | `/departments` | إدارة الأقسام |
+| GET/POST | `/agents` | إدارة الوكلاء |
+| GET/POST | `/webhooks` | إدارة Webhooks |
+| GET/POST | `/roles` | إدارة الأدوار |
+| GET/POST | `/custom-fields` | إدارة الحقول المخصصة |
+| GET/POST | `/settings` | إدارة الإعدادات |
+| GET | `/audit-logs` | عرض سجلات التدقيق |
+| POST | `/import/tickets` | استيراد التذاكر |
+| GET/POST | `/kb/categories` | إدارة فئات قاعدة المعرفة |
+| GET/POST | `/kb/articles` | إدارة مقالات قاعدة المعرفة |
 
 ### Agent (`/escalated/api/agent/`)
-| Method | Path | Description |
+| الطريقة | المسار | الوصف |
 |--------|------|-------------|
-| GET | `/tickets` | List assigned/filtered tickets |
-| GET | `/tickets/{id}` | View ticket |
-| POST | `/tickets/{id}/replies` | Add reply |
-| POST | `/tickets/{id}/macro/{macroId}` | Apply macro |
-| POST | `/tickets/{id}/side-conversations` | Create side conversation |
-| POST | `/tickets/{id}/links` | Link tickets |
-| GET/POST | `/saved-views` | Manage saved views |
-| GET/POST | `/canned-responses` | Manage canned responses |
+| GET | `/tickets` | عرض التذاكر المعينة/المفلترة |
+| GET | `/tickets/{id}` | عرض التذكرة |
+| POST | `/tickets/{id}/replies` | إضافة رد |
+| POST | `/tickets/{id}/macro/{macroId}` | تطبيق ماكرو |
+| POST | `/tickets/{id}/side-conversations` | إنشاء محادثة جانبية |
+| POST | `/tickets/{id}/links` | ربط التذاكر |
+| GET/POST | `/saved-views` | إدارة العروض المحفوظة |
+| GET/POST | `/canned-responses` | إدارة الردود الجاهزة |
 
 ### Customer (`/escalated/api/customer/`)
-| Method | Path | Description |
+| الطريقة | المسار | الوصف |
 |--------|------|-------------|
-| GET | `/tickets?email=` | List customer tickets |
-| POST | `/tickets` | Create ticket |
-| POST | `/tickets/{id}/replies` | Add reply |
+| GET | `/tickets?email=` | عرض تذاكر العميل |
+| POST | `/tickets` | إنشاء تذكرة |
+| POST | `/tickets/{id}/replies` | إضافة رد |
 
 ### Widget (`/escalated/api/widget/`)
-| Method | Path | Description |
+| الطريقة | المسار | الوصف |
 |--------|------|-------------|
-| POST | `/tickets` | Create ticket (public) |
-| GET | `/tickets/{token}` | View ticket by guest token |
-| POST | `/tickets/{token}/replies` | Reply via guest token |
-| GET | `/kb/search?query=` | Search knowledge base |
-| POST | `/csat/{token}` | Submit satisfaction rating |
+| POST | `/tickets` | إنشاء تذكرة (عامة) |
+| GET | `/tickets/{token}` | عرض التذكرة برمز الضيف |
+| POST | `/tickets/{token}/replies` | الرد عبر رمز الضيف |
+| GET | `/kb/search?query=` | البحث في قاعدة المعرفة |
+| POST | `/csat/{token}` | إرسال تقييم الرضا |
 
 ### Guest (`/escalated/api/guest/`)
-| Method | Path | Description |
+| الطريقة | المسار | الوصف |
 |--------|------|-------------|
-| GET | `/tickets/{token}` | View ticket |
-| GET | `/tickets/{token}/replies` | View replies |
-| POST | `/tickets/{token}/replies` | Add reply |
+| GET | `/tickets/{token}` | عرض التذكرة |
+| GET | `/tickets/{token}/replies` | عرض الردود |
+| POST | `/tickets/{token}/replies` | إضافة رد |
 
-## Architecture
+## البنية
 
 ```
 dev.escalated/
-  config/              Auto-configuration, properties, WebSocket config
-  models/              JPA entities with full relationships
-  repositories/        Spring Data JPA repositories
-  services/            Business logic (transactional)
+  config/              التكوين التلقائي، الخصائص، إعدادات WebSocket
+  models/              كيانات JPA مع العلاقات الكاملة
+  repositories/        مستودعات Spring Data JPA
+  services/            منطق الأعمال (معاملاتي)
   controllers/
-    admin/             Admin REST API
-    agent/             Agent REST API
-    customer/          Customer REST API
-    widget/            Public widget API
-  events/              Spring application events + webhook listener
-  security/            API token auth filter, security config, 2FA
-  scheduling/          @Scheduled tasks (snooze, SLA, automations)
+    admin/             واجهة REST للمسؤول
+    agent/             واجهة REST للوكيل
+    customer/          واجهة REST للعميل
+    widget/            واجهة الأداة العامة
+  events/              أحداث تطبيق Spring + مستمع webhook
+  security/            مرشح مصادقة رمز API، إعدادات الأمان، 2FA
+  scheduling/          مهام @Scheduled (تأجيل، SLA، أتمتة)
 ```
 
-## Authentication
+## المصادقة
 
-API endpoints use Bearer token authentication. Create tokens via the admin API:
+تستخدم نقاط نهاية API مصادقة رمز Bearer. أنشئ الرموز عبر واجهة المسؤول:
 
 ```bash
 curl -X POST /escalated/api/admin/tokens \
@@ -199,17 +199,17 @@ curl -X POST /escalated/api/admin/tokens \
   -d '{"name": "My API Token", "agent_id": 1}'
 ```
 
-The response includes the plain-text token (shown only once). Use it in subsequent requests:
+يتضمن الرد الرمز بنص عادي (يُعرض مرة واحدة فقط). استخدمه في الطلبات اللاحقة:
 
 ```bash
 curl -H "Authorization: Bearer <token>" /escalated/api/agent/tickets
 ```
 
-## WebSocket (Real-time)
+## WebSocket (الوقت الحقيقي)
 
-Enable with `escalated.broadcasting.enabled=true`. Connect to `/escalated/ws` via SockJS/STOMP.
+فعّل بـ `escalated.broadcasting.enabled=true`. اتصل بـ `/escalated/ws` عبر SockJS/STOMP.
 
-## Development
+## التطوير
 
 ```bash
 # Build
@@ -222,6 +222,6 @@ Enable with `escalated.broadcasting.enabled=true`. Connect to `/escalated/ws` vi
 ./gradlew checkstyleMain checkstyleTest
 ```
 
-## الرخصة
+## الترخيص
 
-MIT License. See [LICENSE](LICENSE) for details.
+رخصة MIT. انظر [LICENSE](LICENSE) للتفاصيل.

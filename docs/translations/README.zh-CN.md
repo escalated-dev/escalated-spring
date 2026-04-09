@@ -17,51 +17,51 @@
 
 # Escalated Spring
 
-An embeddable helpdesk system for Spring Boot applications. Add a full-featured support desk to any Java application with a single dependency.
+适用于 Spring Boot 应用程序的可嵌入式帮助台系统。通过单个依赖项为任何 Java 应用程序添加功能齐全的支持台。
 
-## 功能特性
+## 功能
 
-1. **Ticket CRUD** -- Full lifecycle management with statuses, priorities, and assignments
-2. **SLA Policies** -- Configurable SLAs with business hours support and holiday calendars
-3. **Automations** -- Time-based rules for auto-closing resolved tickets and auto-assignment
-4. **Escalation Rules** -- Automatic escalation on SLA breach with reassignment and notifications
-5. **Macros & Canned Responses** -- Pre-defined actions and response templates for agents
-6. **Custom Fields** -- Extensible ticket data with multiple field types
-7. **Knowledge Base** -- Articles and categories with search, view counts, and feedback
-8. **Webhooks** -- HMAC-signed webhook delivery with retry logic
-9. **API Tokens** -- SHA-256 hashed token authentication for API access
-10. **Roles & Permissions** -- Granular role-based access control
-11. **Audit Logging** -- Complete audit trail for all actions
-12. **Import System** -- Bulk ticket import from structured data
-13. **Side Conversations** -- Private threaded conversations within tickets
-14. **Ticket Merging & Linking** -- Merge duplicate tickets and link related ones
-15. **Ticket Splitting** -- Split complex tickets into separate issues
-16. **Ticket Snooze** -- Snooze tickets with automatic wake-up via `@Scheduled`
-17. **Email Threading** -- Branded HTML email templates via Thymeleaf with proper Message-ID threading
-18. **Saved Views** -- Custom filtered/sorted ticket views per agent
-19. **Widget API** -- Public REST endpoints for embedding a support widget
-20. **Real-time Broadcasting** -- WebSocket via STOMP/SockJS (opt-in)
-21. **Capacity Management** -- Track and enforce agent workload limits
-22. **Skill-based Routing** -- Route tickets to agents with matching skills
-23. **CSAT Ratings** -- Customer satisfaction surveys with token-based access
-24. **2FA (TOTP)** -- Time-based one-time password support for agent accounts
-25. **Guest Access** -- Token-based ticket access without authentication
+1. **Ticket CRUD** -- 通过状态、优先级和分配实现完整的生命周期管理
+2. **SLA Policies** -- 可配置的 SLA，支持工作时间和假日日历
+3. **Automations** -- 基于时间的规则，用于自动关闭已解决的工单和自动分配
+4. **Escalation Rules** -- SLA 违规时自动升级，包含重新分配和通知
+5. **Macros & Canned Responses** -- 为客服人员提供预定义操作和响应模板
+6. **Custom Fields** -- 支持多种字段类型的可扩展工单数据
+7. **Knowledge Base** -- 包含搜索、浏览计数和反馈的文章和分类
+8. **Webhooks** -- 带重试逻辑的 HMAC 签名 Webhook 交付
+9. **API Tokens** -- 用于 API 访问的 SHA-256 哈希令牌认证
+10. **Roles & Permissions** -- 细粒度的基于角色的访问控制
+11. **Audit Logging** -- 所有操作的完整审计跟踪
+12. **Import System** -- 从结构化数据批量导入工单
+13. **Side Conversations** -- 工单内的私密线程对话
+14. **Ticket Merging & Linking** -- 合并重复工单并链接相关工单
+15. **Ticket Splitting** -- 将复杂工单拆分为独立问题
+16. **Ticket Snooze** -- 通过 `@Scheduled` 自动唤醒的工单休眠
+17. **Email Threading** -- 通过 Thymeleaf 实现品牌化 HTML 邮件模板和正确的 Message-ID 线程
+18. **Saved Views** -- 每个客服人员的自定义过滤/排序工单视图
+19. **Widget API** -- 用于嵌入支持小部件的公共 REST 端点
+20. **Real-time Broadcasting** -- 通过 STOMP/SockJS 的 WebSocket（可选启用）
+21. **Capacity Management** -- 跟踪和执行客服人员工作负载限制
+22. **Skill-based Routing** -- 将工单路由到具有匹配技能的客服人员
+23. **CSAT Ratings** -- 基于令牌访问的客户满意度调查
+24. **2FA (TOTP)** -- 客服人员账户的基于时间的一次性密码支持
+25. **Guest Access** -- 无需认证的基于令牌的工单访问
 
-## 系统要求
+## 要求
 
 - Java 17+
 - Spring Boot 3.2+
-- A relational database (PostgreSQL, MySQL, or H2 for development)
+- 关系型数据库（PostgreSQL、MySQL 或用于开发的 H2）
 
 ## 安装
 
-Add the dependency to your `build.gradle.kts`:
+将依赖项添加到 `build.gradle.kts`：
 
 ```kotlin
 implementation("dev.escalated:escalated-spring:0.1.0")
 ```
 
-Or `pom.xml`:
+或 `pom.xml`：
 
 ```xml
 <dependency>
@@ -73,7 +73,7 @@ Or `pom.xml`:
 
 ## 配置
 
-Add to your `application.properties` or `application.yml`:
+添加到 `application.properties` 或 `application.yml`：
 
 ```properties
 # Enable/disable the helpdesk
@@ -106,92 +106,92 @@ spring.jpa.hibernate.ddl-auto=validate
 spring.flyway.enabled=true
 ```
 
-## Database Setup
+## 数据库设置
 
-Flyway migrations are included and run automatically. The migration creates all tables prefixed with `escalated_` and seeds default roles and permissions.
+Flyway 迁移已包含并自动运行。迁移会创建所有带有 `escalated_` 前缀的表，并初始化默认角色和权限。
 
-## API Endpoints
+## API 端点
 
 ### Admin (`/escalated/api/admin/`)
-| Method | Path | Description |
+| 方法 | 路径 | 描述 |
 |--------|------|-------------|
-| GET | `/tickets` | List tickets (paginated, filterable) |
-| POST | `/tickets` | Create ticket |
-| GET | `/tickets/{id}` | Get ticket |
-| PUT | `/tickets/{id}` | Update ticket |
-| POST | `/tickets/{id}/assign` | Assign ticket |
-| POST | `/tickets/{id}/status` | Change status |
-| POST | `/tickets/{id}/snooze` | Snooze ticket |
-| POST | `/tickets/{id}/merge` | Merge tickets |
-| POST | `/tickets/{id}/split` | Split ticket |
-| DELETE | `/tickets/{id}` | Delete ticket |
-| GET/POST | `/departments` | CRUD departments |
-| GET/POST | `/agents` | CRUD agents |
-| GET/POST | `/webhooks` | CRUD webhooks |
-| GET/POST | `/roles` | CRUD roles |
-| GET/POST | `/custom-fields` | CRUD custom fields |
-| GET/POST | `/settings` | Manage settings |
-| GET | `/audit-logs` | View audit logs |
-| POST | `/import/tickets` | Import tickets |
-| GET/POST | `/kb/categories` | Manage KB categories |
-| GET/POST | `/kb/articles` | Manage KB articles |
+| GET | `/tickets` | 列出工单（分页、可过滤） |
+| POST | `/tickets` | 创建工单 |
+| GET | `/tickets/{id}` | 获取工单 |
+| PUT | `/tickets/{id}` | 更新工单 |
+| POST | `/tickets/{id}/assign` | 分配工单 |
+| POST | `/tickets/{id}/status` | 更改状态 |
+| POST | `/tickets/{id}/snooze` | 休眠工单 |
+| POST | `/tickets/{id}/merge` | 合并工单 |
+| POST | `/tickets/{id}/split` | 拆分工单 |
+| DELETE | `/tickets/{id}` | 删除工单 |
+| GET/POST | `/departments` | 管理部门 |
+| GET/POST | `/agents` | 管理客服人员 |
+| GET/POST | `/webhooks` | 管理 Webhooks |
+| GET/POST | `/roles` | 管理角色 |
+| GET/POST | `/custom-fields` | 管理自定义字段 |
+| GET/POST | `/settings` | 管理设置 |
+| GET | `/audit-logs` | 查看审计日志 |
+| POST | `/import/tickets` | 导入工单 |
+| GET/POST | `/kb/categories` | 管理知识库分类 |
+| GET/POST | `/kb/articles` | 管理知识库文章 |
 
 ### Agent (`/escalated/api/agent/`)
-| Method | Path | Description |
+| 方法 | 路径 | 描述 |
 |--------|------|-------------|
-| GET | `/tickets` | List assigned/filtered tickets |
-| GET | `/tickets/{id}` | View ticket |
-| POST | `/tickets/{id}/replies` | Add reply |
-| POST | `/tickets/{id}/macro/{macroId}` | Apply macro |
-| POST | `/tickets/{id}/side-conversations` | Create side conversation |
-| POST | `/tickets/{id}/links` | Link tickets |
-| GET/POST | `/saved-views` | Manage saved views |
-| GET/POST | `/canned-responses` | Manage canned responses |
+| GET | `/tickets` | 列出已分配/已过滤的工单 |
+| GET | `/tickets/{id}` | 查看工单 |
+| POST | `/tickets/{id}/replies` | 添加回复 |
+| POST | `/tickets/{id}/macro/{macroId}` | 应用宏 |
+| POST | `/tickets/{id}/side-conversations` | 创建侧边对话 |
+| POST | `/tickets/{id}/links` | 链接工单 |
+| GET/POST | `/saved-views` | 管理已保存的视图 |
+| GET/POST | `/canned-responses` | 管理预设回复 |
 
 ### Customer (`/escalated/api/customer/`)
-| Method | Path | Description |
+| 方法 | 路径 | 描述 |
 |--------|------|-------------|
-| GET | `/tickets?email=` | List customer tickets |
-| POST | `/tickets` | Create ticket |
-| POST | `/tickets/{id}/replies` | Add reply |
+| GET | `/tickets?email=` | 列出客户工单 |
+| POST | `/tickets` | 创建工单 |
+| POST | `/tickets/{id}/replies` | 添加回复 |
 
 ### Widget (`/escalated/api/widget/`)
-| Method | Path | Description |
+| 方法 | 路径 | 描述 |
 |--------|------|-------------|
-| POST | `/tickets` | Create ticket (public) |
-| GET | `/tickets/{token}` | View ticket by guest token |
-| POST | `/tickets/{token}/replies` | Reply via guest token |
-| GET | `/kb/search?query=` | Search knowledge base |
-| POST | `/csat/{token}` | Submit satisfaction rating |
+| POST | `/tickets` | 创建工单（公开） |
+| GET | `/tickets/{token}` | 通过访客令牌查看工单 |
+| POST | `/tickets/{token}/replies` | 通过访客令牌回复 |
+| GET | `/kb/search?query=` | 搜索知识库 |
+| POST | `/csat/{token}` | 提交满意度评分 |
 
 ### Guest (`/escalated/api/guest/`)
-| Method | Path | Description |
+| 方法 | 路径 | 描述 |
 |--------|------|-------------|
-| GET | `/tickets/{token}` | View ticket |
-| GET | `/tickets/{token}/replies` | View replies |
-| POST | `/tickets/{token}/replies` | Add reply |
+| GET | `/tickets/{token}` | 查看工单 |
+| GET | `/tickets/{token}/replies` | 查看回复 |
+| POST | `/tickets/{token}/replies` | 添加回复 |
 
-## Architecture
+## 架构
 
 ```
 dev.escalated/
-  config/              Auto-configuration, properties, WebSocket config
-  models/              JPA entities with full relationships
-  repositories/        Spring Data JPA repositories
-  services/            Business logic (transactional)
+  config/              自动配置、属性、WebSocket 配置
+  models/              具有完整关系的 JPA 实体
+  repositories/        Spring Data JPA 仓库
+  services/            业务逻辑（事务性）
   controllers/
-    admin/             Admin REST API
-    agent/             Agent REST API
-    customer/          Customer REST API
-    widget/            Public widget API
-  events/              Spring application events + webhook listener
-  security/            API token auth filter, security config, 2FA
-  scheduling/          @Scheduled tasks (snooze, SLA, automations)
+    admin/             管理员 REST API
+    agent/             客服人员 REST API
+    customer/          客户 REST API
+    widget/            公共小部件 API
+  events/              Spring 应用程序事件 + Webhook 监听器
+  security/            API 令牌认证过滤器、安全配置、2FA
+  scheduling/          @Scheduled 任务（休眠、SLA、自动化）
 ```
 
-## Authentication
+## 认证
 
-API endpoints use Bearer token authentication. Create tokens via the admin API:
+API 端点使用 Bearer 令牌认证。通过管理员 API 创建令牌：
 
 ```bash
 curl -X POST /escalated/api/admin/tokens \
@@ -199,17 +199,17 @@ curl -X POST /escalated/api/admin/tokens \
   -d '{"name": "My API Token", "agent_id": 1}'
 ```
 
-The response includes the plain-text token (shown only once). Use it in subsequent requests:
+响应包含明文令牌（仅显示一次）。在后续请求中使用：
 
 ```bash
 curl -H "Authorization: Bearer <token>" /escalated/api/agent/tickets
 ```
 
-## WebSocket (Real-time)
+## WebSocket（实时）
 
-Enable with `escalated.broadcasting.enabled=true`. Connect to `/escalated/ws` via SockJS/STOMP.
+使用 `escalated.broadcasting.enabled=true` 启用。通过 SockJS/STOMP 连接到 `/escalated/ws`。
 
-## Development
+## 开发
 
 ```bash
 # Build
@@ -224,4 +224,4 @@ Enable with `escalated.broadcasting.enabled=true`. Connect to `/escalated/ws` vi
 
 ## 许可证
 
-MIT License. See [LICENSE](LICENSE) for details.
+MIT 许可证。详情请参阅 [LICENSE](LICENSE)。
