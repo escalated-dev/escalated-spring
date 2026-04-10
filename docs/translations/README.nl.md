@@ -40,7 +40,7 @@ Een inbedbaar helpdesksysteem voor Spring Boot-applicaties. Voeg een volledig ui
 17. **Email Threading** -- Merkgebonden HTML e-mailsjablonen via Thymeleaf met correcte Message-ID-threading
 18. **Saved Views** -- Aangepaste gefilterde/gesorteerde ticketweergaven per agent
 19. **Widget API** -- Openbare REST-endpoints voor het inbedden van een supportwidget
-20. **Real-time Broadcasting** -- WebSocket via STOMP/SockJS (opt-in)
+20. **Real-time Broadcasting** -- WebSocket via STOMP/SockJS (optioneel)
 21. **Capacity Management** -- Werkbelastingslimieten van agenten bijhouden en afdwingen
 22. **Skill-based Routing** -- Tickets routeren naar agenten met overeenkomende vaardigheden
 23. **CSAT Ratings** -- Klanttevredenheidsonderzoeken met tokengebaseerde toegang
