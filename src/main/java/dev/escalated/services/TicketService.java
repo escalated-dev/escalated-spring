@@ -1,21 +1,29 @@
 package dev.escalated.services;
 
+import dev.escalated.dto.TicketDetailDto;
 import dev.escalated.events.TicketEvent;
 import dev.escalated.models.AgentProfile;
+import dev.escalated.models.ChatSession;
 import dev.escalated.models.Reply;
 import dev.escalated.models.Tag;
 import dev.escalated.models.Ticket;
 import dev.escalated.models.TicketActivity;
+import dev.escalated.models.TicketLink;
 import dev.escalated.models.TicketPriority;
 import dev.escalated.models.TicketStatus;
 import dev.escalated.repositories.AgentProfileRepository;
+import dev.escalated.repositories.ChatSessionRepository;
 import dev.escalated.repositories.ReplyRepository;
 import dev.escalated.repositories.TagRepository;
 import dev.escalated.repositories.TicketActivityRepository;
+import dev.escalated.repositories.TicketLinkRepository;
 import dev.escalated.repositories.TicketRepository;
 import jakarta.persistence.EntityNotFoundException;
 import java.time.Instant;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
@@ -31,6 +39,8 @@ public class TicketService {
     private final TagRepository tagRepository;
     private final TicketActivityRepository activityRepository;
     private final AgentProfileRepository agentRepository;
+    private final ChatSessionRepository chatSessionRepository;
+    private final TicketLinkRepository ticketLinkRepository;
     private final ApplicationEventPublisher eventPublisher;
     private final SlaService slaService;
     private final AuditLogService auditLogService;
@@ -40,6 +50,8 @@ public class TicketService {
                          TagRepository tagRepository,
                          TicketActivityRepository activityRepository,
                          AgentProfileRepository agentRepository,
+                         ChatSessionRepository chatSessionRepository,
+                         TicketLinkRepository ticketLinkRepository,
                          ApplicationEventPublisher eventPublisher,
                          SlaService slaService,
                          AuditLogService auditLogService) {
@@ -48,6 +60,8 @@ public class TicketService {
         this.tagRepository = tagRepository;
         this.activityRepository = activityRepository;
         this.agentRepository = agentRepository;
+        this.chatSessionRepository = chatSessionRepository;
+        this.ticketLinkRepository = ticketLinkRepository;
         this.eventPublisher = eventPublisher;
         this.slaService = slaService;
         this.auditLogService = auditLogService;
@@ -57,6 +71,59 @@ public class TicketService {
     public Ticket findById(Long id) {
         return ticketRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Ticket not found: " + id));
+    }
+
+    /**
+     * Returns a detail DTO for a single ticket, including chat session fields,
+     * requester ticket count, and related tickets. Used by show endpoints only.
+     */
+    @Transactional(readOnly = true)
+    public TicketDetailDto findByIdWithDetail(Long id) {
+        Ticket ticket = findById(id);
+
+        // Chat session fields (null when the ticket is not a live-chat)
+        Long chatSessionId = null;
+        Instant chatStartedAt = null;
+        List<Reply> chatMessages = null;
+        Map<String, Object> chatMetadata = null;
+
+        if ("chat".equals(ticket.getChannel())) {
+            ChatSession session = chatSessionRepository.findByTicketId(ticket.getId()).orElse(null);
+            if (session != null) {
+                chatSessionId = session.getId();
+                chatStartedAt = session.getCreatedAt();
+                chatMessages = replyRepository.findByTicketIdOrderByCreatedAtAsc(ticket.getId());
+
+                chatMetadata = new LinkedHashMap<>();
+                chatMetadata.put("visitor_name", session.getVisitorName());
+                chatMetadata.put("visitor_email", session.getVisitorEmail());
+                chatMetadata.put("status", session.getStatus());
+                chatMetadata.put("accepted_at", session.getAcceptedAt());
+                chatMetadata.put("ended_at", session.getEndedAt());
+                chatMetadata.put("last_activity_at", session.getLastActivityAt());
+            }
+        }
+
+        // Requester context
+        long requesterTicketCount = ticketRepository.countByRequesterEmail(ticket.getRequesterEmail());
+
+        // Related / linked tickets
+        List<TicketLink> links = ticketLinkRepository.findByTicketId(ticket.getId());
+        List<TicketDetailDto.RelatedTicketDto> relatedTickets = new ArrayList<>();
+        for (TicketLink link : links) {
+            Ticket other = link.getSourceTicket().getId().equals(ticket.getId())
+                    ? link.getTargetTicket()
+                    : link.getSourceTicket();
+            relatedTickets.add(new TicketDetailDto.RelatedTicketDto(
+                    other.getId(),
+                    other.getTicketNumber(),
+                    other.getSubject(),
+                    other.getStatus().name(),
+                    link.getLinkType()));
+        }
+
+        return new TicketDetailDto(ticket, chatSessionId, chatStartedAt,
+                chatMessages, chatMetadata, requesterTicketCount, relatedTickets);
     }
 
     @Transactional(readOnly = true)

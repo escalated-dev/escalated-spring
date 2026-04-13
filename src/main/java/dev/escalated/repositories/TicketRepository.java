@@ -55,4 +55,6 @@ public interface TicketRepository extends JpaRepository<Ticket, Long> {
 
     @Query("SELECT COUNT(t) FROM Ticket t WHERE t.status = :status")
     long countByStatus(@Param("status") TicketStatus status);
+
+    long countByRequesterEmail(String requesterEmail);
 }

@@ -63,7 +63,8 @@ class AdminTicketControllerTest {
         ticket.setSubject("Test Ticket");
         ticket.setTicketNumber("ESC-000001");
 
-        when(ticketService.findById(1L)).thenReturn(ticket);
+        var detailDto = new dev.escalated.dto.TicketDetailDto(ticket, null, null, java.util.Collections.emptyList(), null, 1L, java.util.Collections.emptyList());
+        when(ticketService.findByIdWithDetail(1L)).thenReturn(detailDto);
 
         mockMvc.perform(get("/escalated/api/admin/tickets/1"))
                 .andExpect(status().isOk())

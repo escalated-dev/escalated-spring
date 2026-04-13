@@ -1,5 +1,6 @@
 package dev.escalated.controllers.agent;
 
+import dev.escalated.dto.TicketDetailDto;
 import dev.escalated.models.Reply;
 import dev.escalated.models.Ticket;
 import dev.escalated.models.TicketStatus;
@@ -55,8 +56,8 @@ public class AgentTicketController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Ticket> show(@PathVariable Long id) {
-        return ResponseEntity.ok(ticketService.findById(id));
+    public ResponseEntity<TicketDetailDto> show(@PathVariable Long id) {
+        return ResponseEntity.ok(ticketService.findByIdWithDetail(id));
     }
 
     @GetMapping("/{id}/replies")
