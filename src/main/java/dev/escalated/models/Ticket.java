@@ -1,5 +1,6 @@
 package dev.escalated.models;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -15,6 +16,7 @@ import jakarta.persistence.Table;
 import jakarta.validation.constraints.NotBlank;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -85,6 +87,9 @@ public class Ticket extends BaseEntity {
 
     @Column(name = "guest_access_token")
     private String guestAccessToken;
+
+    @Column(name = "channel", nullable = false, length = 30)
+    private String channel = "email";
 
     @Column(name = "is_locked", nullable = false)
     private boolean locked = false;
@@ -161,6 +166,7 @@ public class Ticket extends BaseEntity {
         this.ticketNumber = ticketNumber;
     }
 
+    @JsonProperty("requester_name")
     public String getRequesterName() {
         return requesterName;
     }
@@ -169,6 +175,7 @@ public class Ticket extends BaseEntity {
         this.requesterName = requesterName;
     }
 
+    @JsonProperty("requester_email")
     public String getRequesterEmail() {
         return requesterEmail;
     }
@@ -273,6 +280,14 @@ public class Ticket extends BaseEntity {
         this.guestAccessToken = guestAccessToken;
     }
 
+    public String getChannel() {
+        return channel;
+    }
+
+    public void setChannel(String channel) {
+        this.channel = channel;
+    }
+
     public boolean isLocked() {
         return locked;
     }
@@ -351,5 +366,39 @@ public class Ticket extends BaseEntity {
 
     public void setSatisfactionRatings(List<SatisfactionRating> satisfactionRatings) {
         this.satisfactionRatings = satisfactionRatings;
+    }
+
+    // --- Computed JSON properties expected by the frontend ---
+
+    @JsonProperty("last_reply_at")
+    public Instant getLastReplyAt() {
+        if (replies == null || replies.isEmpty()) {
+            return null;
+        }
+        return replies.stream()
+                .map(Reply::getCreatedAt)
+                .max(Comparator.naturalOrder())
+                .orElse(null);
+    }
+
+    @JsonProperty("last_reply_author")
+    public String getLastReplyAuthor() {
+        if (replies == null || replies.isEmpty()) {
+            return null;
+        }
+        return replies.stream()
+                .max(Comparator.comparing(Reply::getCreatedAt))
+                .map(Reply::getAuthorName)
+                .orElse(null);
+    }
+
+    @JsonProperty("is_live_chat")
+    public boolean isLiveChat() {
+        return "chat".equals(channel);
+    }
+
+    @JsonProperty("is_snoozed")
+    public boolean isSnoozed() {
+        return snoozedUntil != null && snoozedUntil.isAfter(Instant.now());
     }
 }
