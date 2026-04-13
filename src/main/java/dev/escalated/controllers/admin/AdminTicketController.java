@@ -1,5 +1,6 @@
 package dev.escalated.controllers.admin;
 
+import dev.escalated.dto.TicketDetailDto;
 import dev.escalated.models.Ticket;
 import dev.escalated.models.TicketPriority;
 import dev.escalated.models.TicketStatus;
@@ -40,8 +41,8 @@ public class AdminTicketController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Ticket> show(@PathVariable Long id) {
-        return ResponseEntity.ok(ticketService.findById(id));
+    public ResponseEntity<TicketDetailDto> show(@PathVariable Long id) {
+        return ResponseEntity.ok(ticketService.findByIdWithDetail(id));
     }
 
     @PostMapping

@@ -1,5 +1,6 @@
 package dev.escalated.controllers.customer;
 
+import dev.escalated.dto.TicketDetailDto;
 import dev.escalated.models.Reply;
 import dev.escalated.models.Ticket;
 import dev.escalated.models.TicketPriority;
@@ -35,8 +36,8 @@ public class CustomerTicketController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Ticket> show(@PathVariable Long id) {
-        return ResponseEntity.ok(ticketService.findById(id));
+    public ResponseEntity<TicketDetailDto> show(@PathVariable Long id) {
+        return ResponseEntity.ok(ticketService.findByIdWithDetail(id));
     }
 
     @PostMapping

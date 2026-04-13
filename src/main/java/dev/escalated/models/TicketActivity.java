@@ -1,11 +1,14 @@
 package dev.escalated.models;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+import java.time.Duration;
+import java.time.Instant;
 
 @Entity
 @Table(name = "escalated_ticket_activities")
@@ -98,5 +101,27 @@ public class TicketActivity extends BaseEntity {
 
     public void setMetadata(String metadata) {
         this.metadata = metadata;
+    }
+
+    @JsonProperty("created_at_human")
+    public String getCreatedAtHuman() {
+        Instant createdAt = getCreatedAt();
+        if (createdAt == null) {
+            return null;
+        }
+        Duration elapsed = Duration.between(createdAt, Instant.now());
+        long seconds = elapsed.getSeconds();
+        if (seconds < 60) {
+            return "just now";
+        } else if (seconds < 3600) {
+            long minutes = seconds / 60;
+            return minutes + (minutes == 1 ? " minute ago" : " minutes ago");
+        } else if (seconds < 86400) {
+            long hours = seconds / 3600;
+            return hours + (hours == 1 ? " hour ago" : " hours ago");
+        } else {
+            long days = seconds / 86400;
+            return days + (days == 1 ? " day ago" : " days ago");
+        }
     }
 }

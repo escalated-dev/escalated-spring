@@ -6,9 +6,11 @@ import dev.escalated.models.Ticket;
 import dev.escalated.models.TicketPriority;
 import dev.escalated.models.TicketStatus;
 import dev.escalated.repositories.AgentProfileRepository;
+import dev.escalated.repositories.ChatSessionRepository;
 import dev.escalated.repositories.ReplyRepository;
 import dev.escalated.repositories.TagRepository;
 import dev.escalated.repositories.TicketActivityRepository;
+import dev.escalated.repositories.TicketLinkRepository;
 import dev.escalated.repositories.TicketRepository;
 import jakarta.persistence.EntityNotFoundException;
 import java.time.Instant;
@@ -43,6 +45,10 @@ class TicketServiceTest {
     @Mock
     private AgentProfileRepository agentRepository;
     @Mock
+    private ChatSessionRepository chatSessionRepository;
+    @Mock
+    private TicketLinkRepository ticketLinkRepository;
+    @Mock
     private ApplicationEventPublisher eventPublisher;
     @Mock
     private SlaService slaService;
@@ -54,7 +60,8 @@ class TicketServiceTest {
     @BeforeEach
     void setUp() {
         ticketService = new TicketService(ticketRepository, replyRepository, tagRepository,
-                activityRepository, agentRepository, eventPublisher, slaService, auditLogService);
+                activityRepository, agentRepository, chatSessionRepository, ticketLinkRepository,
+                eventPublisher, slaService, auditLogService);
     }
 
     @Test
