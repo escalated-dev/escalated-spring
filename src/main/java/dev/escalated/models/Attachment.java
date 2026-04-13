@@ -1,5 +1,7 @@
 package dev.escalated.models;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
@@ -11,10 +13,12 @@ import jakarta.persistence.Table;
 @Table(name = "escalated_attachments")
 public class Attachment extends BaseEntity {
 
+    @JsonIgnore
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "ticket_id")
     private Ticket ticket;
 
+    @JsonIgnore
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "reply_id")
     private Reply reply;
@@ -22,6 +26,7 @@ public class Attachment extends BaseEntity {
     @Column(name = "file_name", nullable = false)
     private String fileName;
 
+    @JsonIgnore
     @Column(name = "file_path", nullable = false)
     private String filePath;
 
@@ -77,5 +82,10 @@ public class Attachment extends BaseEntity {
 
     public void setMimeType(String mimeType) {
         this.mimeType = mimeType;
+    }
+
+    @JsonProperty("url")
+    public String getUrl() {
+        return "/escalated/api/attachments/" + getId() + "/download";
     }
 }
