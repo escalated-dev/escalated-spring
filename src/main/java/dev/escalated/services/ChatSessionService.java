@@ -48,6 +48,7 @@ public class ChatSessionService {
                 visitorEmail != null ? visitorEmail : "visitor@chat.local",
                 TicketPriority.MEDIUM,
                 departmentId);
+        ticket.setChannel("chat");
 
         ChatSession session = new ChatSession();
         session.setTicketId(ticket.getId());
