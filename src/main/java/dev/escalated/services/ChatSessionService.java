@@ -9,6 +9,7 @@ import dev.escalated.repositories.ChatSessionRepository;
 import jakarta.persistence.EntityNotFoundException;
 import java.time.Instant;
 import java.util.List;
+import java.util.Optional;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -16,6 +17,11 @@ import org.springframework.transaction.annotation.Transactional;
 /**
  * Manages live-chat session lifecycle: creation, acceptance by an agent,
  * sending messages (stored as ticket replies), and ending sessions.
+ *
+ * <p>The {@link SimpMessagingTemplate} dependency is optional because
+ * STOMP/WebSocket support is gated behind {@code escalated.broadcasting.enabled}.
+ * When broadcasting is disabled, persistence still works correctly; only the
+ * out-of-band fan-out to subscribed STOMP topics is skipped.
  */
 @Service
 public class ChatSessionService {
@@ -23,16 +29,20 @@ public class ChatSessionService {
     private final ChatSessionRepository chatSessionRepository;
     private final TicketService ticketService;
     private final ChatRoutingService chatRoutingService;
-    private final SimpMessagingTemplate messagingTemplate;
+    private final Optional<SimpMessagingTemplate> messagingTemplate;
 
     public ChatSessionService(ChatSessionRepository chatSessionRepository,
                               TicketService ticketService,
                               ChatRoutingService chatRoutingService,
-                              SimpMessagingTemplate messagingTemplate) {
+                              Optional<SimpMessagingTemplate> messagingTemplate) {
         this.chatSessionRepository = chatSessionRepository;
         this.ticketService = ticketService;
         this.chatRoutingService = chatRoutingService;
         this.messagingTemplate = messagingTemplate;
+    }
+
+    private void broadcast(String destination, Object payload) {
+        messagingTemplate.ifPresent(template -> template.convertAndSend(destination, payload));
     }
 
     /**
@@ -71,7 +81,7 @@ public class ChatSessionService {
 
         session = chatSessionRepository.save(session);
 
-        messagingTemplate.convertAndSend("/topic/chat-queue", session);
+        broadcast("/topic/chat-queue", session);
 
         return session;
     }
@@ -96,7 +106,7 @@ public class ChatSessionService {
 
         session = chatSessionRepository.save(session);
 
-        messagingTemplate.convertAndSend("/topic/chat/" + sessionId, session);
+        broadcast("/topic/chat/" + sessionId, session);
 
         return session;
     }
@@ -119,7 +129,7 @@ public class ChatSessionService {
         session.setLastActivityAt(Instant.now());
         chatSessionRepository.save(session);
 
-        messagingTemplate.convertAndSend("/topic/chat/" + sessionId + "/messages", reply);
+        broadcast("/topic/chat/" + sessionId + "/messages", reply);
 
         return reply;
     }
@@ -142,7 +152,7 @@ public class ChatSessionService {
 
         session = chatSessionRepository.save(session);
 
-        messagingTemplate.convertAndSend("/topic/chat/" + sessionId, session);
+        broadcast("/topic/chat/" + sessionId, session);
 
         return session;
     }
