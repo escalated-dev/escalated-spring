@@ -1,0 +1,23 @@
+spring:
+  application:
+    name: escalated-spring-demo
+  datasource:
+    url: jdbc:postgresql://db:5432/escalated
+    username: escalated
+    password: escalated
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+  flyway:
+    enabled: false  # let Hibernate create the schema for now
+
+escalated:
+  broadcasting:
+    enabled: true   # required because ChatSessionService unconditionally injects SimpMessagingTemplate
+
+server:
+  port: 8080
