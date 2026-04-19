@@ -15,6 +15,7 @@ services:
       SPRING_JPA_HIBERNATE_DDL_AUTO: update
       SPRING_MAIL_HOST: mailpit
       SPRING_MAIL_PORT: 1025
+      ESCALATED_BROADCASTING_ENABLED: "true"
     depends_on:
       db:
         condition: service_healthy
