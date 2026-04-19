@@ -46,7 +46,7 @@ class ChatSessionServiceTest {
     void setUp() {
         chatRoutingService = new ChatRoutingService(routingRuleRepository);
         chatSessionService = new ChatSessionService(
-                chatSessionRepository, ticketService, chatRoutingService, messagingTemplate);
+                chatSessionRepository, ticketService, chatRoutingService, Optional.of(messagingTemplate));
     }
 
     private Ticket createMockTicket() {
@@ -166,5 +166,29 @@ class ChatSessionServiceTest {
         when(chatSessionRepository.findById(99L)).thenReturn(Optional.empty());
 
         assertThrows(EntityNotFoundException.class, () -> chatSessionService.findById(99L));
+    }
+
+    @Test
+    void start_succeedsWhenMessagingTemplateIsAbsent() {
+        // Service constructed without a SimpMessagingTemplate (broadcasting disabled).
+        ChatSessionService noBroadcast = new ChatSessionService(
+                chatSessionRepository, ticketService, chatRoutingService, Optional.empty());
+
+        Ticket ticket = createMockTicket();
+        when(ticketService.create(anyString(), anyString(), anyString(), anyString(),
+                any(TicketPriority.class), any())).thenReturn(ticket);
+        when(routingRuleRepository.findByActiveTrueOrderByPriorityAsc()).thenReturn(List.of());
+        when(chatSessionRepository.save(any(ChatSession.class))).thenAnswer(invocation -> {
+            ChatSession s = invocation.getArgument(0);
+            s.setId(1L);
+            return s;
+        });
+
+        // Should not throw despite the absent messaging template.
+        ChatSession session = noBroadcast.start("Visitor", "v@test.com", "Hi", null);
+
+        assertNotNull(session);
+        assertEquals("waiting", session.getStatus());
+        verify(chatSessionRepository).save(any(ChatSession.class));
     }
 }
