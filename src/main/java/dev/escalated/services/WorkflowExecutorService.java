@@ -3,6 +3,7 @@ package dev.escalated.services;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import dev.escalated.models.AgentProfile;
+import dev.escalated.models.DeferredWorkflowJob;
 import dev.escalated.models.Department;
 import dev.escalated.models.Reply;
 import dev.escalated.models.Tag;
@@ -10,16 +11,19 @@ import dev.escalated.models.Ticket;
 import dev.escalated.models.TicketPriority;
 import dev.escalated.models.TicketStatus;
 import dev.escalated.repositories.AgentProfileRepository;
+import dev.escalated.repositories.DeferredWorkflowJobRepository;
 import dev.escalated.repositories.DepartmentRepository;
 import dev.escalated.repositories.ReplyRepository;
 import dev.escalated.repositories.TagRepository;
 import dev.escalated.repositories.TicketRepository;
+import java.time.Instant;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 /**
@@ -32,9 +36,14 @@ import org.springframework.stereotype.Service;
  *
  * <p>Action catalog: {@code change_priority}, {@code change_status},
  * {@code assign_agent}, {@code set_department}, {@code add_tag},
- * {@code remove_tag}, {@code add_note}, {@code insert_canned_reply}.
- * Mirrors the NestJS reference impl in
+ * {@code remove_tag}, {@code add_note}, {@code insert_canned_reply},
+ * {@code delay}. Mirrors the NestJS reference impl in
  * {@code escalated-nestjs/src/services/workflow-executor.service.ts}.
+ *
+ * <p>{@code delay} splits a run into two halves: everything before the
+ * delay runs inline, everything after is persisted as a
+ * {@link DeferredWorkflowJob} and picked up by
+ * {@link #runDueDeferredJobs()} once the wait expires.
  *
  * <p>Unknown or malformed actions are logged at {@code warn} and
  * skipped — one bad action never halts execution of the other
@@ -51,18 +60,21 @@ public class WorkflowExecutorService {
     private final AgentProfileRepository agentRepository;
     private final DepartmentRepository departmentRepository;
     private final ReplyRepository replyRepository;
+    private final DeferredWorkflowJobRepository deferredRepository;
 
     public WorkflowExecutorService(
             TicketRepository ticketRepository,
             TagRepository tagRepository,
             AgentProfileRepository agentRepository,
             DepartmentRepository departmentRepository,
-            ReplyRepository replyRepository) {
+            ReplyRepository replyRepository,
+            DeferredWorkflowJobRepository deferredRepository) {
         this.ticketRepository = ticketRepository;
         this.tagRepository = tagRepository;
         this.agentRepository = agentRepository;
         this.departmentRepository = departmentRepository;
         this.replyRepository = replyRepository;
+        this.deferredRepository = deferredRepository;
     }
 
     /**
@@ -75,7 +87,20 @@ public class WorkflowExecutorService {
      */
     public List<Map<String, Object>> execute(Ticket ticket, String actionsJson) {
         List<Map<String, Object>> actions = parseActions(actionsJson);
-        for (Map<String, Object> action : actions) {
+        executeParsed(ticket, actions);
+        return actions;
+    }
+
+    private void executeParsed(Ticket ticket, List<Map<String, Object>> actions) {
+        for (int i = 0; i < actions.size(); i++) {
+            Map<String, Object> action = actions.get(i);
+            String type = String.valueOf(action.getOrDefault("type", ""));
+            if ("delay".equals(type)) {
+                String value = action.get("value") == null ? "" : String.valueOf(action.get("value"));
+                List<Map<String, Object>> remaining = actions.subList(i + 1, actions.size());
+                scheduleDelay(ticket, value, remaining);
+                return;
+            }
             try {
                 dispatch(ticket, action);
             } catch (RuntimeException ex) {
@@ -83,7 +108,6 @@ public class WorkflowExecutorService {
                         action.get("type"), ticket.getId(), ex.getMessage());
             }
         }
-        return actions;
     }
 
     private List<Map<String, Object>> parseActions(String actionsJson) {
@@ -221,6 +245,74 @@ public class WorkflowExecutorService {
         reply.setAuthorType("system");
         reply.setInternal(false);
         replyRepository.save(reply);
+    }
+
+    private void scheduleDelay(Ticket ticket, String value, List<Map<String, Object>> remaining) {
+        Long seconds = parseLong(value);
+        if (seconds == null || seconds <= 0) {
+            log.warn(
+                    "[WorkflowExecutor] delay: invalid seconds value '{}', skipping remaining actions",
+                    value);
+            return;
+        }
+        String remainingJson;
+        try {
+            remainingJson = MAPPER.writeValueAsString(remaining);
+        } catch (Exception ex) {
+            log.warn(
+                    "[WorkflowExecutor] delay: failed to serialize remaining actions: {}",
+                    ex.getMessage());
+            return;
+        }
+        DeferredWorkflowJob job = new DeferredWorkflowJob();
+        job.setTicketId(ticket.getId());
+        job.setRemainingActionsJson(remainingJson);
+        job.setRunAt(Instant.now().plusSeconds(seconds));
+        job.setStatus("pending");
+        deferredRepository.save(job);
+    }
+
+    /**
+     * Poll for deferred jobs whose wait has elapsed and resume their
+     * remaining actions. Flips status to {@code done} on success,
+     * {@code failed} (with {@code lastError} populated) on exception,
+     * so rows are audit-retained and never re-picked up.
+     *
+     * <p>Fires on the same 60-second cadence as the NestJS reference and
+     * the existing snooze + SLA schedulers.
+     */
+    @Scheduled(fixedDelayString = "${escalated.workflow.deferred-check-interval-seconds:60}000")
+    public void runDueDeferredJobs() {
+        List<DeferredWorkflowJob> due;
+        try {
+            due = deferredRepository.findByStatusAndRunAtLessThanEqual("pending", Instant.now());
+        } catch (RuntimeException ex) {
+            log.error("[WorkflowExecutor] failed to query deferred jobs: {}", ex.getMessage());
+            return;
+        }
+        for (DeferredWorkflowJob job : due) {
+            try {
+                Optional<Ticket> ticket = ticketRepository.findById(job.getTicketId());
+                if (ticket.isEmpty()) {
+                    job.setStatus("failed");
+                    job.setLastError("Ticket #" + job.getTicketId() + " not found");
+                    deferredRepository.save(job);
+                    continue;
+                }
+                List<Map<String, Object>> remaining = parseActions(job.getRemainingActionsJson());
+                executeParsed(ticket.get(), remaining);
+                job.setStatus("done");
+                deferredRepository.save(job);
+            } catch (RuntimeException ex) {
+                log.error(
+                        "[WorkflowExecutor] deferred job #{} failed: {}",
+                        job.getId(),
+                        ex.getMessage());
+                job.setStatus("failed");
+                job.setLastError(ex.getMessage() == null ? "unknown error" : ex.getMessage());
+                deferredRepository.save(job);
+            }
+        }
     }
 
     private static Map<String, String> ticketToMap(Ticket ticket) {
