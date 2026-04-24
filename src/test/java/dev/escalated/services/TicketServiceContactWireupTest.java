@@ -1,68 +1,151 @@
 package dev.escalated.services;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 import dev.escalated.models.Contact;
 import dev.escalated.models.Ticket;
 import dev.escalated.models.TicketPriority;
+import dev.escalated.repositories.AgentProfileRepository;
+import dev.escalated.repositories.ChatSessionRepository;
 import dev.escalated.repositories.ContactRepository;
+import dev.escalated.repositories.ReplyRepository;
+import dev.escalated.repositories.TagRepository;
+import dev.escalated.repositories.TicketActivityRepository;
+import dev.escalated.repositories.TicketLinkRepository;
+import dev.escalated.repositories.TicketRepository;
+import java.util.Optional;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.transaction.annotation.Transactional;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.context.ApplicationEventPublisher;
 
 /**
- * Integration test for the Contact dedupe wire-up in
- * {@link TicketService#create}. Matches the Pattern B test coverage in
- * the other framework PRs (NestJS, Laravel, Rails, Django, Adonis,
- * .NET, Symfony, Go, WordPress, Phoenix).
+ * Unit tests for the Contact dedupe wire-up in
+ * {@link TicketService#create}. Matches the Pattern B coverage in the
+ * other framework PRs (NestJS, Laravel, Rails, Django, Adonis, .NET,
+ * Symfony, Go, WordPress, Phoenix). Uses Mockito rather than
+ * {@code @SpringBootTest} to match the rest of the test suite.
  */
-@SpringBootTest
-@Transactional
+@ExtendWith(MockitoExtension.class)
 class TicketServiceContactWireupTest {
 
-    @Autowired
+    @Mock private TicketRepository ticketRepository;
+    @Mock private ReplyRepository replyRepository;
+    @Mock private TagRepository tagRepository;
+    @Mock private TicketActivityRepository activityRepository;
+    @Mock private AgentProfileRepository agentRepository;
+    @Mock private ChatSessionRepository chatSessionRepository;
+    @Mock private TicketLinkRepository ticketLinkRepository;
+    @Mock private ApplicationEventPublisher eventPublisher;
+    @Mock private SlaService slaService;
+    @Mock private AuditLogService auditLogService;
+    @Mock private ContactRepository contactRepository;
+
     private TicketService ticketService;
 
-    @Autowired
-    private ContactRepository contactRepository;
+    @BeforeEach
+    void setUp() {
+        ticketService = new TicketService(ticketRepository, replyRepository, tagRepository,
+                activityRepository, agentRepository, chatSessionRepository, ticketLinkRepository,
+                eventPublisher, slaService, auditLogService, contactRepository);
+
+        when(ticketRepository.save(any(Ticket.class))).thenAnswer(inv -> {
+            Ticket t = inv.getArgument(0);
+            t.setId(1L);
+            return t;
+        });
+    }
 
     @Test
-    void create_withGuestEmail_createsContactAndLinksTicket() {
+    void create_withGuestEmail_looksUpContactByNormalizedEmail() {
+        when(contactRepository.findByEmail("alice@example.com"))
+                .thenReturn(Optional.empty());
+        when(contactRepository.save(any(Contact.class))).thenAnswer(inv -> {
+            Contact c = inv.getArgument(0);
+            c.setId(42L);
+            return c;
+        });
+
         Ticket ticket = ticketService.create(
                 "Help", "body", "Alice", "alice@example.com",
                 TicketPriority.MEDIUM, null);
 
+        // Normalized lookup happens once.
+        verify(contactRepository).findByEmail("alice@example.com");
+        // No match → created with normalized email + name.
+        verify(contactRepository).save(any(Contact.class));
         assertThat(ticket.getContact()).isNotNull();
         assertThat(ticket.getContact().getEmail()).isEqualTo("alice@example.com");
         assertThat(ticket.getContact().getName()).isEqualTo("Alice");
     }
 
     @Test
-    void create_repeatEmail_dedupesOntoSameContact() {
-        Ticket t1 = ticketService.create(
-                "First", "body", "Alice", "alice@example.com",
-                TicketPriority.MEDIUM, null);
-        // Casing variant should dedupe.
-        Ticket t2 = ticketService.create(
+    void create_casingVariantEmailNormalizesBeforeLookup() {
+        when(contactRepository.findByEmail("alice@example.com"))
+                .thenReturn(Optional.empty());
+        when(contactRepository.save(any(Contact.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        ticketService.create(
                 "Second", "body", "Alice", "ALICE@Example.COM",
                 TicketPriority.MEDIUM, null);
 
-        assertThat(t1.getContact().getId()).isEqualTo(t2.getContact().getId());
-        assertThat(contactRepository.findByEmail("alice@example.com")).isPresent();
+        verify(contactRepository).findByEmail("alice@example.com");
     }
 
     @Test
-    void create_blankExistingNameIsFilledIn() {
+    void create_existingContactWithBlankNameIsUpdated() {
         Contact existing = new Contact();
+        existing.setId(7L);
         existing.setEmail("alice@example.com");
         existing.setName(null);
-        contactRepository.save(existing);
+
+        when(contactRepository.findByEmail("alice@example.com"))
+                .thenReturn(Optional.of(existing));
+        when(contactRepository.save(existing)).thenReturn(existing);
 
         Ticket ticket = ticketService.create(
                 "Help", "body", "Alice", "alice@example.com",
                 TicketPriority.MEDIUM, null);
 
-        assertThat(ticket.getContact().getName()).isEqualTo("Alice");
+        assertThat(ticket.getContact()).isSameAs(existing);
+        assertThat(existing.getName()).isEqualTo("Alice");
+        verify(contactRepository).save(eq(existing));
+    }
+
+    @Test
+    void create_existingContactWithNamePreservesExistingNameAndDoesNotWriteBack() {
+        Contact existing = new Contact();
+        existing.setId(7L);
+        existing.setEmail("alice@example.com");
+        existing.setName("Original Alice");
+
+        when(contactRepository.findByEmail("alice@example.com"))
+                .thenReturn(Optional.of(existing));
+
+        Ticket ticket = ticketService.create(
+                "Second", "body", "New Alice", "alice@example.com",
+                TicketPriority.MEDIUM, null);
+
+        assertThat(ticket.getContact()).isSameAs(existing);
+        assertThat(existing.getName()).isEqualTo("Original Alice");
+        verify(contactRepository, never()).save(any(Contact.class));
+    }
+
+    @Test
+    void create_blankEmailSkipsContactResolution() {
+        Ticket ticket = ticketService.create(
+                "Anon", "body", null, "   ",
+                TicketPriority.MEDIUM, null);
+
+        assertThat(ticket.getContact()).isNull();
+        verify(contactRepository, never()).findByEmail(any());
+        verify(contactRepository, never()).save(any(Contact.class));
     }
 }
