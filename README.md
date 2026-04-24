@@ -131,6 +131,7 @@ Flyway migrations are included and run automatically. The migration creates all 
 | GET/POST | `/roles` | CRUD roles |
 | GET/POST | `/custom-fields` | CRUD custom fields |
 | GET/POST | `/settings` | Manage settings |
+| GET/PUT | `/settings/public-tickets` | Runtime guest-policy mode (unassigned / guest_user / prompt_signup). See [docs.escalated.dev/public-tickets](https://docs.escalated.dev/public-tickets). |
 | GET | `/audit-logs` | View audit logs |
 | POST | `/import/tickets` | Import tickets |
 | GET/POST | `/kb/categories` | Manage KB categories |
