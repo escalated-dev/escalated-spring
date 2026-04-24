@@ -17,6 +17,8 @@ import dev.escalated.repositories.ReplyRepository;
 import dev.escalated.repositories.TagRepository;
 import dev.escalated.repositories.TicketActivityRepository;
 import dev.escalated.repositories.TicketLinkRepository;
+import dev.escalated.models.Contact;
+import dev.escalated.repositories.ContactRepository;
 import dev.escalated.repositories.TicketRepository;
 import jakarta.persistence.EntityNotFoundException;
 import java.time.Instant;
@@ -44,6 +46,7 @@ public class TicketService {
     private final ApplicationEventPublisher eventPublisher;
     private final SlaService slaService;
     private final AuditLogService auditLogService;
+    private final ContactRepository contactRepository;
 
     public TicketService(TicketRepository ticketRepository,
                          ReplyRepository replyRepository,
@@ -54,7 +57,8 @@ public class TicketService {
                          TicketLinkRepository ticketLinkRepository,
                          ApplicationEventPublisher eventPublisher,
                          SlaService slaService,
-                         AuditLogService auditLogService) {
+                         AuditLogService auditLogService,
+                         ContactRepository contactRepository) {
         this.ticketRepository = ticketRepository;
         this.replyRepository = replyRepository;
         this.tagRepository = tagRepository;
@@ -65,6 +69,7 @@ public class TicketService {
         this.eventPublisher = eventPublisher;
         this.slaService = slaService;
         this.auditLogService = auditLogService;
+        this.contactRepository = contactRepository;
     }
 
     @Transactional(readOnly = true)
@@ -164,6 +169,12 @@ public class TicketService {
         ticket.setTicketNumber(generateTicketNumber());
         ticket.setGuestAccessToken(UUID.randomUUID().toString());
 
+        // Dedupe repeat guests by email (Pattern B).
+        Contact contact = findOrCreateContact(requesterEmail, requesterName);
+        if (contact != null) {
+            ticket.setContact(contact);
+        }
+
         if (departmentId != null) {
             ticket.setDepartment(new dev.escalated.models.Department());
             ticket.getDepartment().setId(departmentId);
@@ -178,6 +189,36 @@ public class TicketService {
         eventPublisher.publishEvent(new TicketEvent(this, saved, TicketEvent.Type.CREATED, requesterEmail));
 
         return saved;
+    }
+
+    /**
+     * Resolve or create a Contact by email (trim + lowercase). Uses the
+     * Pattern B pure statics {@link Contact#normalizeEmail} and
+     * {@link Contact#decideAction} for branch selection. Matches the
+     * reference impl shipped across the other framework PRs.
+     *
+     * @return the resolved Contact, or null if email is blank/unreadable.
+     */
+    private Contact findOrCreateContact(String email, String name) {
+        String normalized = Contact.normalizeEmail(email);
+        if (normalized.isEmpty()) {
+            return null;
+        }
+        Contact existing = contactRepository.findByEmail(normalized).orElse(null);
+        Contact.Action action = Contact.decideAction(existing, name);
+        switch (action) {
+            case RETURN_EXISTING:
+                return existing;
+            case UPDATE_NAME:
+                existing.setName(name);
+                return contactRepository.save(existing);
+            case CREATE:
+            default:
+                Contact created = new Contact();
+                created.setEmail(normalized);
+                created.setName(name);
+                return contactRepository.save(created);
+        }
     }
 
     @Transactional
