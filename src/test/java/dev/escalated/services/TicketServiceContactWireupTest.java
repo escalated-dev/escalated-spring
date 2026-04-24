@@ -2,9 +2,9 @@ package dev.escalated.services;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import dev.escalated.enums.TicketPriority;
 import dev.escalated.models.Contact;
 import dev.escalated.models.Ticket;
+import dev.escalated.models.TicketPriority;
 import dev.escalated.repositories.ContactRepository;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;

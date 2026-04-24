@@ -7,6 +7,7 @@ import dev.escalated.models.TicketPriority;
 import dev.escalated.models.TicketStatus;
 import dev.escalated.repositories.AgentProfileRepository;
 import dev.escalated.repositories.ChatSessionRepository;
+import dev.escalated.repositories.ContactRepository;
 import dev.escalated.repositories.ReplyRepository;
 import dev.escalated.repositories.TagRepository;
 import dev.escalated.repositories.TicketActivityRepository;
@@ -54,6 +55,8 @@ class TicketServiceTest {
     private SlaService slaService;
     @Mock
     private AuditLogService auditLogService;
+    @Mock
+    private ContactRepository contactRepository;
 
     private TicketService ticketService;
 
@@ -61,7 +64,7 @@ class TicketServiceTest {
     void setUp() {
         ticketService = new TicketService(ticketRepository, replyRepository, tagRepository,
                 activityRepository, agentRepository, chatSessionRepository, ticketLinkRepository,
-                eventPublisher, slaService, auditLogService);
+                eventPublisher, slaService, auditLogService, contactRepository);
     }
 
     @Test
