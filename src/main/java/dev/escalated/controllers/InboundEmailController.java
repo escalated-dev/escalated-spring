@@ -1,16 +1,14 @@
 package dev.escalated.controllers;
 
 import dev.escalated.config.EscalatedProperties;
-import dev.escalated.models.Ticket;
 import dev.escalated.services.email.inbound.InboundEmailParser;
-import dev.escalated.services.email.inbound.InboundEmailRouter;
+import dev.escalated.services.email.inbound.InboundEmailService;
 import dev.escalated.services.email.inbound.InboundMessage;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
@@ -44,15 +42,15 @@ public class InboundEmailController {
     private static final Logger log = LoggerFactory.getLogger(InboundEmailController.class);
 
     private final EscalatedProperties properties;
-    private final InboundEmailRouter router;
+    private final InboundEmailService inboundService;
     private final Map<String, InboundEmailParser> parsersByName;
 
     public InboundEmailController(
             EscalatedProperties properties,
-            InboundEmailRouter router,
+            InboundEmailService inboundService,
             List<InboundEmailParser> parsers) {
         this.properties = properties;
-        this.router = router;
+        this.inboundService = inboundService;
         Map<String, InboundEmailParser> byName = new HashMap<>();
         for (InboundEmailParser p : parsers) {
             byName.put(p.name().toLowerCase(), p);
@@ -88,11 +86,19 @@ public class InboundEmailController {
             return ResponseEntity.badRequest().body(Map.of("error", "invalid payload"));
         }
 
-        Optional<Ticket> resolved = router.resolveTicket(message);
-        String status = resolved.isPresent() ? "matched" : "unmatched";
+        InboundEmailService.ProcessResult result;
+        try {
+            result = inboundService.process(message);
+        } catch (RuntimeException ex) {
+            log.error("[InboundEmailController] process failed: {}", ex.getMessage());
+            return ResponseEntity.status(500).body(Map.of("error", "processing failed"));
+        }
+
         Map<String, Object> response = new HashMap<>();
-        response.put("status", status);
-        response.put("ticketId", resolved.map(Ticket::getId).orElse(null));
+        response.put("outcome", result.outcome().name().toLowerCase());
+        response.put("ticketId", result.ticketId());
+        response.put("replyId", result.replyId());
+        response.put("pendingAttachmentDownloads", result.pendingAttachmentDownloads());
         return ResponseEntity.accepted().body(response);
     }
 
