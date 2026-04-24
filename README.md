@@ -46,7 +46,7 @@ An embeddable helpdesk system for Spring Boot applications. Add a full-featured 
 23. **CSAT Ratings** -- Customer satisfaction surveys with token-based access
 24. **2FA (TOTP)** -- Time-based one-time password support for agent accounts
 25. **Guest Access** -- Token-based ticket access without authentication
-26. **Inbound Email** -- Single webhook endpoint with Postmark + Mailgun parsers, signed Reply-To verification, and Message-ID-based ticket resolution
+26. **Inbound Email** -- Single webhook endpoint with Postmark + Mailgun + AWS SES parsers, signed Reply-To verification, and Message-ID-based ticket resolution
 
 ## Requirements
 
@@ -117,11 +117,12 @@ Flyway migrations are included and run automatically. The migration creates all 
 
 ## Inbound email
 
-Point your Postmark or Mailgun inbound webhook at:
+Point your Postmark, Mailgun, or AWS SES (via SNS HTTP subscription) inbound webhook at:
 
 ```
 POST /escalated/webhook/email/inbound?adapter=postmark
 POST /escalated/webhook/email/inbound?adapter=mailgun
+POST /escalated/webhook/email/inbound?adapter=ses
 ```
 
 The adapter can be selected via the query parameter or the `X-Escalated-Adapter` header. Your provider must attach the shared secret as an `X-Escalated-Inbound-Secret` header, which is compared with `MessageDigest.isEqual` (timing-safe).
