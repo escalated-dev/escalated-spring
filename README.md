@@ -46,6 +46,7 @@ An embeddable helpdesk system for Spring Boot applications. Add a full-featured 
 23. **CSAT Ratings** -- Customer satisfaction surveys with token-based access
 24. **2FA (TOTP)** -- Time-based one-time password support for agent accounts
 25. **Guest Access** -- Token-based ticket access without authentication
+26. **Inbound Email** -- Single webhook endpoint with Postmark + Mailgun parsers, signed Reply-To verification, and Message-ID-based ticket resolution
 
 ## Requirements
 
@@ -98,6 +99,10 @@ escalated.snooze.check-interval-seconds=60
 # Webhook settings
 escalated.webhook.max-retries=3
 
+# Inbound email (symmetric secret used for signed Reply-To + webhook verification)
+escalated.mail.domain=support.yourapp.com
+escalated.mail.inbound-secret=${ESCALATED_INBOUND_SECRET}
+
 # Database (example for PostgreSQL)
 spring.datasource.url=jdbc:postgresql://localhost:5432/myapp
 spring.datasource.username=user
@@ -109,6 +114,21 @@ spring.flyway.enabled=true
 ## Database Setup
 
 Flyway migrations are included and run automatically. The migration creates all tables prefixed with `escalated_` and seeds default roles and permissions.
+
+## Inbound email
+
+Point your Postmark or Mailgun inbound webhook at:
+
+```
+POST /escalated/webhook/email/inbound?adapter=postmark
+POST /escalated/webhook/email/inbound?adapter=mailgun
+```
+
+The adapter can be selected via the query parameter or the `X-Escalated-Adapter` header. Your provider must attach the shared secret as an `X-Escalated-Inbound-Secret` header, which is compared with `MessageDigest.isEqual` (timing-safe).
+
+The service resolves inbound messages to existing tickets via, in order: canonical `Message-ID` headers, signed `Reply-To` verification, and subject-reference tags. Unmatched messages with real content create a new ticket; SNS subscription confirmations and empty body+subject messages are skipped.
+
+See the [inbound email docs](https://docs.escalated.dev/inbound-email) for provider setup, the response shape, and a ready-to-paste curl test recipe.
 
 ## API Endpoints
 
