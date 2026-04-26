@@ -49,6 +49,12 @@ public class Ticket extends BaseEntity {
     @Column(name = "requester_email", nullable = false)
     private String requesterEmail;
 
+    // First-class Contact FK (Pattern B). Column added by V2 migration.
+    // Populated for public submissions so repeat guests are deduped by email.
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "contact_id")
+    private Contact contact;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "assigned_agent_id")
     private AgentProfile assignedAgent;
@@ -182,6 +188,14 @@ public class Ticket extends BaseEntity {
 
     public void setRequesterEmail(String requesterEmail) {
         this.requesterEmail = requesterEmail;
+    }
+
+    public Contact getContact() {
+        return contact;
+    }
+
+    public void setContact(Contact contact) {
+        this.contact = contact;
     }
 
     public AgentProfile getAssignedAgent() {
