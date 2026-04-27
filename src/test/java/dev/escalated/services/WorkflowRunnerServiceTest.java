@@ -3,6 +3,7 @@ package dev.escalated.services;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -44,7 +45,8 @@ class WorkflowRunnerServiceTest {
     void setUp() {
         runner = new WorkflowRunnerService(
                 workflowRepository, workflowLogRepository, new WorkflowEngine(), executor);
-        when(workflowLogRepository.save(any(WorkflowLog.class)))
+        lenient()
+                .when(workflowLogRepository.save(any(WorkflowLog.class)))
                 .thenAnswer(inv -> {
                     WorkflowLog l = inv.getArgument(0);
                     if (l.getId() == null) {
