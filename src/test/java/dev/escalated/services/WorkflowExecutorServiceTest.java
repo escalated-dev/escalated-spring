@@ -3,11 +3,13 @@ package dev.escalated.services;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import dev.escalated.models.AgentProfile;
+import dev.escalated.models.DeferredWorkflowJob;
 import dev.escalated.models.Department;
 import dev.escalated.models.Reply;
 import dev.escalated.models.Tag;
@@ -15,11 +17,14 @@ import dev.escalated.models.Ticket;
 import dev.escalated.models.TicketPriority;
 import dev.escalated.models.TicketStatus;
 import dev.escalated.repositories.AgentProfileRepository;
+import dev.escalated.repositories.DeferredWorkflowJobRepository;
 import dev.escalated.repositories.DepartmentRepository;
 import dev.escalated.repositories.ReplyRepository;
 import dev.escalated.repositories.TagRepository;
 import dev.escalated.repositories.TicketRepository;
+import java.time.Instant;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -42,6 +47,7 @@ class WorkflowExecutorServiceTest {
     @Mock private AgentProfileRepository agentRepository;
     @Mock private DepartmentRepository departmentRepository;
     @Mock private ReplyRepository replyRepository;
+    @Mock private DeferredWorkflowJobRepository deferredRepository;
 
     private WorkflowExecutorService executor;
 
@@ -49,7 +55,7 @@ class WorkflowExecutorServiceTest {
     void setUp() {
         executor = new WorkflowExecutorService(
                 ticketRepository, tagRepository, agentRepository,
-                departmentRepository, replyRepository);
+                departmentRepository, replyRepository, deferredRepository);
     }
 
     private Ticket newTicket() {
@@ -294,5 +300,86 @@ class WorkflowExecutorServiceTest {
         assertThat(result).hasSize(2);
         assertThat(result.get(0)).containsEntry("type", "change_priority");
         assertThat(result.get(1)).containsEntry("type", "add_note");
+    }
+
+    // --- delay action ---
+
+    @Test
+    void execute_delay_pausesAndPersistsRemainingActions() {
+        Ticket ticket = newTicket();
+        long before = System.currentTimeMillis();
+
+        executor.execute(ticket,
+                "[{\"type\":\"change_priority\",\"value\":\"high\"},"
+                + "{\"type\":\"delay\",\"value\":\"60\"},"
+                + "{\"type\":\"add_note\",\"value\":\"after wait\"}]");
+
+        // pre-delay action ran
+        assertThat(ticket.getPriority()).isEqualTo(TicketPriority.HIGH);
+        // post-delay action did NOT run
+        verify(replyRepository, never()).save(any());
+
+        ArgumentCaptor<DeferredWorkflowJob> captor = ArgumentCaptor.forClass(DeferredWorkflowJob.class);
+        verify(deferredRepository).save(captor.capture());
+        DeferredWorkflowJob saved = captor.getValue();
+        assertThat(saved.getTicketId()).isEqualTo(1L);
+        assertThat(saved.getStatus()).isEqualTo("pending");
+        assertThat(saved.getRemainingActionsJson()).contains("\"add_note\"").contains("\"after wait\"");
+        assertThat(saved.getRunAt().toEpochMilli())
+                .isGreaterThanOrEqualTo(before + 60_000 - 500);
+    }
+
+    @Test
+    void execute_delay_invalidValueSkipsRemainingActions() {
+        Ticket ticket = newTicket();
+
+        executor.execute(ticket,
+                "[{\"type\":\"delay\",\"value\":\"nonsense\"},"
+                + "{\"type\":\"change_priority\",\"value\":\"urgent\"}]");
+
+        verify(deferredRepository, never()).save(any());
+        // priority should remain LOW from newTicket() — post-delay action must not have run
+        assertThat(ticket.getPriority()).isEqualTo(TicketPriority.LOW);
+    }
+
+    @Test
+    void runDueDeferredJobs_resumesAndMarksDone() {
+        DeferredWorkflowJob job = new DeferredWorkflowJob();
+        job.setId(99L);
+        job.setTicketId(1L);
+        job.setRemainingActionsJson("[{\"type\":\"change_priority\",\"value\":\"urgent\"}]");
+        job.setRunAt(Instant.now().minusSeconds(10));
+        job.setStatus("pending");
+
+        Ticket ticket = newTicket();
+        when(deferredRepository.findByStatusAndRunAtLessThanEqual(eq("pending"), any()))
+                .thenReturn(List.of(job));
+        when(ticketRepository.findById(1L)).thenReturn(Optional.of(ticket));
+
+        executor.runDueDeferredJobs();
+
+        assertThat(ticket.getPriority()).isEqualTo(TicketPriority.URGENT);
+        assertThat(job.getStatus()).isEqualTo("done");
+        verify(deferredRepository).save(job);
+    }
+
+    @Test
+    void runDueDeferredJobs_marksFailedWhenTicketMissing() {
+        DeferredWorkflowJob job = new DeferredWorkflowJob();
+        job.setId(99L);
+        job.setTicketId(404L);
+        job.setRemainingActionsJson("[]");
+        job.setRunAt(Instant.now().minusSeconds(10));
+        job.setStatus("pending");
+
+        when(deferredRepository.findByStatusAndRunAtLessThanEqual(eq("pending"), any()))
+                .thenReturn(List.of(job));
+        when(ticketRepository.findById(404L)).thenReturn(Optional.empty());
+
+        executor.runDueDeferredJobs();
+
+        assertThat(job.getStatus()).isEqualTo("failed");
+        assertThat(job.getLastError()).contains("404");
+        verify(deferredRepository).save(job);
     }
 }
