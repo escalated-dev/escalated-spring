@@ -15,6 +15,7 @@ public class EscalatedProperties {
     private WebhookProperties webhook = new WebhookProperties();
     private WidgetProperties widget = new WidgetProperties();
     private GuestAccessProperties guestAccess = new GuestAccessProperties();
+    private EmailProperties email = new EmailProperties();
 
     public boolean isEnabled() {
         return enabled;
@@ -94,6 +95,14 @@ public class EscalatedProperties {
 
     public void setGuestAccess(GuestAccessProperties guestAccess) {
         this.guestAccess = guestAccess;
+    }
+
+    public EmailProperties getEmail() {
+        return email;
+    }
+
+    public void setEmail(EmailProperties email) {
+        this.email = email;
     }
 
     public static class KnowledgeBaseProperties {
@@ -189,6 +198,34 @@ public class EscalatedProperties {
 
         public void setEnabled(boolean enabled) {
             this.enabled = enabled;
+        }
+    }
+
+    /**
+     * Outbound + inbound email config. {@code domain} is used for the
+     * right-hand side of RFC 5322 Message-IDs and signed Reply-To
+     * addresses. {@code inboundSecret} is the HMAC key used to sign
+     * Reply-To addresses so the inbound provider webhook can verify
+     * a ticket id without trusting the mail client's threading headers.
+     */
+    public static class EmailProperties {
+        private String domain = "localhost";
+        private String inboundSecret = "";
+
+        public String getDomain() {
+            return domain;
+        }
+
+        public void setDomain(String domain) {
+            this.domain = domain;
+        }
+
+        public String getInboundSecret() {
+            return inboundSecret;
+        }
+
+        public void setInboundSecret(String inboundSecret) {
+            this.inboundSecret = inboundSecret;
         }
     }
 }
