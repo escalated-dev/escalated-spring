@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- Translations are now consumed from the central `dev.escalated:escalated-locale` Maven artifact via a chained `ReloadableResourceBundleMessageSource`. Host apps can layer sparse overrides under `classpath:i18n/overrides/messages_{locale}.properties`.
+
 ### Fixed
 - Make `SimpMessagingTemplate` an optional dependency so the app boots without STOMP broker configuration (#19)
 - Include `url` in attachment JSON serialization (#10)
