@@ -28,6 +28,11 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter-thymeleaf")
     implementation("org.springframework.boot:spring-boot-autoconfigure")
 
+    // Central translations artifact. Ships messages_{locale}.properties at
+    // META-INF/escalated/locale/ on the classpath. Layered with local overrides
+    // in the classpath:i18n/overrides/ directory via a HierarchicalMessageSource.
+    implementation("dev.escalated:escalated-locale:0.1.0")
+
     implementation("org.flywaydb:flyway-core")
     implementation("com.fasterxml.jackson.core:jackson-databind")
 
