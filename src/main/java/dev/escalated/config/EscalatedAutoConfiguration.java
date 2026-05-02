@@ -5,6 +5,7 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.persistence.autoconfigure.EntityScan;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.ComponentScan;
+import org.springframework.context.annotation.Import;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 import org.springframework.scheduling.annotation.EnableScheduling;
 
@@ -15,5 +16,6 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 @EntityScan(basePackages = "dev.escalated.models")
 @EnableJpaRepositories(basePackages = "dev.escalated.repositories")
 @EnableScheduling
+@Import(MessageSourceConfig.class)
 public class EscalatedAutoConfiguration {
 }
