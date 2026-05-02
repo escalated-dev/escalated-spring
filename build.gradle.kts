@@ -1,6 +1,6 @@
 plugins {
     java
-    id("org.springframework.boot") version "3.2.5"
+    id("org.springframework.boot") version "4.0.6"
     id("io.spring.dependency-management") version "1.1.7"
     `maven-publish`
     checkstyle
@@ -30,7 +30,6 @@ dependencies {
 
     implementation("org.flywaydb:flyway-core")
     implementation("com.fasterxml.jackson.core:jackson-databind")
-    implementation("dev.samstevens.totp:totp-spring-boot-starter:1.7.1")
 
     runtimeOnly("com.h2database:h2")
     runtimeOnly("org.postgresql:postgresql")
@@ -39,6 +38,7 @@ dependencies {
     annotationProcessor("org.springframework.boot:spring-boot-configuration-processor")
 
     testImplementation("org.springframework.boot:spring-boot-starter-test")
+    testImplementation("org.springframework.boot:spring-boot-starter-webmvc-test")
     testImplementation("org.springframework.security:spring-security-test")
 }
 
