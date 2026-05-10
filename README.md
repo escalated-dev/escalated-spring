@@ -115,6 +115,15 @@ spring.flyway.enabled=true
 
 Flyway migrations are included and run automatically. The migration creates all tables prefixed with `escalated_` and seeds default roles and permissions.
 
+## Internationalization
+
+Translations are consumed from the central [`dev.escalated:escalated-locale`](https://github.com/escalated-dev/escalated-locale) Maven artifact, which ships bundles at `META-INF/escalated/locale/messages_{locale}.properties` on the classpath. The auto-configured `MessageSource` chains two basenames so host apps can override keys without forking the central bundle:
+
+1. `classpath:i18n/overrides/messages` — sparse host-app overrides (first match wins)
+2. `classpath:META-INF/escalated/locale/messages` — central artifact (canonical strings)
+
+Drop a `messages_{locale}.properties` file under `src/main/resources/i18n/overrides/` to override individual keys. See [`src/main/resources/i18n/overrides/README.md`](src/main/resources/i18n/overrides/README.md) for examples. To fix a typo or mistranslation that affects every host plugin, open a PR against the central [`escalated-locale`](https://github.com/escalated-dev/escalated-locale) repo instead.
+
 ## Inbound email
 
 Point your Postmark, Mailgun, or AWS SES (via SNS HTTP subscription) inbound webhook at:
