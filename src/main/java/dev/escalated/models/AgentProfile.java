@@ -38,6 +38,12 @@ public class AgentProfile extends BaseEntity {
     @Column(name = "is_available", nullable = false)
     private boolean available = true;
 
+    @Column(name = "is_admin", nullable = false)
+    private boolean admin = false;
+
+    @Column(name = "is_agent", nullable = false)
+    private boolean agent = true;
+
     @Column
     private String avatar;
 
@@ -113,6 +119,22 @@ public class AgentProfile extends BaseEntity {
 
     public void setAvailable(boolean available) {
         this.available = available;
+    }
+
+    public boolean isAdmin() {
+        return admin;
+    }
+
+    public void setAdmin(boolean admin) {
+        this.admin = admin;
+    }
+
+    public boolean isAgent() {
+        return agent;
+    }
+
+    public void setAgent(boolean agent) {
+        this.agent = agent;
     }
 
     public String getAvatar() {
