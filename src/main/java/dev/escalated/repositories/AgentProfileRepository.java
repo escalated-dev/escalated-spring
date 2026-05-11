@@ -3,6 +3,8 @@ package dev.escalated.repositories;
 import dev.escalated.models.AgentProfile;
 import java.util.List;
 import java.util.Optional;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -23,4 +25,9 @@ public interface AgentProfileRepository extends JpaRepository<AgentProfile, Long
 
     @Query("SELECT ap FROM AgentProfile ap JOIN ap.skills s WHERE s.id = :skillId AND ap.active = true AND ap.available = true")
     List<AgentProfile> findAvailableAgentsWithSkill(@Param("skillId") Long skillId);
+
+    @Query("SELECT ap FROM AgentProfile ap "
+            + "WHERE (:search IS NULL OR LOWER(ap.email) LIKE :search OR LOWER(ap.name) LIKE :search) "
+            + "ORDER BY ap.admin DESC, ap.agent DESC, ap.id ASC")
+    Page<AgentProfile> searchOrderedByRole(@Param("search") String search, Pageable pageable);
 }
