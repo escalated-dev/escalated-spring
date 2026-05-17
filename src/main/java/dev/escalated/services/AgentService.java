@@ -2,9 +2,11 @@ package dev.escalated.services;
 
 import dev.escalated.models.AgentCapacity;
 import dev.escalated.models.AgentProfile;
+import dev.escalated.models.AgentSkill;
 import dev.escalated.models.Skill;
 import dev.escalated.repositories.AgentCapacityRepository;
 import dev.escalated.repositories.AgentProfileRepository;
+import dev.escalated.repositories.AgentSkillRepository;
 import dev.escalated.repositories.SkillRepository;
 import dev.escalated.repositories.TicketRepository;
 import jakarta.persistence.EntityNotFoundException;
@@ -21,15 +23,18 @@ public class AgentService {
     private final AgentProfileRepository agentRepository;
     private final AgentCapacityRepository capacityRepository;
     private final SkillRepository skillRepository;
+    private final AgentSkillRepository agentSkillRepository;
     private final TicketRepository ticketRepository;
 
     public AgentService(AgentProfileRepository agentRepository,
                         AgentCapacityRepository capacityRepository,
                         SkillRepository skillRepository,
+                        AgentSkillRepository agentSkillRepository,
                         TicketRepository ticketRepository) {
         this.agentRepository = agentRepository;
         this.capacityRepository = capacityRepository;
         this.skillRepository = skillRepository;
+        this.agentSkillRepository = agentSkillRepository;
         this.ticketRepository = ticketRepository;
     }
 
@@ -108,18 +113,22 @@ public class AgentService {
 
     @Transactional
     public void addSkill(Long agentId, Long skillId) {
-        AgentProfile agent = findById(agentId);
+        if (agentSkillRepository.existsByUserIdAndSkill_Id(agentId, skillId)) {
+            return;
+        }
+        findById(agentId);
         Skill skill = skillRepository.findById(skillId)
                 .orElseThrow(() -> new EntityNotFoundException("Skill not found: " + skillId));
-        agent.getSkills().add(skill);
-        agentRepository.save(agent);
+        AgentSkill row = new AgentSkill();
+        row.setUserId(agentId);
+        row.setSkill(skill);
+        row.setProficiency(3);
+        agentSkillRepository.save(row);
     }
 
     @Transactional
     public void removeSkill(Long agentId, Long skillId) {
-        AgentProfile agent = findById(agentId);
-        agent.getSkills().removeIf(s -> s.getId().equals(skillId));
-        agentRepository.save(agent);
+        agentSkillRepository.deleteByUserIdAndSkill_Id(agentId, skillId);
     }
 
     @Transactional(readOnly = true)
@@ -132,11 +141,9 @@ public class AgentService {
 
             if (requiredSkillIds.size() > 1) {
                 candidates = candidates.stream()
-                        .filter(agent -> {
-                            Set<Skill> agentSkills = agent.getSkills();
-                            return requiredSkillIds.stream()
-                                    .allMatch(sid -> agentSkills.stream().anyMatch(s -> s.getId().equals(sid)));
-                        })
+                        .filter(agent -> requiredSkillIds.stream()
+                                .allMatch(sid -> agentSkillRepository.existsByUserIdAndSkill_Id(
+                                        agent.getId(), sid)))
                         .toList();
             }
         } else if (departmentId != null) {

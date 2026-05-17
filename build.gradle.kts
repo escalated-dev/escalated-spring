@@ -28,10 +28,13 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter-thymeleaf")
     implementation("org.springframework.boot:spring-boot-autoconfigure")
 
-    // Central translations artifact. Ships messages_{locale}.properties at
-    // META-INF/escalated/locale/ on the classpath. Layered with local overrides
-    // in the classpath:i18n/overrides/ directory via a HierarchicalMessageSource.
-    implementation("dev.escalated:escalated-locale:0.1.0")
+    // Central translations: shipped as a Maven artifact via dev.escalated:escalated-locale
+    // but currently vendored at src/main/resources/META-INF/escalated/locale/ until the
+    // Maven Central publish pipeline is online (see escalated-locale's publish.yml — the
+    // MAVEN_USERNAME / MAVEN_PASSWORD / MAVEN_GPG_PASSPHRASE secrets are not configured,
+    // so the maven publish job no-ops and the artifact is unresolvable). Once the artifact
+    // is published, replace the vendored .properties files with:
+    //   implementation("dev.escalated:escalated-locale:<version>")
 
     implementation("org.flywaydb:flyway-core")
     implementation("com.fasterxml.jackson.core:jackson-databind")

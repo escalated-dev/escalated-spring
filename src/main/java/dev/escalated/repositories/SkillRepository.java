@@ -9,4 +9,12 @@ import org.springframework.stereotype.Repository;
 public interface SkillRepository extends JpaRepository<Skill, Long> {
 
     Optional<Skill> findByName(String name);
+
+    boolean existsByName(String name);
+
+    boolean existsBySlug(String slug);
+
+    boolean existsByNameAndIdNot(String name, Long id);
+
+    boolean existsBySlugAndIdNot(String slug, Long id);
 }

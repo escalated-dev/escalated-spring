@@ -2,16 +2,16 @@ package dev.escalated.services;
 
 import dev.escalated.models.AgentCapacity;
 import dev.escalated.models.AgentProfile;
+import dev.escalated.models.AgentSkill;
 import dev.escalated.models.Skill;
 import dev.escalated.repositories.AgentCapacityRepository;
 import dev.escalated.repositories.AgentProfileRepository;
+import dev.escalated.repositories.AgentSkillRepository;
 import dev.escalated.repositories.SkillRepository;
 import dev.escalated.repositories.TicketRepository;
 import jakarta.persistence.EntityNotFoundException;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
-import java.util.Set;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -23,7 +23,6 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -36,6 +35,10 @@ class AgentServiceTest {
     private AgentCapacityRepository capacityRepository;
     @Mock
     private SkillRepository skillRepository;
+
+    @Mock
+    private AgentSkillRepository agentSkillRepository;
+
     @Mock
     private TicketRepository ticketRepository;
 
@@ -43,7 +46,8 @@ class AgentServiceTest {
 
     @BeforeEach
     void setUp() {
-        agentService = new AgentService(agentRepository, capacityRepository, skillRepository, ticketRepository);
+        agentService = new AgentService(
+                agentRepository, capacityRepository, skillRepository, agentSkillRepository, ticketRepository);
     }
 
     @Test
@@ -125,20 +129,21 @@ class AgentServiceTest {
     }
 
     @Test
-    void addSkill_shouldAddSkillToAgent() {
+    void addSkill_shouldPersistAgentSkillRow() {
         AgentProfile agent = createTestAgent();
-        agent.setSkills(new HashSet<>());
         Skill skill = new Skill();
         skill.setId(1L);
         skill.setName("Java");
+        skill.setSlug("java");
 
         when(agentRepository.findById(1L)).thenReturn(Optional.of(agent));
         when(skillRepository.findById(1L)).thenReturn(Optional.of(skill));
-        when(agentRepository.save(any())).thenReturn(agent);
+        when(agentSkillRepository.existsByUserIdAndSkill_Id(1L, 1L)).thenReturn(false);
+        when(agentSkillRepository.save(any(AgentSkill.class))).thenAnswer(inv -> inv.getArgument(0));
 
         agentService.addSkill(1L, 1L);
 
-        assertTrue(agent.getSkills().contains(skill));
+        verify(agentSkillRepository).save(any(AgentSkill.class));
     }
 
     private AgentProfile createTestAgent() {

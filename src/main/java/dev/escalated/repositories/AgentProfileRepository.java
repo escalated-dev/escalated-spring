@@ -23,8 +23,11 @@ public interface AgentProfileRepository extends JpaRepository<AgentProfile, Long
 
     List<AgentProfile> findByAvailableTrueAndActiveTrueOrderByName();
 
-    @Query("SELECT ap FROM AgentProfile ap JOIN ap.skills s WHERE s.id = :skillId AND ap.active = true AND ap.available = true")
+    @Query("SELECT DISTINCT ap FROM AgentProfile ap JOIN AgentSkill ask ON ask.userId = ap.id "
+            + "WHERE ask.skill.id = :skillId AND ap.active = true AND ap.available = true")
     List<AgentProfile> findAvailableAgentsWithSkill(@Param("skillId") Long skillId);
+
+    List<AgentProfile> findByActiveTrueAndAgentTrueOrderByName();
 
     @Query("SELECT ap FROM AgentProfile ap "
             + "WHERE (:search IS NULL OR LOWER(ap.email) LIKE :search OR LOWER(ap.name) LIKE :search) "
