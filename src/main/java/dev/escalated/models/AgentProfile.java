@@ -5,17 +5,13 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.JoinColumn;
-import jakarta.persistence.JoinTable;
-import jakarta.persistence.ManyToMany;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 import jakarta.validation.constraints.NotBlank;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 @Entity
 @Table(name = "escalated_agent_profiles")
@@ -69,14 +65,6 @@ public class AgentProfile extends BaseEntity {
 
     @OneToOne(mappedBy = "agent", cascade = CascadeType.ALL, orphanRemoval = true)
     private AgentCapacity capacity;
-
-    @ManyToMany
-    @JoinTable(
-            name = "escalated_agent_skills",
-            joinColumns = @JoinColumn(name = "agent_id"),
-            inverseJoinColumns = @JoinColumn(name = "skill_id")
-    )
-    private Set<Skill> skills = new HashSet<>();
 
     @OneToMany(mappedBy = "assignedAgent")
     private List<Ticket> assignedTickets = new ArrayList<>();
@@ -199,14 +187,6 @@ public class AgentProfile extends BaseEntity {
 
     public void setCapacity(AgentCapacity capacity) {
         this.capacity = capacity;
-    }
-
-    public Set<Skill> getSkills() {
-        return skills;
-    }
-
-    public void setSkills(Set<Skill> skills) {
-        this.skills = skills;
     }
 
     public List<Ticket> getAssignedTickets() {
