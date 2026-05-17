@@ -65,7 +65,7 @@ class SkillRoutingServiceTest {
         Mockito.when(agentSkillRepository.findUserIdsBySkillId(200L)).thenReturn(List.of(1L));
 
         Mockito.when(agentSkillRepository.sumProficiencyForUsersAndSkills(Mockito.anySet(), Mockito.anySet()))
-                .thenReturn(List.of(new Object[] {1L, 9L}));
+                .thenReturn(List.<Object[]>of(new Object[] {1L, 9L}));
 
         AgentProfile match = agent(1L, 0.2d);
         Mockito.when(agentProfileRepository.findAllById(Mockito.anySet())).thenReturn(List.of(match));
