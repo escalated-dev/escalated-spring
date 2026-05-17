@@ -13,6 +13,8 @@ public interface SkillRoutingTagRepository extends JpaRepository<SkillRoutingTag
 
     List<SkillRoutingTag> findBySkill_Id(Long skillId);
 
+    long countBySkill_Id(Long skillId);
+
     void deleteBySkill_Id(Long skillId);
 
     @Query("SELECT DISTINCT s.skill.id FROM SkillRoutingTag s WHERE s.tag.id IN :tagIds")

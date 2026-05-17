@@ -104,7 +104,7 @@ public class SkillService {
 
     private List<Map<String, Object>> listAvailableAgents() {
         return agentProfileRepository.findByActiveTrueAndAgentTrueOrderByName().stream()
-                .map(ap -> {
+                .<Map<String, Object>>map(ap -> {
                     LinkedHashMap<String, Object> row = new LinkedHashMap<>();
                     row.put("id", ap.getId());
                     row.put("name", ap.getName());
@@ -116,7 +116,7 @@ public class SkillService {
 
     private List<Map<String, Object>> listAvailableTags() {
         return tagRepository.findAll(Sort.by("name")).stream()
-                .map(t -> {
+                .<Map<String, Object>>map(t -> {
                     LinkedHashMap<String, Object> row = new LinkedHashMap<>();
                     row.put("id", t.getId());
                     row.put("name", t.getName());
@@ -127,7 +127,7 @@ public class SkillService {
 
     private List<Map<String, Object>> listAvailableDepartments() {
         return departmentRepository.findAll(Sort.by("name")).stream()
-                .map(d -> {
+                .<Map<String, Object>>map(d -> {
                     LinkedHashMap<String, Object> row = new LinkedHashMap<>();
                     row.put("id", d.getId());
                     row.put("name", d.getName());
@@ -146,7 +146,7 @@ public class SkillService {
                 .sorted()
                 .toList();
         List<Map<String, Object>> agents = agentSkillRepository.findBySkill_Id(skillId).stream()
-                .map(as -> {
+                .<Map<String, Object>>map(as -> {
                     LinkedHashMap<String, Object> row = new LinkedHashMap<>();
                     row.put("user_id", as.getUserId());
                     row.put("proficiency", as.getProficiency());

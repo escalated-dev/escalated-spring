@@ -12,6 +12,8 @@ public interface SkillRoutingDepartmentRepository extends JpaRepository<SkillRou
 
     List<SkillRoutingDepartment> findBySkill_Id(Long skillId);
 
+    long countBySkill_Id(Long skillId);
+
     void deleteBySkill_Id(Long skillId);
 
     @Query("SELECT DISTINCT s.skill.id FROM SkillRoutingDepartment s WHERE s.department.id = :deptId")
