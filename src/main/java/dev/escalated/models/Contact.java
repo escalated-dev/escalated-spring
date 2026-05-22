@@ -47,6 +47,13 @@ public class Contact extends BaseEntity {
     @Column(columnDefinition = "TEXT")
     private String metadataJson;
 
+    /** Set when the contact one-click unsubscribes from marketing newsletters. */
+    @Column(name = "marketing_opt_out_at")
+    private java.time.Instant marketingOptOutAt;
+
+    public java.time.Instant getMarketingOptOutAt() { return marketingOptOutAt; }
+    public void setMarketingOptOutAt(java.time.Instant v) { this.marketingOptOutAt = v; }
+
     public String getEmail() {
         return email;
     }
