@@ -111,6 +111,41 @@ spring.jpa.hibernate.ddl-auto=validate
 spring.flyway.enabled=true
 ```
 
+## Custom Ticket Actions
+
+Host applications can add custom buttons to the agent ticket screen and handle
+clicks with a Spring `@EventListener`. Register actions in `application.yml`:
+
+```yaml
+escalated:
+  ticket-actions:
+    - key: sync-crm
+      label: Sync CRM
+      variant: primary          # primary | secondary | danger
+      confirmation: "Sync this ticket to the CRM?"
+      metadata:
+        icon: refresh-cw
+```
+
+Visible actions are exposed on the agent ticket detail response as
+`custom_actions` (each with a `url` and `method`). Triggering one
+(`POST /escalated/api/agent/tickets/{id}/actions/{action}`) validates the action
+is visible (404) and enabled (403), records an internal note for auditability,
+and publishes a `CustomActionTriggeredEvent`:
+
+```java
+@Component
+public class CrmSyncListener {
+    @EventListener
+    public void onCustomAction(CustomActionTriggeredEvent event) {
+        if (!"sync-crm".equals(event.getAction())) {
+            return;
+        }
+        // event.getTicket(), event.getUserEmail(), event.getPayload(), event.getMetadata()
+    }
+}
+```
+
 ## Database Setup
 
 Flyway migrations are included and run automatically. The migration creates all tables prefixed with `escalated_` and seeds default roles and permissions.

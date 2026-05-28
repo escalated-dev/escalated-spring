@@ -5,6 +5,7 @@ import com.fasterxml.jackson.annotation.JsonUnwrapped;
 import dev.escalated.models.Reply;
 import dev.escalated.models.Ticket;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -35,6 +36,9 @@ public class TicketDetailDto {
 
     @JsonProperty("related_tickets")
     private final List<RelatedTicketDto> relatedTickets;
+
+    @JsonProperty("custom_actions")
+    private List<Map<String, Object>> customActions = new ArrayList<>();
 
     public TicketDetailDto(Ticket ticket,
                            Long chatSessionId,
@@ -78,6 +82,14 @@ public class TicketDetailDto {
 
     public List<RelatedTicketDto> getRelatedTickets() {
         return relatedTickets;
+    }
+
+    public List<Map<String, Object>> getCustomActions() {
+        return customActions;
+    }
+
+    public void setCustomActions(List<Map<String, Object>> customActions) {
+        this.customActions = customActions;
     }
 
     /**
