@@ -1,5 +1,8 @@
 package dev.escalated.config;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
 @ConfigurationProperties(prefix = "escalated")
@@ -16,6 +19,7 @@ public class EscalatedProperties {
     private WidgetProperties widget = new WidgetProperties();
     private GuestAccessProperties guestAccess = new GuestAccessProperties();
     private EmailProperties email = new EmailProperties();
+    private List<TicketActionProperties> ticketActions = new ArrayList<>();
 
     public boolean isEnabled() {
         return enabled;
@@ -103,6 +107,84 @@ public class EscalatedProperties {
 
     public void setEmail(EmailProperties email) {
         this.email = email;
+    }
+
+    public List<TicketActionProperties> getTicketActions() {
+        return ticketActions;
+    }
+
+    public void setTicketActions(List<TicketActionProperties> ticketActions) {
+        this.ticketActions = ticketActions;
+    }
+
+    /**
+     * A host-defined custom ticket action button, bound from the
+     * {@code escalated.ticket-actions} configuration list.
+     */
+    public static class TicketActionProperties {
+        private String key;
+        private String label;
+        private String variant = "secondary";
+        private boolean visible = true;
+        private boolean enabled = true;
+        private String confirmation;
+        private Map<String, Object> metadata;
+
+        public String getKey() {
+            return key;
+        }
+
+        public void setKey(String key) {
+            this.key = key;
+        }
+
+        public String getLabel() {
+            return label;
+        }
+
+        public void setLabel(String label) {
+            this.label = label;
+        }
+
+        public String getVariant() {
+            return variant;
+        }
+
+        public void setVariant(String variant) {
+            this.variant = variant;
+        }
+
+        public boolean isVisible() {
+            return visible;
+        }
+
+        public void setVisible(boolean visible) {
+            this.visible = visible;
+        }
+
+        public boolean isEnabled() {
+            return enabled;
+        }
+
+        public void setEnabled(boolean enabled) {
+            this.enabled = enabled;
+        }
+
+        public String getConfirmation() {
+            return confirmation;
+        }
+
+        public void setConfirmation(String confirmation) {
+            this.confirmation = confirmation;
+        }
+
+        public Map<String, Object> getMetadata() {
+            return metadata;
+        }
+
+        public void setMetadata(Map<String, Object> metadata) {
+            this.metadata = metadata;
+        }
     }
 
     public static class KnowledgeBaseProperties {
