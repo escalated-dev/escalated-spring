@@ -25,8 +25,10 @@ public class AgentProfile extends BaseEntity {
     @Column(nullable = false, unique = true)
     private String email;
 
+    // Optional link to the host app's user. Stored as a string so hosts with
+    // UUID/string user primary keys (not just integer ids) can be linked.
     @Column(name = "user_id")
-    private Long userId;
+    private String userId;
 
     @Column(name = "is_active", nullable = false)
     private boolean active = true;
@@ -85,11 +87,11 @@ public class AgentProfile extends BaseEntity {
         this.email = email;
     }
 
-    public Long getUserId() {
+    public String getUserId() {
         return userId;
     }
 
-    public void setUserId(Long userId) {
+    public void setUserId(String userId) {
         this.userId = userId;
     }
 
