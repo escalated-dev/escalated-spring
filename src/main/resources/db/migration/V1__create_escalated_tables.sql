@@ -48,7 +48,7 @@ CREATE TABLE escalated_agent_profiles (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
     name VARCHAR(255) NOT NULL,
     email VARCHAR(255) NOT NULL UNIQUE,
-    user_id BIGINT,
+    user_id VARCHAR(255),
     is_active BOOLEAN NOT NULL DEFAULT TRUE,
     is_available BOOLEAN NOT NULL DEFAULT TRUE,
     avatar VARCHAR(255),

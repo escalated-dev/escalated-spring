@@ -40,9 +40,12 @@ public class Contact extends BaseEntity {
     @Column(length = 255)
     private String name;
 
-    /** Linked host-app user id once the contact creates an account. */
+    /**
+     * Linked host-app user id once the contact creates an account. Stored as a
+     * string so hosts with UUID/string user primary keys can be linked.
+     */
     @Column(name = "user_id")
-    private Long userId;
+    private String userId;
 
     @Column(columnDefinition = "TEXT")
     private String metadataJson;
@@ -63,11 +66,11 @@ public class Contact extends BaseEntity {
         this.name = name;
     }
 
-    public Long getUserId() {
+    public String getUserId() {
         return userId;
     }
 
-    public void setUserId(Long userId) {
+    public void setUserId(String userId) {
         this.userId = userId;
     }
 
