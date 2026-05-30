@@ -20,6 +20,7 @@ public class EscalatedProperties {
     private GuestAccessProperties guestAccess = new GuestAccessProperties();
     private EmailProperties email = new EmailProperties();
     private List<TicketActionProperties> ticketActions = new ArrayList<>();
+    private TicketSubjectsProperties ticketSubjects = new TicketSubjectsProperties();
 
     public boolean isEnabled() {
         return enabled;
@@ -115,6 +116,32 @@ public class EscalatedProperties {
 
     public void setTicketActions(List<TicketActionProperties> ticketActions) {
         this.ticketActions = ticketActions;
+    }
+
+    public TicketSubjectsProperties getTicketSubjects() {
+        return ticketSubjects;
+    }
+
+    public void setTicketSubjects(TicketSubjectsProperties ticketSubjects) {
+        this.ticketSubjects = ticketSubjects;
+    }
+
+    /**
+     * Host-app models a ticket can be *about* (Project, Customer, asset, …).
+     * {@code types} is the allowlist the agent/admin API may attach; leave empty
+     * to disable API attach (programmatic {@link dev.escalated.services.TicketSubjectService}
+     * still works when the allowlist is empty).
+     */
+    public static class TicketSubjectsProperties {
+        private List<String> types = new ArrayList<>();
+
+        public List<String> getTypes() {
+            return types;
+        }
+
+        public void setTypes(List<String> types) {
+            this.types = types;
+        }
     }
 
     /**

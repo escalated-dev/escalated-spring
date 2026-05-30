@@ -47,6 +47,7 @@ class TicketServiceContactWireupTest {
     @Mock private SlaService slaService;
     @Mock private AuditLogService auditLogService;
     @Mock private ContactRepository contactRepository;
+    @Mock private TicketSubjectService ticketSubjectService;
 
     private TicketService ticketService;
 
@@ -54,7 +55,7 @@ class TicketServiceContactWireupTest {
     void setUp() {
         ticketService = new TicketService(ticketRepository, replyRepository, tagRepository,
                 activityRepository, agentRepository, chatSessionRepository, ticketLinkRepository,
-                eventPublisher, slaService, auditLogService, contactRepository);
+                eventPublisher, slaService, auditLogService, contactRepository, ticketSubjectService);
 
         when(ticketRepository.save(any(Ticket.class))).thenAnswer(inv -> {
             Ticket t = inv.getArgument(0);

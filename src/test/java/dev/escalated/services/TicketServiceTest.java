@@ -57,6 +57,8 @@ class TicketServiceTest {
     private AuditLogService auditLogService;
     @Mock
     private ContactRepository contactRepository;
+    @Mock
+    private TicketSubjectService ticketSubjectService;
 
     private TicketService ticketService;
 
@@ -64,7 +66,7 @@ class TicketServiceTest {
     void setUp() {
         ticketService = new TicketService(ticketRepository, replyRepository, tagRepository,
                 activityRepository, agentRepository, chatSessionRepository, ticketLinkRepository,
-                eventPublisher, slaService, auditLogService, contactRepository);
+                eventPublisher, slaService, auditLogService, contactRepository, ticketSubjectService);
     }
 
     @Test

@@ -6,6 +6,7 @@ import dev.escalated.models.Reply;
 import dev.escalated.models.Ticket;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -39,6 +40,8 @@ public class TicketDetailDto {
 
     @JsonProperty("custom_actions")
     private List<Map<String, Object>> customActions = new ArrayList<>();
+
+    private List<SerializedTicketSubjectDto> subjects = Collections.emptyList();
 
     public TicketDetailDto(Ticket ticket,
                            Long chatSessionId,
@@ -90,6 +93,14 @@ public class TicketDetailDto {
 
     public void setCustomActions(List<Map<String, Object>> customActions) {
         this.customActions = customActions;
+    }
+
+    public List<SerializedTicketSubjectDto> getSubjects() {
+        return subjects;
+    }
+
+    public void setSubjects(List<SerializedTicketSubjectDto> subjects) {
+        this.subjects = subjects != null ? subjects : Collections.emptyList();
     }
 
     /**
