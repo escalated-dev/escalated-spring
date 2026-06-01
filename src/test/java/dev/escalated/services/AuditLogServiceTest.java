@@ -43,6 +43,43 @@ class AuditLogServiceTest {
     }
 
     @Test
+    void log_shouldRedactSensitiveJsonValues() {
+        when(auditLogRepository.save(any(AuditLog.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        String oldValues = "{\"email\":\"agent@test.com\",\"password\":\"old-password\"}";
+        String newValues = "{\"api_key\":\"key-123\",\"profile\":{\"remember_token\":\"token-123\",\"name\":\"Agent\"}}";
+
+        AuditLog result = auditLogService.log("update", "User", 1L, "admin@test.com", oldValues, newValues);
+
+        assertEquals("{\"email\":\"agent@test.com\",\"password\":\"[REDACTED]\"}", result.getOldValues());
+        assertEquals(
+                "{\"api_key\":\"[REDACTED]\",\"profile\":{\"remember_token\":\"[REDACTED]\",\"name\":\"Agent\"}}",
+                result.getNewValues());
+    }
+
+    @Test
+    void log_shouldRedactSensitiveValuesInArrays() {
+        when(auditLogRepository.save(any(AuditLog.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        String newValues = "{\"webhooks\":[{\"secret\":\"hook-secret\",\"url\":\"https://example.test\"}]}";
+
+        AuditLog result = auditLogService.log("update", "Webhook", 1L, "admin@test.com", null, newValues);
+
+        assertEquals(
+                "{\"webhooks\":[{\"secret\":\"[REDACTED]\",\"url\":\"https://example.test\"}]}",
+                result.getNewValues());
+    }
+
+    @Test
+    void log_shouldPreserveNonJsonAuditValues() {
+        when(auditLogRepository.save(any(AuditLog.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        AuditLog result = auditLogService.log("update", "Ticket", 1L, "admin@test.com", "status changed", null);
+
+        assertEquals("status changed", result.getOldValues());
+    }
+
+    @Test
     void logWithIp_shouldIncludeIpAddress() {
         when(auditLogRepository.save(any(AuditLog.class))).thenAnswer(inv -> {
             AuditLog al = inv.getArgument(0);
