@@ -11,6 +11,8 @@ import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -51,6 +53,23 @@ class WebhookServiceTest {
         assertNotNull(result);
         assertEquals("https://example.com/hook", result.getUrl());
         assertEquals("secret123", result.getSecret());
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {
+            "ftp://example.com/hook",
+            "https://localhost/hook",
+            "http://127.0.0.1/hook",
+            "http://10.0.0.10/hook",
+            "http://172.16.0.10/hook",
+            "http://192.168.1.10/hook",
+            "http://2130706433/hook",
+            "http://169.254.169.254/latest/meta-data",
+            "http://[::1]/hook"
+    })
+    void create_shouldRejectUnsafeWebhookUrls(String url) {
+        assertThrows(IllegalArgumentException.class, () -> webhookService.create(url, null,
+                "ticket.created", "Unsafe webhook"));
     }
 
     @Test

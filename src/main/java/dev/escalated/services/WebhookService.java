@@ -7,7 +7,9 @@ import dev.escalated.models.WebhookDelivery;
 import dev.escalated.repositories.WebhookDeliveryRepository;
 import dev.escalated.repositories.WebhookRepository;
 import jakarta.persistence.EntityNotFoundException;
+import java.net.InetAddress;
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
@@ -60,8 +62,9 @@ public class WebhookService {
 
     @Transactional
     public Webhook create(String url, String secret, String events, String description) {
+        URI webhookUri = validateWebhookUrl(url);
         Webhook webhook = new Webhook();
-        webhook.setUrl(url);
+        webhook.setUrl(webhookUri.toString());
         webhook.setSecret(secret);
         webhook.setEvents(events);
         webhook.setDescription(description);
@@ -72,7 +75,7 @@ public class WebhookService {
     @Transactional
     public Webhook update(Long id, String url, String events, String description, boolean active) {
         Webhook webhook = findById(id);
-        webhook.setUrl(url);
+        webhook.setUrl(validateWebhookUrl(url).toString());
         webhook.setEvents(events);
         webhook.setDescription(description);
         webhook.setActive(active);
@@ -106,7 +109,7 @@ public class WebhookService {
             delivery.setPayload(payload);
 
             HttpRequest.Builder requestBuilder = HttpRequest.newBuilder()
-                    .uri(URI.create(webhook.getUrl()))
+                    .uri(validateWebhookUrl(webhook.getUrl()))
                     .timeout(Duration.ofSeconds(30))
                     .header("Content-Type", "application/json")
                     .header("X-Escalated-Event", eventName)
@@ -142,6 +145,90 @@ public class WebhookService {
 
         webhookRepository.save(webhook);
         deliveryRepository.save(delivery);
+    }
+
+    private static URI validateWebhookUrl(String url) {
+        if (url == null || url.isBlank()) {
+            throw new IllegalArgumentException("Webhook URL is required");
+        }
+
+        URI uri;
+        try {
+            uri = new URI(url.trim());
+        } catch (URISyntaxException ex) {
+            throw new IllegalArgumentException("Webhook URL is invalid", ex);
+        }
+
+        String scheme = uri.getScheme();
+        String host = uri.getHost();
+        if (scheme == null || host == null || uri.getUserInfo() != null) {
+            throw new IllegalArgumentException("Webhook URL must include an absolute HTTP(S) host");
+        }
+
+        if (!"https".equalsIgnoreCase(scheme) && !"http".equalsIgnoreCase(scheme)) {
+            throw new IllegalArgumentException("Webhook URL must use HTTP or HTTPS");
+        }
+
+        if (isBlockedHost(host)) {
+            throw new IllegalArgumentException("Webhook URL host is not allowed");
+        }
+
+        return uri;
+    }
+
+    private static boolean isBlockedHost(String host) {
+        String normalizedHost = host.toLowerCase();
+        if ("localhost".equals(normalizedHost) || normalizedHost.endsWith(".localhost")) {
+            return true;
+        }
+
+        if (isIpv4Literal(normalizedHost)) {
+            return isBlockedAddress(parseIpv4Address(normalizedHost));
+        }
+
+        if (normalizedHost.matches("[0-9.]+")) {
+            return true;
+        }
+
+        if (normalizedHost.contains(":")) {
+            try {
+                return isBlockedAddress(InetAddress.getByName(normalizedHost));
+            } catch (Exception ex) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private static boolean isIpv4Literal(String host) {
+        return host.matches("\\d{1,3}(\\.\\d{1,3}){3}");
+    }
+
+    private static InetAddress parseIpv4Address(String host) {
+        String[] parts = host.split("\\.");
+        byte[] bytes = new byte[4];
+        for (int i = 0; i < parts.length; i++) {
+            int octet = Integer.parseInt(parts[i]);
+            if (octet < 0 || octet > 255) {
+                throw new IllegalArgumentException("Webhook URL host is invalid");
+            }
+            bytes[i] = (byte) octet;
+        }
+
+        try {
+            return InetAddress.getByAddress(bytes);
+        } catch (Exception ex) {
+            throw new IllegalArgumentException("Webhook URL host is invalid", ex);
+        }
+    }
+
+    private static boolean isBlockedAddress(InetAddress address) {
+        return address.isAnyLocalAddress()
+                || address.isLoopbackAddress()
+                || address.isLinkLocalAddress()
+                || address.isSiteLocalAddress()
+                || address.isMulticastAddress();
     }
 
     private String computeHmac(String payload, String secret) {
