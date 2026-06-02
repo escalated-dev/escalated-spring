@@ -12,7 +12,7 @@ CREATE TABLE escalated_newsletter_lists (
     description TEXT,
     kind VARCHAR(16) NOT NULL DEFAULT 'static',
     filter_json TEXT,
-    created_by BIGINT,
+    created_by VARCHAR(255),
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
@@ -26,7 +26,7 @@ CREATE TABLE escalated_newsletter_templates (
     subject_template VARCHAR(998),
     body_markdown TEXT NOT NULL,
     merge_fields_schema TEXT,
-    created_by BIGINT,
+    created_by VARCHAR(255),
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
@@ -38,7 +38,7 @@ CREATE TABLE escalated_newsletter_list_members (
     list_id BIGINT NOT NULL,
     contact_id BIGINT NOT NULL,
     added_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    added_by BIGINT,
+    added_by VARCHAR(255),
     CONSTRAINT uniq_nlm_list_contact UNIQUE (list_id, contact_id),
     CONSTRAINT fk_nlm_list FOREIGN KEY (list_id) REFERENCES escalated_newsletter_lists (id) ON DELETE CASCADE,
     CONSTRAINT fk_nlm_contact FOREIGN KEY (contact_id) REFERENCES escalated_contacts (id) ON DELETE CASCADE
@@ -58,8 +58,8 @@ CREATE TABLE escalated_newsletters (
     status VARCHAR(16) NOT NULL DEFAULT 'draft',
     scheduled_at TIMESTAMP,
     sent_at TIMESTAMP,
-    created_by BIGINT,
-    sent_by BIGINT,
+    created_by VARCHAR(255),
+    sent_by VARCHAR(255),
     summary_total INT NOT NULL DEFAULT 0,
     summary_sent INT NOT NULL DEFAULT 0,
     summary_opened INT NOT NULL DEFAULT 0,

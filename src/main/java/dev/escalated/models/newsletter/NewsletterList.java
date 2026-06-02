@@ -34,7 +34,7 @@ public class NewsletterList extends BaseEntity {
     private String filterJson;
 
     @Column(name = "created_by")
-    private Long createdBy;
+    private String createdBy;
 
     public String getName() { return name; }
     public void setName(String name) { this.name = name; }
@@ -44,6 +44,6 @@ public class NewsletterList extends BaseEntity {
     public void setKind(String kind) { this.kind = kind; }
     public String getFilterJson() { return filterJson; }
     public void setFilterJson(String filterJson) { this.filterJson = filterJson; }
-    public Long getCreatedBy() { return createdBy; }
-    public void setCreatedBy(Long createdBy) { this.createdBy = createdBy; }
+    public String getCreatedBy() { return createdBy; }
+    public void setCreatedBy(String createdBy) { this.createdBy = createdBy; }
 }
