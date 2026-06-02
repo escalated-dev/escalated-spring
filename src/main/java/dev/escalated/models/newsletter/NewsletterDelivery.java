@@ -74,6 +74,7 @@ public class NewsletterDelivery {
     private Instant createdAt = Instant.now();
 
     public Long getId() { return id; }
+    public void setId(Long v) { this.id = v; }
     public Long getNewsletterId() { return newsletterId; }
     public void setNewsletterId(Long v) { this.newsletterId = v; }
     public Long getContactId() { return contactId; }
