@@ -64,6 +64,9 @@ public class NewsletterDelivery {
     @Column(name = "claimed_at")
     private Instant claimedAt;
 
+    @Column(name = "next_attempt_at")
+    private Instant nextAttemptAt;
+
     @Column(name = "is_test", nullable = false)
     private boolean isTest = false;
 
@@ -97,6 +100,8 @@ public class NewsletterDelivery {
     public void setAttemptCount(short v) { this.attemptCount = v; }
     public Instant getClaimedAt() { return claimedAt; }
     public void setClaimedAt(Instant v) { this.claimedAt = v; }
+    public Instant getNextAttemptAt() { return nextAttemptAt; }
+    public void setNextAttemptAt(Instant v) { this.nextAttemptAt = v; }
     public boolean isTest() { return isTest; }
     public void setTest(boolean v) { this.isTest = v; }
     public Instant getCreatedAt() { return createdAt; }
