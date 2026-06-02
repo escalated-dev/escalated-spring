@@ -75,7 +75,7 @@ public class AdminNewsletterSettingsController {
 
         for (String key : KEYS) {
             Object value = data.get(key);
-            String stored = value instanceof Boolean bool ? String.valueOf(bool ? 1 : 0) : String.valueOf(value ?? "");
+            String stored = value instanceof Boolean bool ? String.valueOf(bool ? 1 : 0) : (value == null ? "" : String.valueOf(value));
             EscalatedSettings row = settings.findByKey("newsletter." + key).orElseGet(() -> {
                 EscalatedSettings created = new EscalatedSettings();
                 created.setKey("newsletter." + key);
