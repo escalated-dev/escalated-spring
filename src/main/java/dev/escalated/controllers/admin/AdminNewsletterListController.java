@@ -224,6 +224,10 @@ public class AdminNewsletterListController {
         return auth == null ? null : auth.getName();
     }
 
+    private static Map<String, Object> redirect(String url) {
+        return redirect(url, Map.of());
+    }
+
     private static Map<String, Object> redirect(String url, Map<String, Object> flash) {
         Map<String, Object> body = new LinkedHashMap<>(flash);
         body.put("redirect", url);

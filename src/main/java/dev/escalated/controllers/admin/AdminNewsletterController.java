@@ -334,7 +334,6 @@ public class AdminNewsletterController {
 
     private static NewsletterDelivery previewDelivery(Newsletter newsletter, Contact contact, String token) {
         NewsletterDelivery delivery = new NewsletterDelivery();
-        delivery.setId(0L);
         delivery.setNewsletterId(newsletter.getId());
         delivery.setContactId(contact.getId());
         delivery.setEmailAtSend(contact.getEmail());
