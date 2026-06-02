@@ -111,6 +111,56 @@ spring.jpa.hibernate.ddl-auto=validate
 spring.flyway.enabled=true
 ```
 
+## Ticket subjects
+
+A ticket has a **requester** (who raised it) and a **subject line** (free text).
+Tickets can also be *about* host-app entities — a Project, Customer, asset — that
+are not people. Attach them as **ticket subjects** so agents see what the ticket
+concerns and can jump to the entity in your app.
+
+Implement the `dev.escalated.contracts.TicketSubject` interface on host models and
+register a `TicketSubjectResolver` bean to resolve `type`/`id` pairs for the UI:
+
+```java
+@Component
+public class ProjectTicketSubjectResolver implements TicketSubjectResolver {
+    private final ProjectRepository projects;
+
+    @Override
+    public TicketSubject resolve(String subjectType, String subjectId) {
+        if (!"com.example.Project".equals(subjectType)) {
+            return null;
+        }
+        return projects.findById(subjectId).orElse(null);
+    }
+}
+```
+
+Allow types the admin API may attach (prevents arbitrary type injection):
+
+```yaml
+escalated:
+  ticket-subjects:
+    types:
+      - com.example.Project
+      - com.example.Customer
+```
+
+Attach or detach via the admin API:
+
+```
+POST   /escalated/api/admin/tickets/{ticketId}/subjects   { "type", "id", "role"? }
+DELETE /escalated/api/admin/tickets/{ticketId}/subjects/{linkId}
+```
+
+Ticket detail responses include `subjects[]` with
+`{ type, id, role, title, subtitle, url, color, icon, missing }`. When no
+resolver is registered or the entity is gone, `title` falls back to `type#id`
+and `missing` is `true`.
+
+Programmatic attach via `TicketSubjectService` works for any type when the
+allowlist is empty; the API only accepts allowlisted types.
+
 ## Custom Ticket Actions
 
 Host applications can add custom buttons to the agent ticket screen and handle

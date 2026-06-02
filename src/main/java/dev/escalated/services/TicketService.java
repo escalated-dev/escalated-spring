@@ -47,6 +47,7 @@ public class TicketService {
     private final SlaService slaService;
     private final AuditLogService auditLogService;
     private final ContactRepository contactRepository;
+    private final TicketSubjectService ticketSubjectService;
 
     public TicketService(TicketRepository ticketRepository,
                          ReplyRepository replyRepository,
@@ -58,7 +59,8 @@ public class TicketService {
                          ApplicationEventPublisher eventPublisher,
                          SlaService slaService,
                          AuditLogService auditLogService,
-                         ContactRepository contactRepository) {
+                         ContactRepository contactRepository,
+                         TicketSubjectService ticketSubjectService) {
         this.ticketRepository = ticketRepository;
         this.replyRepository = replyRepository;
         this.tagRepository = tagRepository;
@@ -70,6 +72,7 @@ public class TicketService {
         this.slaService = slaService;
         this.auditLogService = auditLogService;
         this.contactRepository = contactRepository;
+        this.ticketSubjectService = ticketSubjectService;
     }
 
     @Transactional(readOnly = true)
@@ -127,8 +130,10 @@ public class TicketService {
                     link.getLinkType()));
         }
 
-        return new TicketDetailDto(ticket, chatSessionId, chatStartedAt,
+        TicketDetailDto detail = new TicketDetailDto(ticket, chatSessionId, chatStartedAt,
                 chatMessages, chatMetadata, requesterTicketCount, relatedTickets);
+        detail.setSubjects(ticketSubjectService.serializeForTicket(ticket));
+        return detail;
     }
 
     @Transactional(readOnly = true)
