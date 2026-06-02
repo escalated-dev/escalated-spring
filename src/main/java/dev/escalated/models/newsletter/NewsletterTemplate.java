@@ -35,7 +35,7 @@ public class NewsletterTemplate extends BaseEntity {
     private String mergeFieldsSchema;
 
     @Column(name = "created_by")
-    private Long createdBy;
+    private String createdBy;
 
     public String getName() { return name; }
     public void setName(String name) { this.name = name; }
@@ -47,6 +47,6 @@ public class NewsletterTemplate extends BaseEntity {
     public void setBodyMarkdown(String bodyMarkdown) { this.bodyMarkdown = bodyMarkdown; }
     public String getMergeFieldsSchema() { return mergeFieldsSchema; }
     public void setMergeFieldsSchema(String mergeFieldsSchema) { this.mergeFieldsSchema = mergeFieldsSchema; }
-    public Long getCreatedBy() { return createdBy; }
-    public void setCreatedBy(Long createdBy) { this.createdBy = createdBy; }
+    public String getCreatedBy() { return createdBy; }
+    public void setCreatedBy(String createdBy) { this.createdBy = createdBy; }
 }

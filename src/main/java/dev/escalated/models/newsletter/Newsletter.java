@@ -59,10 +59,10 @@ public class Newsletter extends BaseEntity {
     private Instant sentAt;
 
     @Column(name = "created_by")
-    private Long createdBy;
+    private String createdBy;
 
     @Column(name = "sent_by")
-    private Long sentBy;
+    private String sentBy;
 
     @Column(name = "summary_total", nullable = false)
     private int summaryTotal = 0;

@@ -26,7 +26,7 @@ public class NewsletterListMember extends BaseEntity {
     private Instant addedAt = Instant.now();
 
     @Column(name = "added_by")
-    private Long addedBy;
+    private String addedBy;
 
     public Long getListId() { return listId; }
     public void setListId(Long listId) { this.listId = listId; }
@@ -34,6 +34,6 @@ public class NewsletterListMember extends BaseEntity {
     public void setContactId(Long contactId) { this.contactId = contactId; }
     public Instant getAddedAt() { return addedAt; }
     public void setAddedAt(Instant addedAt) { this.addedAt = addedAt; }
-    public Long getAddedBy() { return addedBy; }
-    public void setAddedBy(Long addedBy) { this.addedBy = addedBy; }
+    public String getAddedBy() { return addedBy; }
+    public void setAddedBy(String addedBy) { this.addedBy = addedBy; }
 }
