@@ -41,10 +41,15 @@ public class EscalatedSecurityConfig {
     public SecurityFilterChain escalatedWebSecurityFilterChain(HttpSecurity http) throws Exception {
         http
                 .securityMatcher("/escalated/**")
-                .csrf(csrf -> csrf.ignoringRequestMatchers("/escalated/api/**"))
+                .csrf(csrf -> csrf.ignoringRequestMatchers(
+                        "/escalated/api/**",
+                        "/escalated/n/**",
+                        "/escalated/webhooks/newsletter/**"))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/escalated/ws/**").permitAll()
                         .requestMatchers("/escalated/kb/**").permitAll()
+                        .requestMatchers("/escalated/n/**").permitAll()
+                        .requestMatchers("/escalated/webhooks/newsletter/**").permitAll()
                         .anyRequest().authenticated()
                 );
         return http.build();
