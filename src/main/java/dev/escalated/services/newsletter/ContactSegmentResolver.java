@@ -11,6 +11,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Set;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -18,7 +19,7 @@ import org.springframework.transaction.annotation.Transactional;
 @ConditionalOnProperty(prefix = "escalated.newsletters", name = "enabled", havingValue = "true")
 public class ContactSegmentResolver {
 
-    private static final Set<String> ALLOWED_FIELDS = Set.of(
+    static final Set<String> ALLOWED_FIELDS = Set.of(
             "id", "email", "name", "user_id", "created_at", "updated_at", "marketing_opt_out_at");
 
     private static final Set<String> ALLOWED_OPS = Set.of(
@@ -45,7 +46,7 @@ public class ContactSegmentResolver {
                     .map(m -> m.getContactId())
                     .toList();
         }
-        return applyFilter(list.getFilterJson(), true).stream().map(Contact::getId).toList();
+        return queryIds(list.getFilterJson(), true);
     }
 
     @Transactional(readOnly = true)
@@ -57,31 +58,35 @@ public class ContactSegmentResolver {
             if (memberIds.isEmpty()) {
                 return List.of();
             }
-            return contactRepository.findAllById(memberIds).stream()
-                    .filter(c -> c.getMarketingOptOutAt() == null)
-                    .map(Contact::getId)
-                    .toList();
+            Specification<Contact> spec = (root, query, cb) -> root.get("id").in(memberIds);
+            spec = spec.and((root, query, cb) -> cb.isNull(root.get("marketingOptOutAt")));
+            return contactRepository.findAll(spec).stream().map(Contact::getId).toList();
         }
-        return applyFilter(list.getFilterJson(), false).stream().map(Contact::getId).toList();
+        return queryIds(list.getFilterJson(), false);
     }
 
     @Transactional(readOnly = true)
     public int countMatches(String filterJson) {
-        return applyFilter(filterJson, true).size();
+        List<SegmentRule> rules = parseRules(filterJson);
+        if (rules.isEmpty()) {
+            return (int) contactRepository.count();
+        }
+        return (int) contactRepository.count(ContactSegmentSpecification.forRules(rules, true));
     }
 
-    private List<Contact> applyFilter(String filterJson, boolean includeOptedOut) {
-        List<Contact> contacts = new ArrayList<>(contactRepository.findAll());
-        if (!includeOptedOut) {
-            contacts = contacts.stream().filter(c -> c.getMarketingOptOutAt() == null).toList();
-        }
-        for (SegmentRule rule : parseRules(filterJson)) {
-            contacts = contacts.stream().filter(c -> matches(c, rule)).toList();
-        }
-        return contacts;
+    /** Package-visible for tests — unknown columns must not reach Criteria paths. */
+    static boolean isAllowedField(String field) {
+        return ALLOWED_FIELDS.contains(field.toLowerCase(Locale.ROOT))
+                || field.toLowerCase(Locale.ROOT).startsWith("metadata.");
     }
 
-    private List<SegmentRule> parseRules(String filterJson) {
+    private List<Long> queryIds(String filterJson, boolean includeOptedOut) {
+        List<SegmentRule> rules = parseRules(filterJson);
+        Specification<Contact> spec = ContactSegmentSpecification.forRules(rules, includeOptedOut);
+        return contactRepository.findAll(spec).stream().map(Contact::getId).toList();
+    }
+
+    List<SegmentRule> parseRules(String filterJson) {
         List<SegmentRule> rules = new ArrayList<>();
         if (filterJson == null || filterJson.isBlank()) {
             return rules;
@@ -109,11 +114,6 @@ public class ContactSegmentResolver {
         return rules;
     }
 
-    private static boolean isAllowedField(String field) {
-        return ALLOWED_FIELDS.contains(field.toLowerCase(Locale.ROOT))
-                || field.toLowerCase(Locale.ROOT).startsWith("metadata.");
-    }
-
     private static String text(JsonNode node, String key) {
         JsonNode value = node.get(key);
         return value == null || value.isNull() ? null : value.asText();
@@ -132,91 +132,5 @@ public class ContactSegmentResolver {
         return value.toString();
     }
 
-    private boolean matches(Contact contact, SegmentRule rule) {
-        String actual = resolveField(contact, rule.field());
-        return switch (rule.op()) {
-            case "is_null" -> actual == null;
-            case "not_null" -> actual != null;
-            case "=" -> compare(actual, rule.value()) == 0;
-            case "!=" -> compare(actual, rule.value()) != 0;
-            case ">" -> compare(actual, rule.value()) > 0;
-            case ">=" -> compare(actual, rule.value()) >= 0;
-            case "<" -> compare(actual, rule.value()) < 0;
-            case "<=" -> compare(actual, rule.value()) <= 0;
-            case "contains" -> actual != null && rule.value() != null
-                    && actual.toLowerCase(Locale.ROOT).contains(rule.value().toLowerCase(Locale.ROOT));
-            case "starts_with" -> actual != null && rule.value() != null
-                    && actual.toLowerCase(Locale.ROOT).startsWith(rule.value().toLowerCase(Locale.ROOT));
-            case "ends_with" -> actual != null && rule.value() != null
-                    && actual.toLowerCase(Locale.ROOT).endsWith(rule.value().toLowerCase(Locale.ROOT));
-            case "in" -> {
-                if (actual == null || rule.value() == null) {
-                    yield false;
-                }
-                String[] parts = rule.value().split(",");
-                boolean found = false;
-                for (String part : parts) {
-                    if (actual.equalsIgnoreCase(part.trim())) {
-                        found = true;
-                        break;
-                    }
-                }
-                yield found;
-            }
-            default -> false;
-        };
-    }
-
-    private String resolveField(Contact contact, String field) {
-        String normalized = field.toLowerCase(Locale.ROOT);
-        if (normalized.startsWith("metadata.")) {
-            String key = field.substring("metadata.".length());
-            try {
-                JsonNode root = objectMapper.readTree(
-                        contact.getMetadataJson() == null ? "{}" : contact.getMetadataJson());
-                JsonNode value = root.get(key);
-                return value == null || value.isNull() ? null : value.asText();
-            } catch (Exception ex) {
-                return null;
-            }
-        }
-        return switch (normalized) {
-            case "id" -> String.valueOf(contact.getId());
-            case "email" -> contact.getEmail();
-            case "name" -> contact.getName();
-            case "user_id" -> contact.getUserId();
-            case "created_at" -> contact.getCreatedAt() == null ? null : contact.getCreatedAt().toString();
-            case "updated_at" -> contact.getUpdatedAt() == null ? null : contact.getUpdatedAt().toString();
-            case "marketing_opt_out_at" -> contact.getMarketingOptOutAt() == null
-                    ? null
-                    : contact.getMarketingOptOutAt().toString();
-            default -> null;
-        };
-    }
-
-    private static int compare(String actual, String expected) {
-        if (actual == null) {
-            return expected == null ? 0 : -1;
-        }
-        if (expected == null) {
-            return 1;
-        }
-        try {
-            java.time.Instant actualInstant = java.time.Instant.parse(actual);
-            java.time.Instant expectedInstant = java.time.Instant.parse(expected);
-            return actualInstant.compareTo(expectedInstant);
-        } catch (Exception ignored) {
-            // fall through
-        }
-        try {
-            double actualNumber = Double.parseDouble(actual);
-            double expectedNumber = Double.parseDouble(expected);
-            return Double.compare(actualNumber, expectedNumber);
-        } catch (NumberFormatException ignored) {
-            // fall through
-        }
-        return actual.compareToIgnoreCase(expected);
-    }
-
-    private record SegmentRule(String field, String op, String value) {}
+    record SegmentRule(String field, String op, String value) {}
 }

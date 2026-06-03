@@ -35,6 +35,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.mail.javamail.JavaMailSender;
 
 @ExtendWith(MockitoExtension.class)
@@ -115,7 +116,8 @@ class NewsletterEngineServiceTest {
         Contact c2 = new Contact();
         c2.setId(2L);
         c2.setMarketingOptOutAt(Instant.now());
-        when(contactRepository.findAllById(List.of(1L, 2L))).thenReturn(List.of(c1, c2));
+        when(contactRepository.findAll(org.mockito.ArgumentMatchers.<Specification<Contact>>any()))
+                .thenReturn(List.of(c1));
 
         assertEquals(List.of(1L, 2L), segments.resolve(list));
         assertEquals(List.of(1L), segments.resolveSendable(list));
@@ -139,6 +141,8 @@ class NewsletterEngineServiceTest {
 
         when(listRepository.findById(1L)).thenReturn(Optional.of(list));
         when(memberRepository.findByListId(1L)).thenReturn(List.of(member(1L), member(2L)));
+        when(contactRepository.findAll(org.mockito.ArgumentMatchers.<Specification<Contact>>any()))
+                .thenReturn(List.of(ok, bounced));
         when(contactRepository.findAllById(List.of(1L, 2L))).thenReturn(List.of(ok, bounced));
         when(settingsRepository.findByKey(BounceSuppressionStore.KEY)).thenReturn(Optional.empty());
         when(settingsRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
