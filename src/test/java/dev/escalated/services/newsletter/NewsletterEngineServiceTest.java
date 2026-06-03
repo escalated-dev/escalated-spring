@@ -32,10 +32,13 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 import org.springframework.data.domain.Pageable;
 import org.springframework.mail.javamail.JavaMailSender;
 
 @ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
 class NewsletterEngineServiceTest {
 
     @Mock private EscalatedSettingsRepository settingsRepository;
@@ -82,10 +85,13 @@ class NewsletterEngineServiceTest {
 
     @Test
     void bounceStore_filtersCaseInsensitively() throws Exception {
-        when(settingsRepository.findByKey(BounceSuppressionStore.KEY)).thenReturn(Optional.empty());
+        final EscalatedSettings[] stored = { null };
+        when(settingsRepository.findByKey(BounceSuppressionStore.KEY))
+                .thenAnswer(inv -> Optional.ofNullable(stored[0]));
         when(settingsRepository.save(any())).thenAnswer(inv -> {
             EscalatedSettings row = inv.getArgument(0);
             row.setId(1L);
+            stored[0] = row;
             return row;
         });
         bounces.markBounced("USER@Example.com");

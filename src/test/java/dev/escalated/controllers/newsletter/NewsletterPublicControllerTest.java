@@ -11,6 +11,7 @@ import dev.escalated.repositories.ContactRepository;
 import dev.escalated.repositories.NewsletterDeliveryRepository;
 import dev.escalated.repositories.NewsletterRepository;
 import dev.escalated.repositories.NewsletterTemplateRepository;
+import dev.escalated.services.ApiTokenService;
 import dev.escalated.services.newsletter.NewsletterRenderer;
 import dev.escalated.services.newsletter.NewsletterTracker;
 import java.util.Optional;
@@ -42,6 +43,8 @@ class NewsletterPublicControllerTest {
     private NewsletterTemplateRepository templates;
     @MockitoBean
     private ContactRepository contacts;
+    @MockitoBean
+    private ApiTokenService apiTokenService;
 
     @Test
     void open_returnsPixelAndRecordsOpen() throws Exception {
