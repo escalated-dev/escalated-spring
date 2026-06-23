@@ -21,6 +21,7 @@ public class EscalatedProperties {
     private EmailProperties email = new EmailProperties();
     private List<TicketActionProperties> ticketActions = new ArrayList<>();
     private TicketSubjectsProperties ticketSubjects = new TicketSubjectsProperties();
+    private NewslettersProperties newsletters = new NewslettersProperties();
 
     public boolean isEnabled() {
         return enabled;
@@ -124,6 +125,14 @@ public class EscalatedProperties {
 
     public void setTicketSubjects(TicketSubjectsProperties ticketSubjects) {
         this.ticketSubjects = ticketSubjects;
+    }
+
+    public NewslettersProperties getNewsletters() {
+        return newsletters;
+    }
+
+    public void setNewsletters(NewslettersProperties newsletters) {
+        this.newsletters = newsletters;
     }
 
     /**
@@ -335,6 +344,145 @@ public class EscalatedProperties {
 
         public void setInboundSecret(String inboundSecret) {
             this.inboundSecret = inboundSecret;
+        }
+    }
+
+    /** Newsletter broadcast feature (off by default). */
+    public static class NewslettersProperties {
+        private boolean enabled = false;
+        private String appUrl = "http://localhost";
+        private String defaultFrom;
+        private String defaultReplyTo;
+        private String defaultTheme = "default";
+        private int rateLimitPerMinute = 60;
+        private int batchSize = 50;
+        private boolean trackingEnabled = true;
+        private double autoPauseBounceRate = 0.05;
+        private int autoPauseThreshold = 100;
+        private int claimTimeoutMinutes = 10;
+        private String brandAccent = "#2563eb";
+        private String brandLogoUrl;
+        private String brandPhysicalAddress;
+        private String themesDir = "";
+
+        public boolean isEnabled() {
+            return enabled;
+        }
+
+        public void setEnabled(boolean enabled) {
+            this.enabled = enabled;
+        }
+
+        public String getAppUrl() {
+            return appUrl;
+        }
+
+        public void setAppUrl(String appUrl) {
+            this.appUrl = appUrl;
+        }
+
+        public String getDefaultFrom() {
+            return defaultFrom;
+        }
+
+        public void setDefaultFrom(String defaultFrom) {
+            this.defaultFrom = defaultFrom;
+        }
+
+        public String getDefaultReplyTo() {
+            return defaultReplyTo;
+        }
+
+        public void setDefaultReplyTo(String defaultReplyTo) {
+            this.defaultReplyTo = defaultReplyTo;
+        }
+
+        public String getDefaultTheme() {
+            return defaultTheme;
+        }
+
+        public void setDefaultTheme(String defaultTheme) {
+            this.defaultTheme = defaultTheme;
+        }
+
+        public int getRateLimitPerMinute() {
+            return rateLimitPerMinute;
+        }
+
+        public void setRateLimitPerMinute(int rateLimitPerMinute) {
+            this.rateLimitPerMinute = rateLimitPerMinute;
+        }
+
+        public int getBatchSize() {
+            return batchSize;
+        }
+
+        public void setBatchSize(int batchSize) {
+            this.batchSize = batchSize;
+        }
+
+        public boolean isTrackingEnabled() {
+            return trackingEnabled;
+        }
+
+        public void setTrackingEnabled(boolean trackingEnabled) {
+            this.trackingEnabled = trackingEnabled;
+        }
+
+        public double getAutoPauseBounceRate() {
+            return autoPauseBounceRate;
+        }
+
+        public void setAutoPauseBounceRate(double autoPauseBounceRate) {
+            this.autoPauseBounceRate = autoPauseBounceRate;
+        }
+
+        public int getAutoPauseThreshold() {
+            return autoPauseThreshold;
+        }
+
+        public void setAutoPauseThreshold(int autoPauseThreshold) {
+            this.autoPauseThreshold = autoPauseThreshold;
+        }
+
+        public int getClaimTimeoutMinutes() {
+            return claimTimeoutMinutes;
+        }
+
+        public void setClaimTimeoutMinutes(int claimTimeoutMinutes) {
+            this.claimTimeoutMinutes = claimTimeoutMinutes;
+        }
+
+        public String getBrandAccent() {
+            return brandAccent;
+        }
+
+        public void setBrandAccent(String brandAccent) {
+            this.brandAccent = brandAccent;
+        }
+
+        public String getBrandLogoUrl() {
+            return brandLogoUrl;
+        }
+
+        public void setBrandLogoUrl(String brandLogoUrl) {
+            this.brandLogoUrl = brandLogoUrl;
+        }
+
+        public String getBrandPhysicalAddress() {
+            return brandPhysicalAddress;
+        }
+
+        public void setBrandPhysicalAddress(String brandPhysicalAddress) {
+            this.brandPhysicalAddress = brandPhysicalAddress;
+        }
+
+        public String getThemesDir() {
+            return themesDir;
+        }
+
+        public void setThemesDir(String themesDir) {
+            this.themesDir = themesDir;
         }
     }
 }

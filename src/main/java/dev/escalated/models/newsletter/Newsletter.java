@@ -116,4 +116,8 @@ public class Newsletter extends BaseEntity {
     public void incrementSummaryBounced() { this.summaryBounced++; }
     public int getSummaryComplained() { return summaryComplained; }
     public void incrementSummaryComplained() { this.summaryComplained++; }
+    public String getCreatedBy() { return createdBy; }
+    public void setCreatedBy(String createdBy) { this.createdBy = createdBy; }
+    public String getSentBy() { return sentBy; }
+    public void setSentBy(String sentBy) { this.sentBy = sentBy; }
 }
