@@ -31,6 +31,12 @@ public class EscalatedSecurityConfig {
                         .requestMatchers("/escalated/api/widget/**").permitAll()
                         .requestMatchers("/escalated/api/csat/**").permitAll()
                         .requestMatchers("/escalated/api/guest/**").permitAll()
+                        // Public auth endpoints carry no token yet.
+                        .requestMatchers(
+                                "/escalated/api/v1/auth/login",
+                                "/escalated/api/v1/auth/register",
+                                "/escalated/api/v1/auth/refresh",
+                                "/escalated/api/v1/auth/logout").permitAll()
                         .anyRequest().authenticated()
                 );
         return http.build();
