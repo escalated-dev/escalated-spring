@@ -8,6 +8,7 @@ import dev.escalated.models.Department;
 import dev.escalated.models.Reply;
 import dev.escalated.models.Tag;
 import dev.escalated.models.Ticket;
+import dev.escalated.models.TicketFollower;
 import dev.escalated.models.TicketPriority;
 import dev.escalated.models.TicketStatus;
 import dev.escalated.repositories.AgentProfileRepository;
@@ -15,6 +16,7 @@ import dev.escalated.repositories.DeferredWorkflowJobRepository;
 import dev.escalated.repositories.DepartmentRepository;
 import dev.escalated.repositories.ReplyRepository;
 import dev.escalated.repositories.TagRepository;
+import dev.escalated.repositories.TicketFollowerRepository;
 import dev.escalated.repositories.TicketRepository;
 import java.time.Instant;
 import java.util.HashMap;
@@ -61,6 +63,7 @@ public class WorkflowExecutorService {
     private final DepartmentRepository departmentRepository;
     private final ReplyRepository replyRepository;
     private final DeferredWorkflowJobRepository deferredRepository;
+    private final TicketFollowerRepository ticketFollowerRepository;
 
     public WorkflowExecutorService(
             TicketRepository ticketRepository,
@@ -68,13 +71,15 @@ public class WorkflowExecutorService {
             AgentProfileRepository agentRepository,
             DepartmentRepository departmentRepository,
             ReplyRepository replyRepository,
-            DeferredWorkflowJobRepository deferredRepository) {
+            DeferredWorkflowJobRepository deferredRepository,
+            TicketFollowerRepository ticketFollowerRepository) {
         this.ticketRepository = ticketRepository;
         this.tagRepository = tagRepository;
         this.agentRepository = agentRepository;
         this.departmentRepository = departmentRepository;
         this.replyRepository = replyRepository;
         this.deferredRepository = deferredRepository;
+        this.ticketFollowerRepository = ticketFollowerRepository;
     }
 
     /**
@@ -134,7 +139,17 @@ public class WorkflowExecutorService {
             case "remove_tag" -> removeTag(ticket, value);
             case "add_note" -> addNote(ticket, value);
             case "insert_canned_reply" -> insertCannedReply(ticket, value);
+            case "add_follower" -> addFollower(ticket, value);
             default -> log.warn("[WorkflowExecutor] unknown action type: {}", type);
+        }
+    }
+
+    private void addFollower(Ticket ticket, String value) {
+        if (value == null || value.isBlank() || "0".equals(value)) {
+            return;
+        }
+        if (!ticketFollowerRepository.existsByTicketIdAndUserId(ticket.getId(), value)) {
+            ticketFollowerRepository.save(new TicketFollower(ticket.getId(), value));
         }
     }
 
