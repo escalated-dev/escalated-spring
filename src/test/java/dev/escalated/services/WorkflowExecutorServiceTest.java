@@ -14,6 +14,7 @@ import dev.escalated.models.Department;
 import dev.escalated.models.Reply;
 import dev.escalated.models.Tag;
 import dev.escalated.models.Ticket;
+import dev.escalated.models.TicketFollower;
 import dev.escalated.models.TicketPriority;
 import dev.escalated.models.TicketStatus;
 import dev.escalated.repositories.AgentProfileRepository;
@@ -21,6 +22,7 @@ import dev.escalated.repositories.DeferredWorkflowJobRepository;
 import dev.escalated.repositories.DepartmentRepository;
 import dev.escalated.repositories.ReplyRepository;
 import dev.escalated.repositories.TagRepository;
+import dev.escalated.repositories.TicketFollowerRepository;
 import dev.escalated.repositories.TicketRepository;
 import java.time.Instant;
 import java.util.HashSet;
@@ -48,6 +50,7 @@ class WorkflowExecutorServiceTest {
     @Mock private DepartmentRepository departmentRepository;
     @Mock private ReplyRepository replyRepository;
     @Mock private DeferredWorkflowJobRepository deferredRepository;
+    @Mock private TicketFollowerRepository ticketFollowerRepository;
 
     private WorkflowExecutorService executor;
 
@@ -55,7 +58,8 @@ class WorkflowExecutorServiceTest {
     void setUp() {
         executor = new WorkflowExecutorService(
                 ticketRepository, tagRepository, agentRepository,
-                departmentRepository, replyRepository, deferredRepository);
+                departmentRepository, replyRepository, deferredRepository,
+                ticketFollowerRepository);
     }
 
     private Ticket newTicket() {
@@ -80,6 +84,26 @@ class WorkflowExecutorServiceTest {
 
         assertThat(ticket.getPriority()).isEqualTo(TicketPriority.HIGH);
         verify(ticketRepository).save(ticket);
+    }
+
+    @Test
+    void execute_addFollower_recordsFollower() {
+        Ticket ticket = newTicket();
+        when(ticketFollowerRepository.existsByTicketIdAndUserId(1L, "7")).thenReturn(false);
+
+        executor.execute(ticket, "[{\"type\":\"add_follower\",\"value\":\"7\"}]");
+
+        verify(ticketFollowerRepository).save(any(TicketFollower.class));
+    }
+
+    @Test
+    void execute_addFollower_skipsWhenAlreadyFollowing() {
+        Ticket ticket = newTicket();
+        when(ticketFollowerRepository.existsByTicketIdAndUserId(1L, "7")).thenReturn(true);
+
+        executor.execute(ticket, "[{\"type\":\"add_follower\",\"value\":\"7\"}]");
+
+        verify(ticketFollowerRepository, never()).save(any());
     }
 
     @Test
