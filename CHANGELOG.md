@@ -7,6 +7,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- **The test suite runs on PostgreSQL and MySQL as well as H2.** It had only
+  ever seen H2 — the one database no host deploys on. `ESCALATED_TEST_URL` and
+  its companions select the connection, defaulting to H2 so running the suite
+  locally still needs nothing installed.
+
+  Which database the suite is *meant* to be on is passed separately, as
+  `-Pdatabase=...`. That is deliberate: a Gradle daemon started before the
+  environment variables were exported keeps the environment it was started with,
+  so an environment-only check cannot tell a real PostgreSQL leg from one that
+  silently fell back to H2. A command-line property cannot be stale, and
+  `DatabaseEngineTest` compares it against the product name the connection
+  actually reports.
+
+  315 tests pass on all three. `DatabaseConnectionTest` stays pinned to H2
+  whatever the leg: the claim it makes is that two `DataSource`s are two
+  databases, which is the same wiring on every engine.
+
 ### Added
 - **Configurable database connection.** Every repository in the package bound to
   the host's `EntityManagerFactory`, which forced Escalated's tables into the

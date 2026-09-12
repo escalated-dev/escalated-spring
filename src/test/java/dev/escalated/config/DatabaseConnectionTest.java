@@ -39,9 +39,21 @@ class DatabaseConnectionTest {
     @Nested
     @SpringBootTest(classes = HostApplication.class)
     @ActiveProfiles("test")
-    // The package's mail service needs a JavaMailSender to construct; the rest
-    // of the suite never boots a whole context, so nothing configured one.
-    @TestPropertySource(properties = {"spring.mail.host=localhost"})
+    @TestPropertySource(
+            properties = {
+                // The package's mail service needs a JavaMailSender to
+                // construct; the rest of the suite never boots a whole context,
+                // so nothing configured one.
+                "spring.mail.host=localhost",
+                // Pinned to H2 for the same reason as the split case below:
+                // identity between two bean names is the claim, and it is the
+                // same claim on every engine.
+                "spring.datasource.url=jdbc:h2:mem:hostdb_shared;DB_CLOSE_DELAY=-1",
+                "spring.datasource.driver-class-name=org.h2.Driver",
+                "spring.datasource.username=sa",
+                "spring.datasource.password=",
+                "spring.jpa.database-platform=org.hibernate.dialect.H2Dialect",
+            })
     class SharingTheHostsDatabase {
 
         @Autowired private ApplicationContext context;
@@ -86,7 +98,18 @@ class DatabaseConnectionTest {
                 // keeps an in-memory database alive for the whole JVM, so
                 // sharing testdb with the other context would leave that
                 // context's escalated_ tables sitting in it.
+                //
+                // Pinned to H2 whatever leg of the matrix this is: the claim
+                // under test is that two DataSources are two databases, which
+                // is the same wiring on every engine, and two in-memory H2
+                // databases are the only way to get two genuinely empty ones
+                // without a second server. Overriding the URL alone would leave
+                // the profile's driver and dialect pointing elsewhere.
                 "spring.datasource.url=jdbc:h2:mem:hostdb_split;DB_CLOSE_DELAY=-1",
+                "spring.datasource.driver-class-name=org.h2.Driver",
+                "spring.datasource.username=sa",
+                "spring.datasource.password=",
+                "spring.jpa.database-platform=org.hibernate.dialect.H2Dialect",
                 // A genuinely separate database. Pointing this at the host's own
                 // would pass every assertion below and prove nothing.
                 "escalated.datasource.url=jdbc:h2:mem:supportdb;DB_CLOSE_DELAY=-1",

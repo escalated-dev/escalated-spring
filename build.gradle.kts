@@ -51,8 +51,46 @@ dependencies {
     testImplementation("org.springframework.security:spring-security-test")
 }
 
+// The database the suite runs against, chosen from the environment. H2 when
+// nothing is set, so running the tests locally needs nothing installed; CI sets
+// these for the PostgreSQL and MySQL legs.
+//
+// Passed through explicitly rather than relying on the Gradle daemon's
+// environment -- a daemon started before the variables were exported keeps the
+// environment it was started with, which is how a leg silently runs on H2 and
+// reports green. Declaring them as task inputs also makes Gradle re-run the
+// tests when they change, instead of calling the task up to date.
+val databaseEnvironment = listOf(
+    "ESCALATED_TEST_URL",
+    "ESCALATED_TEST_DRIVER_CLASS",
+    "ESCALATED_TEST_USERNAME",
+    "ESCALATED_TEST_PASSWORD",
+    "ESCALATED_TEST_PLATFORM",
+)
+
+// Which database the suite is meant to be running on. Passed as -Pdatabase=...
+// rather than read from the environment on purpose: a Gradle daemon started
+// before the variables were exported keeps the environment it was started with,
+// so an environment-only check cannot tell "postgres leg" from "postgres leg
+// that silently fell back to H2". A command-line property cannot be stale.
+val expectedDatabase = providers.gradleProperty("database").getOrElse("h2")
+
 tasks.withType<Test> {
     useJUnitPlatform()
+
+    // DatabaseEngineTest compares this against what actually answered.
+    systemProperty("escalated.test.database", expectedDatabase)
+    inputs.property("database", expectedDatabase)
+
+    databaseEnvironment.forEach { name ->
+        val value = System.getenv(name)
+
+        inputs.property(name, value).optional(true)
+
+        if (value != null) {
+            environment(name, value)
+        }
+    }
 }
 
 checkstyle {
