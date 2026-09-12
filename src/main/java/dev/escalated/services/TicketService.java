@@ -1,5 +1,6 @@
 package dev.escalated.services;
 
+import dev.escalated.config.EscalatedTransactionManagers;
 import dev.escalated.dto.TicketDetailDto;
 import dev.escalated.events.TicketEvent;
 import dev.escalated.models.AgentProfile;
@@ -75,7 +76,7 @@ public class TicketService {
         this.ticketSubjectService = ticketSubjectService;
     }
 
-    @Transactional(readOnly = true)
+    @Transactional(transactionManager = EscalatedTransactionManagers.ESCALATED, readOnly = true)
     public Ticket findById(Long id) {
         return ticketRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Ticket not found: " + id));
@@ -85,7 +86,7 @@ public class TicketService {
      * Returns a detail DTO for a single ticket, including chat session fields,
      * requester ticket count, and related tickets. Used by show endpoints only.
      */
-    @Transactional(readOnly = true)
+    @Transactional(transactionManager = EscalatedTransactionManagers.ESCALATED, readOnly = true)
     public TicketDetailDto findByIdWithDetail(Long id) {
         Ticket ticket = findById(id);
 
@@ -136,33 +137,33 @@ public class TicketService {
         return detail;
     }
 
-    @Transactional(readOnly = true)
+    @Transactional(transactionManager = EscalatedTransactionManagers.ESCALATED, readOnly = true)
     public Ticket findByTicketNumber(String ticketNumber) {
         return ticketRepository.findByTicketNumber(ticketNumber)
                 .orElseThrow(() -> new EntityNotFoundException("Ticket not found: " + ticketNumber));
     }
 
-    @Transactional(readOnly = true)
+    @Transactional(transactionManager = EscalatedTransactionManagers.ESCALATED, readOnly = true)
     public Page<Ticket> findAll(Pageable pageable) {
         return ticketRepository.findAll(pageable);
     }
 
-    @Transactional(readOnly = true)
+    @Transactional(transactionManager = EscalatedTransactionManagers.ESCALATED, readOnly = true)
     public Page<Ticket> findByStatus(TicketStatus status, Pageable pageable) {
         return ticketRepository.findByStatus(status, pageable);
     }
 
-    @Transactional(readOnly = true)
+    @Transactional(transactionManager = EscalatedTransactionManagers.ESCALATED, readOnly = true)
     public Page<Ticket> findByAssignedAgent(Long agentId, Pageable pageable) {
         return ticketRepository.findByAssignedAgentId(agentId, pageable);
     }
 
-    @Transactional(readOnly = true)
+    @Transactional(transactionManager = EscalatedTransactionManagers.ESCALATED, readOnly = true)
     public Page<Ticket> findByRequesterEmail(String email, Pageable pageable) {
         return ticketRepository.findByRequesterEmail(email, pageable);
     }
 
-    @Transactional
+    @Transactional(transactionManager = EscalatedTransactionManagers.ESCALATED)
     public Ticket create(String subject, String body, String requesterName, String requesterEmail,
                          TicketPriority priority, Long departmentId) {
         Ticket ticket = new Ticket();
@@ -226,7 +227,7 @@ public class TicketService {
         }
     }
 
-    @Transactional
+    @Transactional(transactionManager = EscalatedTransactionManagers.ESCALATED)
     public Ticket update(Long id, String subject, String body, TicketPriority priority) {
         Ticket ticket = findById(id);
         if (subject != null) {
@@ -248,7 +249,7 @@ public class TicketService {
         return saved;
     }
 
-    @Transactional
+    @Transactional(transactionManager = EscalatedTransactionManagers.ESCALATED)
     public Ticket changeStatus(Long id, TicketStatus newStatus, String actorEmail) {
         Ticket ticket = findById(id);
         TicketStatus oldStatus = ticket.getStatus();
@@ -279,7 +280,7 @@ public class TicketService {
         return saved;
     }
 
-    @Transactional
+    @Transactional(transactionManager = EscalatedTransactionManagers.ESCALATED)
     public Ticket assign(Long ticketId, Long agentId, String actorEmail) {
         Ticket ticket = findById(ticketId);
         String oldAgent = ticket.getAssignedAgent() != null ? ticket.getAssignedAgent().getName() : "unassigned";
@@ -299,7 +300,7 @@ public class TicketService {
         return saved;
     }
 
-    @Transactional
+    @Transactional(transactionManager = EscalatedTransactionManagers.ESCALATED)
     public Reply addReply(Long ticketId, String body, String authorName, String authorEmail,
                           String authorType, boolean internal) {
         Ticket ticket = findById(ticketId);
@@ -324,12 +325,12 @@ public class TicketService {
         return saved;
     }
 
-    @Transactional(readOnly = true)
+    @Transactional(transactionManager = EscalatedTransactionManagers.ESCALATED, readOnly = true)
     public List<Reply> getReplies(Long ticketId) {
         return replyRepository.findByTicketIdOrderByCreatedAtAsc(ticketId);
     }
 
-    @Transactional
+    @Transactional(transactionManager = EscalatedTransactionManagers.ESCALATED)
     public Ticket addTag(Long ticketId, String tagName) {
         Ticket ticket = findById(ticketId);
         Tag tag = tagRepository.findByName(tagName).orElseGet(() -> {
@@ -341,14 +342,14 @@ public class TicketService {
         return ticketRepository.save(ticket);
     }
 
-    @Transactional
+    @Transactional(transactionManager = EscalatedTransactionManagers.ESCALATED)
     public Ticket removeTag(Long ticketId, Long tagId) {
         Ticket ticket = findById(ticketId);
         ticket.getTags().removeIf(t -> t.getId().equals(tagId));
         return ticketRepository.save(ticket);
     }
 
-    @Transactional
+    @Transactional(transactionManager = EscalatedTransactionManagers.ESCALATED)
     public Ticket snooze(Long ticketId, Instant until, String actorEmail) {
         Ticket ticket = findById(ticketId);
         ticket.setStatus(TicketStatus.SNOOZED);
@@ -360,7 +361,7 @@ public class TicketService {
         return saved;
     }
 
-    @Transactional
+    @Transactional(transactionManager = EscalatedTransactionManagers.ESCALATED)
     public void wakeUpSnoozedTickets() {
         List<Ticket> snoozed = ticketRepository.findSnoozedTicketsDue(Instant.now());
         for (Ticket ticket : snoozed) {
@@ -372,7 +373,7 @@ public class TicketService {
         }
     }
 
-    @Transactional
+    @Transactional(transactionManager = EscalatedTransactionManagers.ESCALATED)
     public Ticket merge(Long sourceTicketId, Long targetTicketId, String actorEmail) {
         Ticket source = findById(sourceTicketId);
         Ticket target = findById(targetTicketId);
@@ -400,7 +401,7 @@ public class TicketService {
         return target;
     }
 
-    @Transactional
+    @Transactional(transactionManager = EscalatedTransactionManagers.ESCALATED)
     public Ticket split(Long ticketId, String newSubject, String replyIds, String actorEmail) {
         Ticket original = findById(ticketId);
 
@@ -439,7 +440,7 @@ public class TicketService {
         return saved;
     }
 
-    @Transactional
+    @Transactional(transactionManager = EscalatedTransactionManagers.ESCALATED)
     public void delete(Long id, String actorEmail) {
         Ticket ticket = findById(id);
         auditLogService.log("delete", "Ticket", id, actorEmail, null, null);
@@ -447,7 +448,7 @@ public class TicketService {
         ticketRepository.delete(ticket);
     }
 
-    @Transactional(readOnly = true)
+    @Transactional(transactionManager = EscalatedTransactionManagers.ESCALATED, readOnly = true)
     public Ticket findByGuestToken(String token) {
         return ticketRepository.findByGuestAccessToken(token)
                 .orElseThrow(() -> new EntityNotFoundException("Ticket not found for guest token"));

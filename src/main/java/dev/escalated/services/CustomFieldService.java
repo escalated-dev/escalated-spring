@@ -1,5 +1,6 @@
 package dev.escalated.services;
 
+import dev.escalated.config.EscalatedTransactionManagers;
 import dev.escalated.models.CustomField;
 import dev.escalated.models.CustomFieldValue;
 import dev.escalated.repositories.CustomFieldRepository;
@@ -22,18 +23,18 @@ public class CustomFieldService {
         this.customFieldValueRepository = customFieldValueRepository;
     }
 
-    @Transactional(readOnly = true)
+    @Transactional(transactionManager = EscalatedTransactionManagers.ESCALATED, readOnly = true)
     public List<CustomField> findActiveFields() {
         return customFieldRepository.findByActiveTrueOrderBySortOrderAsc();
     }
 
-    @Transactional(readOnly = true)
+    @Transactional(transactionManager = EscalatedTransactionManagers.ESCALATED, readOnly = true)
     public CustomField findById(Long id) {
         return customFieldRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Custom field not found: " + id));
     }
 
-    @Transactional
+    @Transactional(transactionManager = EscalatedTransactionManagers.ESCALATED)
     public CustomField create(String name, String fieldKey, String fieldType,
                               String description, boolean required, String options) {
         CustomField field = new CustomField();
@@ -46,7 +47,7 @@ public class CustomFieldService {
         return customFieldRepository.save(field);
     }
 
-    @Transactional
+    @Transactional(transactionManager = EscalatedTransactionManagers.ESCALATED)
     public CustomField update(Long id, String name, String description, boolean required, boolean active) {
         CustomField field = findById(id);
         field.setName(name);
@@ -56,7 +57,7 @@ public class CustomFieldService {
         return customFieldRepository.save(field);
     }
 
-    @Transactional
+    @Transactional(transactionManager = EscalatedTransactionManagers.ESCALATED)
     public void setFieldValues(Long ticketId, Map<Long, String> fieldValues) {
         for (Map.Entry<Long, String> entry : fieldValues.entrySet()) {
             CustomFieldValue value = customFieldValueRepository
@@ -74,12 +75,12 @@ public class CustomFieldService {
         }
     }
 
-    @Transactional(readOnly = true)
+    @Transactional(transactionManager = EscalatedTransactionManagers.ESCALATED, readOnly = true)
     public List<CustomFieldValue> getFieldValues(Long ticketId) {
         return customFieldValueRepository.findByTicketId(ticketId);
     }
 
-    @Transactional
+    @Transactional(transactionManager = EscalatedTransactionManagers.ESCALATED)
     public void delete(Long id) {
         customFieldRepository.deleteById(id);
     }

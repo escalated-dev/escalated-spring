@@ -2,6 +2,7 @@ package dev.escalated.services.newsletter;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import dev.escalated.config.EscalatedTransactionManagers;
 import dev.escalated.models.EscalatedSettings;
 import dev.escalated.repositories.EscalatedSettingsRepository;
 import java.util.ArrayList;
@@ -27,22 +28,22 @@ public class BounceSuppressionStore {
         this.objectMapper = objectMapper;
     }
 
-    @Transactional
+    @Transactional(transactionManager = EscalatedTransactionManagers.ESCALATED)
     public void markBounced(String email) {
         mark(email);
     }
 
-    @Transactional
+    @Transactional(transactionManager = EscalatedTransactionManagers.ESCALATED)
     public void markComplained(String email) {
         mark(email);
     }
 
-    @Transactional(readOnly = true)
+    @Transactional(transactionManager = EscalatedTransactionManagers.ESCALATED, readOnly = true)
     public boolean isBounced(String email) {
         return load().contains(email.toLowerCase(Locale.ROOT));
     }
 
-    @Transactional(readOnly = true)
+    @Transactional(transactionManager = EscalatedTransactionManagers.ESCALATED, readOnly = true)
     public List<String> filterSendable(List<String> emails) {
         Set<String> suppressed = load();
         List<String> sendable = new ArrayList<>();

@@ -1,5 +1,6 @@
 package dev.escalated.services.newsletter;
 
+import dev.escalated.config.EscalatedTransactionManagers;
 import dev.escalated.config.EscalatedProperties;
 import dev.escalated.models.Contact;
 import dev.escalated.models.newsletter.Newsletter;
@@ -60,7 +61,7 @@ public class NewsletterDispatcher {
         this.mailSender = mailSender;
     }
 
-    @Transactional
+    @Transactional(transactionManager = EscalatedTransactionManagers.ESCALATED)
     public void dispatchBatch() {
         if (!properties.getNewsletters().isEnabled()) {
             return;

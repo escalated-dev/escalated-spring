@@ -1,6 +1,7 @@
 package dev.escalated.services;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import dev.escalated.config.EscalatedTransactionManagers;
 import dev.escalated.config.EscalatedProperties;
 import dev.escalated.models.Webhook;
 import dev.escalated.models.WebhookDelivery;
@@ -49,18 +50,18 @@ public class WebhookService {
                 .build();
     }
 
-    @Transactional(readOnly = true)
+    @Transactional(transactionManager = EscalatedTransactionManagers.ESCALATED, readOnly = true)
     public List<Webhook> findAll() {
         return webhookRepository.findAll();
     }
 
-    @Transactional(readOnly = true)
+    @Transactional(transactionManager = EscalatedTransactionManagers.ESCALATED, readOnly = true)
     public Webhook findById(Long id) {
         return webhookRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Webhook not found: " + id));
     }
 
-    @Transactional
+    @Transactional(transactionManager = EscalatedTransactionManagers.ESCALATED)
     public Webhook create(String url, String secret, String events, String description) {
         URI webhookUri = validateWebhookUrl(url);
         Webhook webhook = new Webhook();
@@ -72,7 +73,7 @@ public class WebhookService {
         return webhookRepository.save(webhook);
     }
 
-    @Transactional
+    @Transactional(transactionManager = EscalatedTransactionManagers.ESCALATED)
     public Webhook update(Long id, String url, String events, String description, boolean active) {
         Webhook webhook = findById(id);
         webhook.setUrl(validateWebhookUrl(url).toString());
@@ -82,12 +83,12 @@ public class WebhookService {
         return webhookRepository.save(webhook);
     }
 
-    @Transactional
+    @Transactional(transactionManager = EscalatedTransactionManagers.ESCALATED)
     public void delete(Long id) {
         webhookRepository.deleteById(id);
     }
 
-    @Transactional
+    @Transactional(transactionManager = EscalatedTransactionManagers.ESCALATED)
     public void dispatchEvent(String eventName, Long entityId) {
         List<Webhook> webhooks = webhookRepository.findActiveByEvent(eventName);
         for (Webhook webhook : webhooks) {
@@ -251,7 +252,7 @@ public class WebhookService {
         }
     }
 
-    @Transactional(readOnly = true)
+    @Transactional(transactionManager = EscalatedTransactionManagers.ESCALATED, readOnly = true)
     public List<WebhookDelivery> getDeliveries(Long webhookId) {
         return deliveryRepository.findByWebhookIdOrderByCreatedAtDesc(webhookId);
     }

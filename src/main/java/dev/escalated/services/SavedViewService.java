@@ -1,5 +1,6 @@
 package dev.escalated.services;
 
+import dev.escalated.config.EscalatedTransactionManagers;
 import dev.escalated.models.SavedView;
 import dev.escalated.repositories.SavedViewRepository;
 import jakarta.persistence.EntityNotFoundException;
@@ -16,18 +17,18 @@ public class SavedViewService {
         this.savedViewRepository = savedViewRepository;
     }
 
-    @Transactional(readOnly = true)
+    @Transactional(transactionManager = EscalatedTransactionManagers.ESCALATED, readOnly = true)
     public List<SavedView> findAccessibleByAgent(Long agentId) {
         return savedViewRepository.findAccessibleByAgent(agentId);
     }
 
-    @Transactional(readOnly = true)
+    @Transactional(transactionManager = EscalatedTransactionManagers.ESCALATED, readOnly = true)
     public SavedView findById(Long id) {
         return savedViewRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Saved view not found: " + id));
     }
 
-    @Transactional
+    @Transactional(transactionManager = EscalatedTransactionManagers.ESCALATED)
     public SavedView create(String name, String filters, String sortBy, String sortDirection,
                             String columns, boolean shared, Long agentId) {
         SavedView view = new SavedView();
@@ -44,7 +45,7 @@ public class SavedViewService {
         return savedViewRepository.save(view);
     }
 
-    @Transactional
+    @Transactional(transactionManager = EscalatedTransactionManagers.ESCALATED)
     public SavedView update(Long id, String name, String filters, String sortBy,
                             String sortDirection, String columns, boolean shared) {
         SavedView view = findById(id);
@@ -57,7 +58,7 @@ public class SavedViewService {
         return savedViewRepository.save(view);
     }
 
-    @Transactional
+    @Transactional(transactionManager = EscalatedTransactionManagers.ESCALATED)
     public void delete(Long id) {
         savedViewRepository.deleteById(id);
     }

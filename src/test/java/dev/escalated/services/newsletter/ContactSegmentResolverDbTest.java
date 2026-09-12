@@ -2,6 +2,7 @@ package dev.escalated.services.newsletter;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import dev.escalated.config.EscalatedPersistenceAliasRegistrar;
 import dev.escalated.models.Contact;
 import dev.escalated.models.newsletter.NewsletterList;
 import dev.escalated.repositories.ContactRepository;
@@ -18,7 +19,14 @@ import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
 @DataJpaTest
-@Import({ContactSegmentResolver.class, ContactSegmentResolverDbTest.JacksonConfig.class})
+// @DataJpaTest is a slice: it does not load Escalated's auto-configuration,
+// so the alias that points escalatedTransactionManager at the host's own
+// transaction manager has to be imported here explicitly.
+@Import({
+    ContactSegmentResolver.class,
+    ContactSegmentResolverDbTest.JacksonConfig.class,
+    EscalatedPersistenceAliasRegistrar.class
+})
 @TestPropertySource(
         properties = {
             "escalated.newsletters.enabled=true",

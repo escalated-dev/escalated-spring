@@ -1,5 +1,6 @@
 package dev.escalated.services.newsletter;
 
+import dev.escalated.config.EscalatedTransactionManagers;
 import dev.escalated.models.AgentProfile;
 import dev.escalated.repositories.AgentProfileRepository;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -19,7 +20,7 @@ public class NewsletterPermissionService {
         this.agentProfiles = agentProfiles;
     }
 
-    @Transactional(readOnly = true)
+    @Transactional(transactionManager = EscalatedTransactionManagers.ESCALATED, readOnly = true)
     public void require(Authentication authentication, String permission) {
         AgentProfile profile = resolveProfile(authentication);
         if (profile.isAdmin()) {

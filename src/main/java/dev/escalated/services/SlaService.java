@@ -1,5 +1,6 @@
 package dev.escalated.services;
 
+import dev.escalated.config.EscalatedTransactionManagers;
 import dev.escalated.models.BusinessSchedule;
 import dev.escalated.models.Holiday;
 import dev.escalated.models.SlaPolicy;
@@ -31,7 +32,7 @@ public class SlaService {
         this.ticketRepository = ticketRepository;
     }
 
-    @Transactional
+    @Transactional(transactionManager = EscalatedTransactionManagers.ESCALATED)
     public void applySlaPolicy(Ticket ticket) {
         slaPolicyRepository.findByPriorityAndActiveTrue(ticket.getPriority()).ifPresent(policy -> {
             ticket.setSlaPolicy(policy);
@@ -51,12 +52,12 @@ public class SlaService {
         });
     }
 
-    @Transactional(readOnly = true)
+    @Transactional(transactionManager = EscalatedTransactionManagers.ESCALATED, readOnly = true)
     public List<Ticket> findBreachingSlaTickets() {
         return ticketRepository.findTicketsBreachingSla(Instant.now());
     }
 
-    @Transactional(readOnly = true)
+    @Transactional(transactionManager = EscalatedTransactionManagers.ESCALATED, readOnly = true)
     public List<Ticket> findBreachingFirstResponseTickets() {
         return ticketRepository.findTicketsBreachingFirstResponse(Instant.now());
     }

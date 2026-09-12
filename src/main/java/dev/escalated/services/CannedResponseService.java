@@ -1,5 +1,6 @@
 package dev.escalated.services;
 
+import dev.escalated.config.EscalatedTransactionManagers;
 import dev.escalated.models.CannedResponse;
 import dev.escalated.repositories.CannedResponseRepository;
 import jakarta.persistence.EntityNotFoundException;
@@ -16,23 +17,23 @@ public class CannedResponseService {
         this.cannedResponseRepository = cannedResponseRepository;
     }
 
-    @Transactional(readOnly = true)
+    @Transactional(transactionManager = EscalatedTransactionManagers.ESCALATED, readOnly = true)
     public List<CannedResponse> findAll() {
         return cannedResponseRepository.findAll();
     }
 
-    @Transactional(readOnly = true)
+    @Transactional(transactionManager = EscalatedTransactionManagers.ESCALATED, readOnly = true)
     public List<CannedResponse> findAccessibleByAgent(Long agentId) {
         return cannedResponseRepository.findAccessibleByAgent(agentId);
     }
 
-    @Transactional(readOnly = true)
+    @Transactional(transactionManager = EscalatedTransactionManagers.ESCALATED, readOnly = true)
     public CannedResponse findById(Long id) {
         return cannedResponseRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Canned response not found: " + id));
     }
 
-    @Transactional
+    @Transactional(transactionManager = EscalatedTransactionManagers.ESCALATED)
     public CannedResponse create(String title, String content, String shortcut, String category,
                                  boolean shared, Long agentId) {
         CannedResponse cr = new CannedResponse();
@@ -45,7 +46,7 @@ public class CannedResponseService {
         return cannedResponseRepository.save(cr);
     }
 
-    @Transactional
+    @Transactional(transactionManager = EscalatedTransactionManagers.ESCALATED)
     public CannedResponse update(Long id, String title, String content, String shortcut, String category) {
         CannedResponse cr = findById(id);
         cr.setTitle(title);
@@ -55,7 +56,7 @@ public class CannedResponseService {
         return cannedResponseRepository.save(cr);
     }
 
-    @Transactional
+    @Transactional(transactionManager = EscalatedTransactionManagers.ESCALATED)
     public void delete(Long id) {
         cannedResponseRepository.deleteById(id);
     }

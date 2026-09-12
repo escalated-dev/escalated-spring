@@ -1,5 +1,6 @@
 package dev.escalated.services;
 
+import dev.escalated.config.EscalatedTransactionManagers;
 import dev.escalated.models.Permission;
 import dev.escalated.models.Role;
 import dev.escalated.repositories.PermissionRepository;
@@ -23,18 +24,18 @@ public class RolePermissionService {
         this.permissionRepository = permissionRepository;
     }
 
-    @Transactional(readOnly = true)
+    @Transactional(transactionManager = EscalatedTransactionManagers.ESCALATED, readOnly = true)
     public List<Role> findAllRoles() {
         return roleRepository.findAll();
     }
 
-    @Transactional(readOnly = true)
+    @Transactional(transactionManager = EscalatedTransactionManagers.ESCALATED, readOnly = true)
     public Role findRoleById(Long id) {
         return roleRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Role not found: " + id));
     }
 
-    @Transactional
+    @Transactional(transactionManager = EscalatedTransactionManagers.ESCALATED)
     public Role createRole(String name, String description, List<Long> permissionIds) {
         Role role = new Role();
         role.setName(name);
@@ -51,7 +52,7 @@ public class RolePermissionService {
         return roleRepository.save(role);
     }
 
-    @Transactional
+    @Transactional(transactionManager = EscalatedTransactionManagers.ESCALATED)
     public Role updateRole(Long id, String name, String description, List<Long> permissionIds) {
         Role role = findRoleById(id);
         if (role.isSystem()) {
@@ -71,7 +72,7 @@ public class RolePermissionService {
         return roleRepository.save(role);
     }
 
-    @Transactional
+    @Transactional(transactionManager = EscalatedTransactionManagers.ESCALATED)
     public void deleteRole(Long id) {
         Role role = findRoleById(id);
         if (role.isSystem()) {
@@ -80,12 +81,12 @@ public class RolePermissionService {
         roleRepository.delete(role);
     }
 
-    @Transactional(readOnly = true)
+    @Transactional(transactionManager = EscalatedTransactionManagers.ESCALATED, readOnly = true)
     public List<Permission> findAllPermissions() {
         return permissionRepository.findAll();
     }
 
-    @Transactional
+    @Transactional(transactionManager = EscalatedTransactionManagers.ESCALATED)
     public Permission createPermission(String name, String description, String category) {
         Permission permission = new Permission();
         permission.setName(name);
@@ -94,7 +95,7 @@ public class RolePermissionService {
         return permissionRepository.save(permission);
     }
 
-    @Transactional(readOnly = true)
+    @Transactional(transactionManager = EscalatedTransactionManagers.ESCALATED, readOnly = true)
     public boolean hasPermission(Long roleId, String permissionName) {
         Role role = findRoleById(roleId);
         return role.hasPermission(permissionName);

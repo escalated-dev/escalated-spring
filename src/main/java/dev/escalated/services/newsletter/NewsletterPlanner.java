@@ -1,5 +1,6 @@
 package dev.escalated.services.newsletter;
 
+import dev.escalated.config.EscalatedTransactionManagers;
 import dev.escalated.models.Contact;
 import dev.escalated.models.newsletter.Newsletter;
 import dev.escalated.models.newsletter.NewsletterDelivery;
@@ -46,7 +47,7 @@ public class NewsletterPlanner {
         this.contacts = contacts;
     }
 
-    @Transactional
+    @Transactional(transactionManager = EscalatedTransactionManagers.ESCALATED)
     public void plan(Newsletter newsletter) {
         newsletter.setStatus("sending");
         newsletters.save(newsletter);

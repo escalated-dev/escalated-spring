@@ -1,5 +1,6 @@
 package dev.escalated.services.newsletter;
 
+import dev.escalated.config.EscalatedTransactionManagers;
 import dev.escalated.models.newsletter.NewsletterDelivery;
 import dev.escalated.repositories.NewsletterDeliveryRepository;
 import dev.escalated.repositories.NewsletterRepository;
@@ -28,7 +29,7 @@ public class NewsletterTracker {
         this.bounces = bounces;
     }
 
-    @Transactional
+    @Transactional(transactionManager = EscalatedTransactionManagers.ESCALATED)
     public void recordOpen(String token) {
         NewsletterDelivery delivery = findByToken(token);
         if (delivery == null || TERMINAL.contains(delivery.getStatus()) || delivery.getOpenedAt() != null) {
@@ -42,7 +43,7 @@ public class NewsletterTracker {
         });
     }
 
-    @Transactional
+    @Transactional(transactionManager = EscalatedTransactionManagers.ESCALATED)
     public void recordClick(String token, String url) {
         NewsletterDelivery delivery = findByToken(token);
         if (delivery == null || TERMINAL.contains(delivery.getStatus())) {
@@ -67,7 +68,7 @@ public class NewsletterTracker {
         }
     }
 
-    @Transactional
+    @Transactional(transactionManager = EscalatedTransactionManagers.ESCALATED)
     public void recordBounce(String token, String type, String reason) {
         if (!"hard".equals(type)) {
             return;
@@ -86,7 +87,7 @@ public class NewsletterTracker {
         bounces.markBounced(delivery.getEmailAtSend());
     }
 
-    @Transactional
+    @Transactional(transactionManager = EscalatedTransactionManagers.ESCALATED)
     public void recordComplaint(String token) {
         NewsletterDelivery delivery = findByToken(token);
         if (delivery == null || "complained".equals(delivery.getStatus())) {

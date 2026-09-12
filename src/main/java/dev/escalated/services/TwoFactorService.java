@@ -1,5 +1,6 @@
 package dev.escalated.services;
 
+import dev.escalated.config.EscalatedTransactionManagers;
 import dev.escalated.models.AgentProfile;
 import dev.escalated.repositories.AgentProfileRepository;
 import jakarta.persistence.EntityNotFoundException;
@@ -25,7 +26,7 @@ public class TwoFactorService {
         this.agentRepository = agentRepository;
     }
 
-    @Transactional
+    @Transactional(transactionManager = EscalatedTransactionManagers.ESCALATED)
     public String enableTwoFactor(Long agentId) {
         AgentProfile agent = agentRepository.findById(agentId)
                 .orElseThrow(() -> new EntityNotFoundException("Agent not found: " + agentId));
@@ -40,7 +41,7 @@ public class TwoFactorService {
         return secret;
     }
 
-    @Transactional
+    @Transactional(transactionManager = EscalatedTransactionManagers.ESCALATED)
     public boolean verifyAndActivate(Long agentId, String code) {
         AgentProfile agent = agentRepository.findById(agentId)
                 .orElseThrow(() -> new EntityNotFoundException("Agent not found: " + agentId));
@@ -72,7 +73,7 @@ public class TwoFactorService {
         return false;
     }
 
-    @Transactional
+    @Transactional(transactionManager = EscalatedTransactionManagers.ESCALATED)
     public void disableTwoFactor(Long agentId) {
         AgentProfile agent = agentRepository.findById(agentId)
                 .orElseThrow(() -> new EntityNotFoundException("Agent not found: " + agentId));

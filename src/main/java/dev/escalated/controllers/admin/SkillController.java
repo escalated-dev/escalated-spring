@@ -1,5 +1,6 @@
 package dev.escalated.controllers.admin;
 
+import dev.escalated.config.EscalatedTransactionManagers;
 import dev.escalated.dtos.admin.CreateSkillDto;
 import dev.escalated.dtos.admin.UpdateSkillDto;
 import dev.escalated.models.Skill;
@@ -45,7 +46,7 @@ public class SkillController {
     }
 
     @PostMapping
-    @Transactional
+    @Transactional(transactionManager = EscalatedTransactionManagers.ESCALATED)
     public ResponseEntity<Map<String, Object>> store(@Valid @RequestBody CreateSkillDto body) {
         try {
             Skill skill = skillService.create(body);
@@ -68,7 +69,7 @@ public class SkillController {
     }
 
     @PutMapping("/{id}")
-    @Transactional
+    @Transactional(transactionManager = EscalatedTransactionManagers.ESCALATED)
     public ResponseEntity<Map<String, Object>> update(
             @PathVariable long id, @Valid @RequestBody UpdateSkillDto body) {
         try {
@@ -85,7 +86,7 @@ public class SkillController {
     }
 
     @DeleteMapping("/{id}")
-    @Transactional
+    @Transactional(transactionManager = EscalatedTransactionManagers.ESCALATED)
     public ResponseEntity<Void> destroy(@PathVariable long id) {
         try {
             skillService.delete(id);

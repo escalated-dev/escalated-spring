@@ -1,5 +1,6 @@
 package dev.escalated.services;
 
+import dev.escalated.config.EscalatedTransactionManagers;
 import dev.escalated.models.SideConversation;
 import dev.escalated.models.SideConversationReply;
 import dev.escalated.repositories.SideConversationRepository;
@@ -18,18 +19,18 @@ public class SideConversationService {
         this.sideConversationRepository = sideConversationRepository;
     }
 
-    @Transactional(readOnly = true)
+    @Transactional(transactionManager = EscalatedTransactionManagers.ESCALATED, readOnly = true)
     public List<SideConversation> findByTicket(Long ticketId) {
         return sideConversationRepository.findByTicketIdOrderByCreatedAtDesc(ticketId);
     }
 
-    @Transactional(readOnly = true)
+    @Transactional(transactionManager = EscalatedTransactionManagers.ESCALATED, readOnly = true)
     public SideConversation findById(Long id) {
         return sideConversationRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Side conversation not found: " + id));
     }
 
-    @Transactional
+    @Transactional(transactionManager = EscalatedTransactionManagers.ESCALATED)
     public SideConversation create(Long ticketId, String subject, String participantEmails,
                                    String initialMessage, String authorName, String authorEmail) {
         SideConversation sc = new SideConversation();
@@ -50,7 +51,7 @@ public class SideConversationService {
         return sideConversationRepository.save(saved);
     }
 
-    @Transactional
+    @Transactional(transactionManager = EscalatedTransactionManagers.ESCALATED)
     public SideConversationReply addReply(Long sideConversationId, String body,
                                           String authorName, String authorEmail) {
         SideConversation sc = findById(sideConversationId);
@@ -64,7 +65,7 @@ public class SideConversationService {
         return reply;
     }
 
-    @Transactional
+    @Transactional(transactionManager = EscalatedTransactionManagers.ESCALATED)
     public void close(Long id) {
         SideConversation sc = findById(id);
         sc.setStatus("closed");
