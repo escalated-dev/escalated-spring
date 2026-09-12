@@ -11,6 +11,7 @@ permissions:
 
 jobs:
   test:
+    name: gradle test - h2
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
@@ -28,4 +29,92 @@ jobs:
         if: always()
         with:
           name: test-results
+          path: build/reports/tests/
+
+  # The same suite against the databases hosts actually deploy on. H2 is the one
+  # nobody runs in production, and the three disagree about enough to matter --
+  # identifier length limits, LIKE case sensitivity, what may carry a column
+  # default, how aggregates come back.
+  #
+  # -Pdatabase is what the guard test compares against. It is a command-line
+  # property rather than an environment variable on purpose: a Gradle daemon
+  # started before the variables were exported keeps the environment it was
+  # started with, so an environment-only check cannot tell a real PostgreSQL leg
+  # from one that silently fell back to H2.
+  #
+  # Both service containers start on both legs. GitHub Actions cannot make a
+  # service conditional, and an empty `image:` is an error rather than a skip.
+  databases:
+    name: gradle test - ${{ matrix.db }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - db: postgres
+            url: jdbc:postgresql://127.0.0.1:5432/escalated_test
+            driver: org.postgresql.Driver
+            username: postgres
+            password: postgres
+            platform: org.hibernate.dialect.PostgreSQLDialect
+          - db: mysql
+            url: jdbc:mysql://127.0.0.1:3306/escalated_test
+            driver: com.mysql.cj.jdbc.Driver
+            username: root
+            password: ''
+            platform: org.hibernate.dialect.MySQLDialect
+
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: escalated_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd=pg_isready
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=10
+
+      mysql:
+        image: mysql:8.4
+        env:
+          MYSQL_ALLOW_EMPTY_PASSWORD: 'yes'
+          MYSQL_DATABASE: escalated_test
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping --silent"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=10
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v6
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v6
+
+      - name: Run Tests
+        env:
+          ESCALATED_TEST_URL: ${{ matrix.url }}
+          ESCALATED_TEST_DRIVER_CLASS: ${{ matrix.driver }}
+          ESCALATED_TEST_USERNAME: ${{ matrix.username }}
+          ESCALATED_TEST_PASSWORD: ${{ matrix.password }}
+          ESCALATED_TEST_PLATFORM: ${{ matrix.platform }}
+        run: ./gradlew test -Pdatabase=${{ matrix.db }}
+
+      - name: Upload Test Results
+        uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: test-results-${{ matrix.db }}
           path: build/reports/tests/
