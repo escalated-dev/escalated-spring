@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.0] - 2026-09-12
+
 ### Changed
 - **The test suite runs on PostgreSQL and MySQL as well as H2.** It had only
   ever seen H2 — the one database no host deploys on. `ESCALATED_TEST_URL` and
