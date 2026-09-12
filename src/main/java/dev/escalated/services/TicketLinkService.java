@@ -1,5 +1,6 @@
 package dev.escalated.services;
 
+import dev.escalated.config.EscalatedTransactionManagers;
 import dev.escalated.models.Ticket;
 import dev.escalated.models.TicketLink;
 import dev.escalated.repositories.TicketLinkRepository;
@@ -21,12 +22,12 @@ public class TicketLinkService {
         this.ticketRepository = ticketRepository;
     }
 
-    @Transactional(readOnly = true)
+    @Transactional(transactionManager = EscalatedTransactionManagers.ESCALATED, readOnly = true)
     public List<TicketLink> findByTicket(Long ticketId) {
         return ticketLinkRepository.findByTicketId(ticketId);
     }
 
-    @Transactional
+    @Transactional(transactionManager = EscalatedTransactionManagers.ESCALATED)
     public TicketLink create(Long sourceTicketId, Long targetTicketId, String linkType) {
         Ticket source = ticketRepository.findById(sourceTicketId)
                 .orElseThrow(() -> new EntityNotFoundException("Source ticket not found: " + sourceTicketId));
@@ -40,7 +41,7 @@ public class TicketLinkService {
         return ticketLinkRepository.save(link);
     }
 
-    @Transactional
+    @Transactional(transactionManager = EscalatedTransactionManagers.ESCALATED)
     public void delete(Long id) {
         ticketLinkRepository.deleteById(id);
     }

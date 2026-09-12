@@ -1,5 +1,6 @@
 package dev.escalated.services;
 
+import dev.escalated.config.EscalatedTransactionManagers;
 import dev.escalated.dtos.admin.AgentSkillEntryDto;
 import dev.escalated.dtos.admin.CreateSkillDto;
 import dev.escalated.dtos.admin.UpdateSkillDto;
@@ -57,7 +58,7 @@ public class SkillService {
         this.agentProfileRepository = agentProfileRepository;
     }
 
-    @Transactional(readOnly = true)
+    @Transactional(transactionManager = EscalatedTransactionManagers.ESCALATED, readOnly = true)
     public Map<String, Object> listForAdmin() {
         List<Skill> skills = skillRepository.findAll(Sort.by("name"));
         List<Map<String, Object>> rows = new ArrayList<>();
@@ -80,12 +81,12 @@ public class SkillService {
         return m;
     }
 
-    @Transactional(readOnly = true)
+    @Transactional(transactionManager = EscalatedTransactionManagers.ESCALATED, readOnly = true)
     public Map<String, Object> getFormContext() {
         return buildFormResponse(null);
     }
 
-    @Transactional(readOnly = true)
+    @Transactional(transactionManager = EscalatedTransactionManagers.ESCALATED, readOnly = true)
     public Map<String, Object> findForEdit(Long id) {
         Skill s = skillRepository
                 .findById(id)
@@ -166,7 +167,7 @@ public class SkillService {
         return m;
     }
 
-    @Transactional
+    @Transactional(transactionManager = EscalatedTransactionManagers.ESCALATED)
     public Skill create(CreateSkillDto dto) {
         validateForCreate(dto);
         Skill s = new Skill();
@@ -180,7 +181,7 @@ public class SkillService {
                 .orElseThrow(() -> new EntityNotFoundException("Skill not found: " + saved.getId()));
     }
 
-    @Transactional
+    @Transactional(transactionManager = EscalatedTransactionManagers.ESCALATED)
     public Skill update(long id, UpdateSkillDto dto) {
         if (!skillRepository.existsById(id)) {
             throw new EntityNotFoundException("Skill not found: " + id);
@@ -197,7 +198,7 @@ public class SkillService {
                 .orElseThrow(() -> new EntityNotFoundException("Skill not found: " + id));
     }
 
-    @Transactional
+    @Transactional(transactionManager = EscalatedTransactionManagers.ESCALATED)
     public void delete(long id) {
         if (!skillRepository.existsById(id)) {
             throw new EntityNotFoundException("Skill not found: " + id);

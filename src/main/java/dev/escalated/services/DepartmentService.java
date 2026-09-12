@@ -1,5 +1,6 @@
 package dev.escalated.services;
 
+import dev.escalated.config.EscalatedTransactionManagers;
 import dev.escalated.models.Department;
 import dev.escalated.repositories.DepartmentRepository;
 import jakarta.persistence.EntityNotFoundException;
@@ -16,18 +17,18 @@ public class DepartmentService {
         this.departmentRepository = departmentRepository;
     }
 
-    @Transactional(readOnly = true)
+    @Transactional(transactionManager = EscalatedTransactionManagers.ESCALATED, readOnly = true)
     public List<Department> findAll() {
         return departmentRepository.findByActiveTrueOrderBySortOrderAsc();
     }
 
-    @Transactional(readOnly = true)
+    @Transactional(transactionManager = EscalatedTransactionManagers.ESCALATED, readOnly = true)
     public Department findById(Long id) {
         return departmentRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Department not found: " + id));
     }
 
-    @Transactional
+    @Transactional(transactionManager = EscalatedTransactionManagers.ESCALATED)
     public Department create(String name, String description) {
         Department department = new Department();
         department.setName(name);
@@ -35,7 +36,7 @@ public class DepartmentService {
         return departmentRepository.save(department);
     }
 
-    @Transactional
+    @Transactional(transactionManager = EscalatedTransactionManagers.ESCALATED)
     public Department update(Long id, String name, String description, boolean active) {
         Department department = findById(id);
         department.setName(name);
@@ -44,7 +45,7 @@ public class DepartmentService {
         return departmentRepository.save(department);
     }
 
-    @Transactional
+    @Transactional(transactionManager = EscalatedTransactionManagers.ESCALATED)
     public void delete(Long id) {
         departmentRepository.deleteById(id);
     }

@@ -1,5 +1,6 @@
 package dev.escalated.services;
 
+import dev.escalated.config.EscalatedTransactionManagers;
 import dev.escalated.models.Ticket;
 import dev.escalated.models.TicketPriority;
 import java.util.ArrayList;
@@ -23,7 +24,7 @@ public class ImportService {
         this.auditLogService = auditLogService;
     }
 
-    @Transactional
+    @Transactional(transactionManager = EscalatedTransactionManagers.ESCALATED)
     public ImportResult importTickets(List<Map<String, String>> rows, String actorEmail) {
         int imported = 0;
         int skipped = 0;

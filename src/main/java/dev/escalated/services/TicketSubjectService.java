@@ -1,5 +1,6 @@
 package dev.escalated.services;
 
+import dev.escalated.config.EscalatedTransactionManagers;
 import dev.escalated.config.EscalatedProperties;
 import dev.escalated.contracts.TicketSubject;
 import dev.escalated.dto.SerializedTicketSubjectDto;
@@ -59,17 +60,17 @@ public class TicketSubjectService {
         return !allowed.isEmpty() && allowed.contains(subjectType);
     }
 
-    @Transactional(readOnly = true)
+    @Transactional(transactionManager = EscalatedTransactionManagers.ESCALATED, readOnly = true)
     public List<TicketSubjectLink> list(Ticket ticket) {
         return linkRepository.findByTicketIdOrderByPositionAsc(ticket.getId());
     }
 
-    @Transactional(readOnly = true)
+    @Transactional(transactionManager = EscalatedTransactionManagers.ESCALATED, readOnly = true)
     public List<TicketSubjectLink> listByTicketId(Long ticketId) {
         return linkRepository.findByTicketIdOrderByPositionAsc(ticketId);
     }
 
-    @Transactional
+    @Transactional(transactionManager = EscalatedTransactionManagers.ESCALATED)
     public TicketSubjectLink attach(Ticket ticket, String subjectType, Object subjectId, String role) {
         assertTypeAllowed(subjectType);
         String id = String.valueOf(subjectId);
@@ -93,14 +94,14 @@ public class TicketSubjectService {
         return linkRepository.save(link);
     }
 
-    @Transactional
+    @Transactional(transactionManager = EscalatedTransactionManagers.ESCALATED)
     public TicketSubjectLink attach(Long ticketId, String subjectType, Object subjectId, String role) {
         Ticket ticket = ticketRepository.findById(ticketId)
                 .orElseThrow(() -> new EntityNotFoundException("Ticket not found: " + ticketId));
         return attach(ticket, subjectType, subjectId, role);
     }
 
-    @Transactional
+    @Transactional(transactionManager = EscalatedTransactionManagers.ESCALATED)
     public void detach(Ticket ticket, Long linkId) {
         TicketSubjectLink link = linkRepository.findByIdAndTicketId(linkId, ticket.getId())
                 .orElseThrow(() -> new EntityNotFoundException(
@@ -108,7 +109,7 @@ public class TicketSubjectService {
         linkRepository.delete(link);
     }
 
-    @Transactional
+    @Transactional(transactionManager = EscalatedTransactionManagers.ESCALATED)
     public void detachByKey(Ticket ticket, String subjectType, Object subjectId) {
         String id = String.valueOf(subjectId);
         linkRepository.findByTicketIdAndSubjectTypeAndSubjectId(ticket.getId(), subjectType, id)
@@ -118,7 +119,7 @@ public class TicketSubjectService {
     /**
      * Replace all subjects on a ticket with the given items, preserving order.
      */
-    @Transactional
+    @Transactional(transactionManager = EscalatedTransactionManagers.ESCALATED)
     public List<TicketSubjectLink> sync(Ticket ticket, List<SyncItem> items) {
         linkRepository.deleteByTicketId(ticket.getId());
 
@@ -137,7 +138,7 @@ public class TicketSubjectService {
         return links;
     }
 
-    @Transactional(readOnly = true)
+    @Transactional(transactionManager = EscalatedTransactionManagers.ESCALATED, readOnly = true)
     public List<SerializedTicketSubjectDto> serializeLinks(List<TicketSubjectLink> links) {
         TicketSubjectResolver resolver = resolverProvider.getIfAvailable();
         List<SerializedTicketSubjectDto> result = new ArrayList<>();
@@ -161,12 +162,12 @@ public class TicketSubjectService {
         return result;
     }
 
-    @Transactional(readOnly = true)
+    @Transactional(transactionManager = EscalatedTransactionManagers.ESCALATED, readOnly = true)
     public List<SerializedTicketSubjectDto> serializeForTicket(Ticket ticket) {
         return serializeLinks(list(ticket));
     }
 
-    @Transactional(readOnly = true)
+    @Transactional(transactionManager = EscalatedTransactionManagers.ESCALATED, readOnly = true)
     public List<SerializedTicketSubjectDto> serializeForTicketId(Long ticketId) {
         return serializeLinks(listByTicketId(ticketId));
     }

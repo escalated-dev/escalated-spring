@@ -1,5 +1,6 @@
 package dev.escalated.services;
 
+import dev.escalated.config.EscalatedTransactionManagers;
 import dev.escalated.models.AgentProfile;
 import dev.escalated.models.ApiToken;
 import dev.escalated.repositories.AgentProfileRepository;
@@ -29,7 +30,7 @@ public class ApiTokenService {
         this.agentRepository = agentRepository;
     }
 
-    @Transactional
+    @Transactional(transactionManager = EscalatedTransactionManagers.ESCALATED)
     public Map<String, Object> createToken(String name, Long agentId, String abilities, Instant expiresAt) {
         AgentProfile agent = agentRepository.findById(agentId)
                 .orElseThrow(() -> new EntityNotFoundException("Agent not found: " + agentId));
@@ -49,7 +50,7 @@ public class ApiTokenService {
         return Map.of("token", saved, "plainTextToken", plainTextToken);
     }
 
-    @Transactional(readOnly = true)
+    @Transactional(transactionManager = EscalatedTransactionManagers.ESCALATED, readOnly = true)
     public ApiToken validateToken(String plainTextToken) {
         String hash = hashToken(plainTextToken);
         ApiToken token = tokenRepository.findByTokenHash(hash)
@@ -63,12 +64,12 @@ public class ApiTokenService {
         return tokenRepository.save(token);
     }
 
-    @Transactional(readOnly = true)
+    @Transactional(transactionManager = EscalatedTransactionManagers.ESCALATED, readOnly = true)
     public List<ApiToken> findByAgent(Long agentId) {
         return tokenRepository.findByAgentIdOrderByCreatedAtDesc(agentId);
     }
 
-    @Transactional
+    @Transactional(transactionManager = EscalatedTransactionManagers.ESCALATED)
     public void delete(Long id) {
         tokenRepository.deleteById(id);
     }

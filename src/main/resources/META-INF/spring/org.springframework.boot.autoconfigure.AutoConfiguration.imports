@@ -1,1 +1,2 @@
 dev.escalated.config.EscalatedAutoConfiguration
+dev.escalated.config.EscalatedDedicatedPersistenceConfiguration

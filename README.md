@@ -200,6 +200,42 @@ public class CrmSyncListener {
 
 Flyway migrations are included and run automatically. The migration creates all tables prefixed with `escalated_` and seeds default roles and permissions.
 
+### A database of Escalated's own
+
+By default Escalated shares your application's `DataSource`, `EntityManagerFactory` and transaction manager — its tables sit alongside yours. Point it somewhere else with one property:
+
+```properties
+escalated.datasource.url=jdbc:postgresql://support-db:5432/support
+```
+
+That is enough. Escalated then gets a persistence unit of its own: its repositories bind to it, its transactions open on it, and its Flyway migrations run against it under a schema history table of their own (`escalated_flyway_schema_history`). Your application's database is left alone entirely — no Escalated tables are created in it and no Escalated transaction is opened on it.
+
+Everything else falls back to your own `spring.datasource.*`, so a second database on the same server needs one line rather than five:
+
+| Property | Default | |
+|---|---|---|
+| `escalated.datasource.url` | *unset* | The only property that decides. Unset, or blank, means "share the host's database" |
+| `escalated.datasource.username` | your `spring.datasource.username` | |
+| `escalated.datasource.password` | your `spring.datasource.password` | |
+| `escalated.datasource.driver-class-name` | derived from the URL | |
+| `escalated.datasource.platform` | detected | Hibernate dialect |
+| `escalated.datasource.ddl-auto` | `none` | Schema management belongs to Flyway |
+| `escalated.datasource.migrate` | `true` | A dedicated database starts empty and nothing else is going to migrate it |
+
+The two need not be the same engine — your application on MySQL and Escalated on PostgreSQL is a supported arrangement.
+
+### Your users stay in your database
+
+Escalated owns no user entity. The admin roles page reads `is_admin` / `is_agent` on `escalated_agent_profiles`, which is one of Escalated's own tables, and ticket columns that reference one of your users hold a plain value with no foreign key behind it.
+
+That is deliberate, and it is what makes the split possible at all: no database can join across two connections. The cost is that Escalated cannot filter or sort its tables by a column that lives on your user — assignment, skill routing and agent load all resolve ids from Escalated's own tables first.
+
+### Transactions
+
+Every `@Transactional` in the package names `escalatedTransactionManager` explicitly. While Escalated shares your database that name is an *alias* of your own transaction manager, so it is the same bean and the same transaction it always was. A host `@Transactional` method that calls into Escalated joins one transaction as before.
+
+Once Escalated has a database of its own, the two are separate transactions, because they are separate connections. A host transaction that rolls back will not roll back the Escalated work it triggered.
+
 ## Internationalization
 
 Translations are consumed from the central [`dev.escalated:escalated-locale`](https://github.com/escalated-dev/escalated-locale) Maven artifact, which ships bundles at `META-INF/escalated/locale/messages_{locale}.properties` on the classpath. The auto-configured `MessageSource` chains two basenames so host apps can override keys without forking the central bundle:

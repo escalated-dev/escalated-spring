@@ -3,6 +3,17 @@ package dev.escalated.services;
 import java.util.*;
 import java.util.regex.*;
 
+import org.springframework.stereotype.Component;
+
+/**
+ * Stateless evaluator for Workflow conditions and action shapes.
+ *
+ * <p>Registered as a component because {@code WorkflowRunnerService} takes it as
+ * a constructor dependency. It carried no stereotype before, so no application
+ * context that component-scanned this package could start -- the whole test
+ * suite is Mockito and slice tests, so nothing ever tried.
+ */
+@Component
 public class WorkflowEngine {
 
     public static final List<String> OPERATORS = List.of("equals", "not_equals", "contains", "not_contains", "starts_with", "ends_with", "greater_than", "less_than", "greater_or_equal", "less_or_equal", "is_empty", "is_not_empty");

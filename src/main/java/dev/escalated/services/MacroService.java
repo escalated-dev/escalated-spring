@@ -2,6 +2,7 @@ package dev.escalated.services;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import dev.escalated.config.EscalatedTransactionManagers;
 import dev.escalated.models.Macro;
 import dev.escalated.models.Ticket;
 import dev.escalated.models.TicketPriority;
@@ -32,23 +33,23 @@ public class MacroService {
         this.objectMapper = objectMapper;
     }
 
-    @Transactional(readOnly = true)
+    @Transactional(transactionManager = EscalatedTransactionManagers.ESCALATED, readOnly = true)
     public List<Macro> findAll() {
         return macroRepository.findByActiveTrueOrderBySortOrderAsc();
     }
 
-    @Transactional(readOnly = true)
+    @Transactional(transactionManager = EscalatedTransactionManagers.ESCALATED, readOnly = true)
     public List<Macro> findAccessibleByAgent(Long agentId) {
         return macroRepository.findAccessibleByAgent(agentId);
     }
 
-    @Transactional(readOnly = true)
+    @Transactional(transactionManager = EscalatedTransactionManagers.ESCALATED, readOnly = true)
     public Macro findById(Long id) {
         return macroRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Macro not found: " + id));
     }
 
-    @Transactional
+    @Transactional(transactionManager = EscalatedTransactionManagers.ESCALATED)
     public Macro create(String name, String description, String actions, boolean shared, Long agentId) {
         Macro macro = new Macro();
         macro.setName(name);
@@ -59,7 +60,7 @@ public class MacroService {
         return macroRepository.save(macro);
     }
 
-    @Transactional
+    @Transactional(transactionManager = EscalatedTransactionManagers.ESCALATED)
     public void applyMacro(Long macroId, Long ticketId, String actorEmail) {
         Macro macro = findById(macroId);
         Ticket ticket = ticketService.findById(ticketId);
@@ -93,7 +94,7 @@ public class MacroService {
         }
     }
 
-    @Transactional
+    @Transactional(transactionManager = EscalatedTransactionManagers.ESCALATED)
     public void delete(Long id) {
         macroRepository.deleteById(id);
     }

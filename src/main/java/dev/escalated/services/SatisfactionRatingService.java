@@ -1,5 +1,6 @@
 package dev.escalated.services;
 
+import dev.escalated.config.EscalatedTransactionManagers;
 import dev.escalated.models.SatisfactionRating;
 import dev.escalated.models.Ticket;
 import dev.escalated.repositories.SatisfactionRatingRepository;
@@ -22,7 +23,7 @@ public class SatisfactionRatingService {
         this.ticketRepository = ticketRepository;
     }
 
-    @Transactional
+    @Transactional(transactionManager = EscalatedTransactionManagers.ESCALATED)
     public SatisfactionRating createRatingRequest(Long ticketId) {
         Ticket ticket = ticketRepository.findById(ticketId)
                 .orElseThrow(() -> new EntityNotFoundException("Ticket not found: " + ticketId));
@@ -35,7 +36,7 @@ public class SatisfactionRatingService {
         return ratingRepository.save(rating);
     }
 
-    @Transactional
+    @Transactional(transactionManager = EscalatedTransactionManagers.ESCALATED)
     public SatisfactionRating submitRating(String accessToken, int score, String comment) {
         SatisfactionRating rating = ratingRepository.findByAccessToken(accessToken)
                 .orElseThrow(() -> new EntityNotFoundException("Rating not found for token"));
@@ -45,12 +46,12 @@ public class SatisfactionRatingService {
         return ratingRepository.save(rating);
     }
 
-    @Transactional(readOnly = true)
+    @Transactional(transactionManager = EscalatedTransactionManagers.ESCALATED, readOnly = true)
     public List<SatisfactionRating> findByTicket(Long ticketId) {
         return ratingRepository.findByTicketId(ticketId);
     }
 
-    @Transactional(readOnly = true)
+    @Transactional(transactionManager = EscalatedTransactionManagers.ESCALATED, readOnly = true)
     public Double getAverageRating() {
         return ratingRepository.getAverageRating();
     }

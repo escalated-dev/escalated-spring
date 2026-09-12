@@ -6,6 +6,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.databind.node.TextNode;
+import dev.escalated.config.EscalatedTransactionManagers;
 import dev.escalated.models.AuditLog;
 import dev.escalated.repositories.AuditLogRepository;
 import java.util.Iterator;
@@ -38,7 +39,7 @@ public class AuditLogService {
         this.auditLogRepository = auditLogRepository;
     }
 
-    @Transactional
+    @Transactional(transactionManager = EscalatedTransactionManagers.ESCALATED)
     public AuditLog log(String action, String entityType, Long entityId,
                         String actorEmail, String oldValues, String newValues) {
         AuditLog entry = new AuditLog();
@@ -51,7 +52,7 @@ public class AuditLogService {
         return auditLogRepository.save(entry);
     }
 
-    @Transactional
+    @Transactional(transactionManager = EscalatedTransactionManagers.ESCALATED)
     public AuditLog logWithIp(String action, String entityType, Long entityId,
                               String actorEmail, String actorIp, String oldValues, String newValues) {
         AuditLog entry = log(action, entityType, entityId, actorEmail, oldValues, newValues);
@@ -59,17 +60,17 @@ public class AuditLogService {
         return auditLogRepository.save(entry);
     }
 
-    @Transactional(readOnly = true)
+    @Transactional(transactionManager = EscalatedTransactionManagers.ESCALATED, readOnly = true)
     public Page<AuditLog> findAll(Pageable pageable) {
         return auditLogRepository.findAllByOrderByCreatedAtDesc(pageable);
     }
 
-    @Transactional(readOnly = true)
+    @Transactional(transactionManager = EscalatedTransactionManagers.ESCALATED, readOnly = true)
     public List<AuditLog> findByEntity(String entityType, Long entityId) {
         return auditLogRepository.findByEntityTypeAndEntityIdOrderByCreatedAtDesc(entityType, entityId);
     }
 
-    @Transactional(readOnly = true)
+    @Transactional(transactionManager = EscalatedTransactionManagers.ESCALATED, readOnly = true)
     public Page<AuditLog> findByActor(String actorEmail, Pageable pageable) {
         return auditLogRepository.findByActorEmailOrderByCreatedAtDesc(actorEmail, pageable);
     }

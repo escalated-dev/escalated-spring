@@ -1,5 +1,6 @@
 package dev.escalated.services;
 
+import dev.escalated.config.EscalatedTransactionManagers;
 import dev.escalated.models.AgentProfile;
 import dev.escalated.repositories.AgentProfileRepository;
 import jakarta.persistence.EntityNotFoundException;
@@ -28,7 +29,7 @@ public class UserService {
         this.agentRepository = agentRepository;
     }
 
-    @Transactional(readOnly = true)
+    @Transactional(transactionManager = EscalatedTransactionManagers.ESCALATED, readOnly = true)
     public Page<AgentProfile> search(String search, Pageable pageable) {
         String term = (search == null || search.isBlank())
                 ? null
@@ -42,7 +43,7 @@ public class UserService {
      * their own admin role (which would lock them out of the panel they
      * are using).
      */
-    @Transactional
+    @Transactional(transactionManager = EscalatedTransactionManagers.ESCALATED)
     public AgentProfile updateRole(Long targetId, String role, boolean value, Long currentUserId) {
         if (!"admin".equals(role) && !"agent".equals(role)) {
             throw new IllegalArgumentException("Invalid role: " + role);

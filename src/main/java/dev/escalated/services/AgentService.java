@@ -1,5 +1,6 @@
 package dev.escalated.services;
 
+import dev.escalated.config.EscalatedTransactionManagers;
 import dev.escalated.models.AgentCapacity;
 import dev.escalated.models.AgentProfile;
 import dev.escalated.models.AgentSkill;
@@ -38,29 +39,29 @@ public class AgentService {
         this.ticketRepository = ticketRepository;
     }
 
-    @Transactional(readOnly = true)
+    @Transactional(transactionManager = EscalatedTransactionManagers.ESCALATED, readOnly = true)
     public AgentProfile findById(Long id) {
         return agentRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Agent not found: " + id));
     }
 
-    @Transactional(readOnly = true)
+    @Transactional(transactionManager = EscalatedTransactionManagers.ESCALATED, readOnly = true)
     public AgentProfile findByEmail(String email) {
         return agentRepository.findByEmail(email)
                 .orElseThrow(() -> new EntityNotFoundException("Agent not found: " + email));
     }
 
-    @Transactional(readOnly = true)
+    @Transactional(transactionManager = EscalatedTransactionManagers.ESCALATED, readOnly = true)
     public List<AgentProfile> findAll() {
         return agentRepository.findByActiveTrueOrderByName();
     }
 
-    @Transactional(readOnly = true)
+    @Transactional(transactionManager = EscalatedTransactionManagers.ESCALATED, readOnly = true)
     public List<AgentProfile> findByDepartment(Long departmentId) {
         return agentRepository.findByDepartmentIdAndActiveTrueOrderByName(departmentId);
     }
 
-    @Transactional
+    @Transactional(transactionManager = EscalatedTransactionManagers.ESCALATED)
     public AgentProfile create(String name, String email, Long departmentId, Long roleId) {
         AgentProfile agent = new AgentProfile();
         agent.setName(name);
@@ -85,7 +86,7 @@ public class AgentService {
         return saved;
     }
 
-    @Transactional
+    @Transactional(transactionManager = EscalatedTransactionManagers.ESCALATED)
     public AgentProfile update(Long id, String name, String phone, String signature, boolean available) {
         AgentProfile agent = findById(id);
         if (name != null) {
@@ -97,7 +98,7 @@ public class AgentService {
         return agentRepository.save(agent);
     }
 
-    @Transactional
+    @Transactional(transactionManager = EscalatedTransactionManagers.ESCALATED)
     public void updateCapacity(Long agentId, int maxTickets, int weight) {
         AgentCapacity capacity = capacityRepository.findByAgentId(agentId)
                 .orElseGet(() -> {
@@ -111,7 +112,7 @@ public class AgentService {
         capacityRepository.save(capacity);
     }
 
-    @Transactional
+    @Transactional(transactionManager = EscalatedTransactionManagers.ESCALATED)
     public void addSkill(Long agentId, Long skillId) {
         if (agentSkillRepository.existsByUserIdAndSkill_Id(agentId, skillId)) {
             return;
@@ -126,12 +127,12 @@ public class AgentService {
         agentSkillRepository.save(row);
     }
 
-    @Transactional
+    @Transactional(transactionManager = EscalatedTransactionManagers.ESCALATED)
     public void removeSkill(Long agentId, Long skillId) {
         agentSkillRepository.deleteByUserIdAndSkill_Id(agentId, skillId);
     }
 
-    @Transactional(readOnly = true)
+    @Transactional(transactionManager = EscalatedTransactionManagers.ESCALATED, readOnly = true)
     public Optional<AgentProfile> findBestAvailableAgent(Long departmentId, Set<Long> requiredSkillIds) {
         List<AgentProfile> candidates;
 
@@ -165,7 +166,7 @@ public class AgentService {
                 }));
     }
 
-    @Transactional
+    @Transactional(transactionManager = EscalatedTransactionManagers.ESCALATED)
     public void refreshCapacityCount(Long agentId) {
         capacityRepository.findByAgentId(agentId).ifPresent(capacity -> {
             int count = ticketRepository.countActiveTicketsByAgent(agentId);

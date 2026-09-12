@@ -1,5 +1,6 @@
 package dev.escalated.services;
 
+import dev.escalated.config.EscalatedTransactionManagers;
 import dev.escalated.models.ChatSession;
 import dev.escalated.models.Reply;
 import dev.escalated.models.Ticket;
@@ -48,7 +49,7 @@ public class ChatSessionService {
     /**
      * Start a new chat session. Creates an underlying ticket with channel "chat".
      */
-    @Transactional
+    @Transactional(transactionManager = EscalatedTransactionManagers.ESCALATED)
     public ChatSession start(String visitorName, String visitorEmail,
                              String initialMessage, Long departmentId) {
         Ticket ticket = ticketService.create(
@@ -89,7 +90,7 @@ public class ChatSessionService {
     /**
      * Agent accepts a waiting chat session.
      */
-    @Transactional
+    @Transactional(transactionManager = EscalatedTransactionManagers.ESCALATED)
     public ChatSession accept(Long sessionId, Long agentId) {
         ChatSession session = findById(sessionId);
 
@@ -114,7 +115,7 @@ public class ChatSessionService {
     /**
      * Send a message within a chat session.
      */
-    @Transactional
+    @Transactional(transactionManager = EscalatedTransactionManagers.ESCALATED)
     public Reply sendMessage(Long sessionId, String body, String authorName,
                              String authorEmail, String authorType) {
         ChatSession session = findById(sessionId);
@@ -137,7 +138,7 @@ public class ChatSessionService {
     /**
      * End a chat session. The underlying ticket is resolved.
      */
-    @Transactional
+    @Transactional(transactionManager = EscalatedTransactionManagers.ESCALATED)
     public ChatSession end(Long sessionId) {
         ChatSession session = findById(sessionId);
 

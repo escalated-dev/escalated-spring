@@ -2,6 +2,7 @@ package dev.escalated.services.newsletter;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import dev.escalated.config.EscalatedTransactionManagers;
 import dev.escalated.models.Contact;
 import dev.escalated.models.newsletter.NewsletterList;
 import dev.escalated.repositories.ContactRepository;
@@ -39,7 +40,7 @@ public class ContactSegmentResolver {
         this.objectMapper = objectMapper;
     }
 
-    @Transactional(readOnly = true)
+    @Transactional(transactionManager = EscalatedTransactionManagers.ESCALATED, readOnly = true)
     public List<Long> resolve(NewsletterList list) {
         if ("static".equals(list.getKind())) {
             return memberRepository.findByListId(list.getId()).stream()
@@ -49,7 +50,7 @@ public class ContactSegmentResolver {
         return queryIds(list.getFilterJson(), true);
     }
 
-    @Transactional(readOnly = true)
+    @Transactional(transactionManager = EscalatedTransactionManagers.ESCALATED, readOnly = true)
     public List<Long> resolveSendable(NewsletterList list) {
         if ("static".equals(list.getKind())) {
             List<Long> memberIds = memberRepository.findByListId(list.getId()).stream()
@@ -65,7 +66,7 @@ public class ContactSegmentResolver {
         return queryIds(list.getFilterJson(), false);
     }
 
-    @Transactional(readOnly = true)
+    @Transactional(transactionManager = EscalatedTransactionManagers.ESCALATED, readOnly = true)
     public int countMatches(String filterJson) {
         List<SegmentRule> rules = parseRules(filterJson);
         if (rules.isEmpty()) {

@@ -1,5 +1,6 @@
 package dev.escalated.services;
 
+import dev.escalated.config.EscalatedTransactionManagers;
 import dev.escalated.models.AgentCapacity;
 import dev.escalated.models.AgentProfile;
 import dev.escalated.models.Tag;
@@ -43,7 +44,7 @@ public class SkillRoutingService {
         this.agentProfileRepository = agentProfileRepository;
     }
 
-    @Transactional(readOnly = true)
+    @Transactional(transactionManager = EscalatedTransactionManagers.ESCALATED, readOnly = true)
     public List<AgentProfile> findMatchingAgents(Ticket ticket) {
         Set<Long> required = new LinkedHashSet<>();
         Set<Long> tagIds = ticket.getTags().stream().map(Tag::getId).collect(Collectors.toSet());
