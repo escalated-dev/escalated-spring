@@ -56,6 +56,35 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - H2 stored a JSON string literal the engine could not parse.
 
   So no workflow with actions ran on either.
+- **Escalated's migrations run, on PostgreSQL as well as MySQL.** They did not run on
+  either. Boot 4 moved Flyway auto-configuration into `spring-boot-flyway`, which
+  Escalated does not bring in, so on a shared database nothing ran them and a host
+  on `ddl-auto=validate` could not start. Flyway 12 also needs a module per
+  database, so on a dedicated database Flyway answered `Unsupported Database` for
+  both engines. The scripts were MySQL-only (`AUTO_INCREMENT`, `MODIFY COLUMN`),
+  and MySQL's V1 fails on MySQL 8, which rejects `TEXT DEFAULT '*'`.
+
+  Escalated now runs its migrations itself, in both database arrangements, from
+  `db/escalated/{postgresql,mysql}` into `escalated_flyway_schema_history`.
+  - The MySQL V1-V10 are byte-for-byte what 0.1.0 shipped, so recorded checksums
+    still match.
+  - A fresh MySQL install runs V1 without the one default MySQL 8 refuses, and is
+    baselined at 1.
+  - An install whose own Flyway applied the scripts from `db/migration` is adopted,
+    and those rows are removed from the host's history.
+- **The migrations create the schema the entities map.** V11 adds:
+  - `escalated_tickets.channel`
+  - timestamps on `escalated_newsletter_list_members`
+  - the `escalated_workflows`, `escalated_workflow_logs`,
+    `escalated_deferred_workflow_jobs`, `escalated_chat_sessions` and
+    `escalated_chat_routing_rules` tables, which no migration had created
+  - corrected types for `proficiency` and `attempt_count`
+
+  `AgentProfile.signature` and `EscalationRule.notifyEmails` now map to the
+  `TEXT` columns the migrations create. New tests run every migration on an
+  empty PostgreSQL and MySQL database and boot with `ddl-auto=validate`.
+- `application-test.properties` moved to the test classpath; the library jar
+  shipped the suite's H2 profile.
 
 ## [0.1.0] - 2026-09-12
 

@@ -51,7 +51,7 @@ public class EscalatedAutoConfiguration {
     @Configuration(proxyBeanMethods = false)
     @Conditional(EscalatedDatabaseCondition.OnSharedDatabase.class)
     @EntityScan(basePackages = "dev.escalated.models")
-    @Import(EscalatedPersistenceAliasRegistrar.class)
+    @Import({EscalatedPersistenceAliasRegistrar.class, EscalatedSharedDatabaseMigrations.class})
     public static class SharedPersistenceConfiguration {
     }
 }

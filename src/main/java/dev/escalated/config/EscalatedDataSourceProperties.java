@@ -43,9 +43,11 @@ public class EscalatedDataSourceProperties {
     private String ddlAuto = "none";
 
     /**
-     * Run Escalated's Flyway migrations against this database on startup.
-     * Defaults to true, because a dedicated database starts empty and nothing
-     * else is going to migrate it.
+     * Run Escalated's Flyway migrations on startup against the database its
+     * tables live on: this one when {@code url} is set, the host's otherwise.
+     * Defaults to true, because nothing else is going to migrate it. They are
+     * recorded in {@code escalated_flyway_schema_history}, apart from any
+     * history of the host's own.
      */
     private boolean migrate = true;
 
