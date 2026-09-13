@@ -1,5 +1,6 @@
 package dev.escalated.security;
 
+import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
@@ -14,9 +15,27 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 public class EscalatedSecurityConfig {
 
     private final ApiTokenAuthenticationFilter apiTokenFilter;
+    private final EscalatedAuthorization authorization;
 
-    public EscalatedSecurityConfig(ApiTokenAuthenticationFilter apiTokenFilter) {
+    public EscalatedSecurityConfig(ApiTokenAuthenticationFilter apiTokenFilter,
+                                   EscalatedAuthorization authorization) {
         this.apiTokenFilter = apiTokenFilter;
+        this.authorization = authorization;
+    }
+
+    /**
+     * Keeps the token filter out of the servlet container's filter chain.
+     *
+     * <p>Boot registers every {@code Filter} bean on {@code /*} unless told
+     * otherwise. This one belongs inside the API security chain below and
+     * nowhere else; registered globally it ran on every request the host
+     * served and answered the host's own {@code Bearer} routes with 401.
+     */
+    @Bean
+    public FilterRegistrationBean<ApiTokenAuthenticationFilter> escalatedApiTokenFilterRegistration() {
+        FilterRegistrationBean<ApiTokenAuthenticationFilter> registration = new FilterRegistrationBean<>(apiTokenFilter);
+        registration.setEnabled(false);
+        return registration;
     }
 
     @Bean
@@ -31,12 +50,15 @@ public class EscalatedSecurityConfig {
                         .requestMatchers("/escalated/api/widget/**").permitAll()
                         .requestMatchers("/escalated/api/csat/**").permitAll()
                         .requestMatchers("/escalated/api/guest/**").permitAll()
-                        // Public auth endpoints carry no token yet.
-                        .requestMatchers(
-                                "/escalated/api/v1/auth/login",
-                                "/escalated/api/v1/auth/register",
-                                "/escalated/api/v1/auth/refresh",
-                                "/escalated/api/v1/auth/logout").permitAll()
+                        // The JSON auth endpoints carry tokens the host issued
+                        // and check them through the host's
+                        // EscalatedApiAuthenticator, answering 401 themselves.
+                        .requestMatchers("/escalated/api/v1/auth/**").permitAll()
+                        // Being logged in is not being staff. The same two
+                        // gates as every other Escalated host: admin, and
+                        // agent-or-admin.
+                        .requestMatchers("/escalated/api/admin/**").access(authorization.admin())
+                        .requestMatchers("/escalated/api/agent/**").access(authorization.agent())
                         .anyRequest().authenticated()
                 );
         return http.build();
@@ -50,11 +72,17 @@ public class EscalatedSecurityConfig {
                 .csrf(csrf -> csrf.ignoringRequestMatchers(
                         "/escalated/api/**",
                         "/escalated/n/**",
+                        "/escalated/webhook/**",
                         "/escalated/webhooks/newsletter/**"))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/escalated/ws/**").permitAll()
                         .requestMatchers("/escalated/kb/**").permitAll()
                         .requestMatchers("/escalated/n/**").permitAll()
+                        // Mail providers have no session and no CSRF token.
+                        // InboundEmailController authenticates them by the
+                        // shared-secret header, and refuses everything while
+                        // no secret is configured.
+                        .requestMatchers("/escalated/webhook/**").permitAll()
                         .requestMatchers("/escalated/webhooks/newsletter/**").permitAll()
                         .anyRequest().authenticated()
                 );

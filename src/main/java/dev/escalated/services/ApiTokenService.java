@@ -50,7 +50,14 @@ public class ApiTokenService {
         return Map.of("token", saved, "plainTextToken", plainTextToken);
     }
 
-    @Transactional(transactionManager = EscalatedTransactionManagers.ESCALATED, readOnly = true)
+    /**
+     * Returns the token with its agent loaded, so the caller can read the agent
+     * after this transaction has closed.
+     *
+     * <p>Read-write on purpose: it records {@code last_used_at}, and a
+     * read-only transaction silently never flushes that update.
+     */
+    @Transactional(transactionManager = EscalatedTransactionManagers.ESCALATED)
     public ApiToken validateToken(String plainTextToken) {
         String hash = hashToken(plainTextToken);
         ApiToken token = tokenRepository.findByTokenHash(hash)

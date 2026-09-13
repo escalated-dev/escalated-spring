@@ -100,8 +100,8 @@ escalated.snooze.check-interval-seconds=60
 escalated.webhook.max-retries=3
 
 # Inbound email (symmetric secret used for signed Reply-To + webhook verification)
-escalated.mail.domain=support.yourapp.com
-escalated.mail.inbound-secret=${ESCALATED_INBOUND_SECRET}
+escalated.email.domain=support.yourapp.com
+escalated.email.inbound-secret=${ESCALATED_INBOUND_SECRET}
 
 # Database (example for PostgreSQL)
 spring.datasource.url=jdbc:postgresql://localhost:5432/myapp
@@ -342,6 +342,23 @@ dev.escalated/
 ```
 
 ## Authentication
+
+### Who may call what
+
+| Path | Requires |
+|---|---|
+| `/escalated/api/admin/**` | an admin |
+| `/escalated/api/agent/**` | an agent or an admin |
+| `/escalated/api/customer/**`, `/escalated/api/attachments/**` | any authenticated user |
+| `/escalated/api/widget/**`, `/escalated/api/guest/**`, `/escalated/api/csat/**` | nothing |
+| `/escalated/api/v1/auth/**` | nothing; the endpoints check host-issued tokens through your `EscalatedApiAuthenticator` |
+| `/escalated/webhook/email/inbound` | the `X-Escalated-Inbound-Secret` header |
+
+An admin is a caller whose `escalated_agent_profiles` row, matched by principal name (email), is active with `is_admin` set; an agent is the same with `is_agent` or `is_admin`. If your roles live in your own user store instead, grant your users `ROLE_ESCALATED_ADMIN` or `ROLE_ESCALATED_AGENT` (`EscalatedAuthorization.ADMIN_ROLE` / `AGENT_ROLE`) and no profile lookup is made.
+
+The API chain is stateless: it authenticates Escalated API tokens and does not read your application's HTTP session.
+
+### API tokens
 
 API endpoints use Bearer token authentication. Create tokens via the admin API:
 
