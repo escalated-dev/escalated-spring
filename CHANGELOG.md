@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.1] - 2026-09-13
+
 ### Security
 - **The admin and agent APIs now check who is calling.** `/escalated/api/admin/**`
   required nothing more than a logged-in user, so any account the host
