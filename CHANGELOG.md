@@ -7,6 +7,35 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Security
+- **The admin and agent APIs now check who is calling.** `/escalated/api/admin/**`
+  required nothing more than a logged-in user, so any account the host
+  authenticated could manage users, roles, settings and webhooks. It now requires
+  an admin, and `/escalated/api/agent/**` an agent or admin — the same two gates
+  as every other Escalated host. The caller is matched to
+  `escalated_agent_profiles` by principal name (email) and must be active with
+  `is_admin` / `is_agent` set; a host that keeps roles in its own user store can
+  grant `ROLE_ESCALATED_ADMIN` / `ROLE_ESCALATED_AGENT` instead.
+
+  **Upgrading:** a host user who reached the admin API before this change and
+  has no admin profile or authority now gets 403.
+
+### Fixed
+- **Inbound email is accepted again.** The web security chain required a login
+  and a CSRF token on `/escalated/webhook/**`, so every provider webhook was
+  refused before `InboundEmailController` could check the shared secret. The
+  secret header is now the only gate, as documented.
+- **A valid API token authenticates.** The token's agent was loaded lazily and
+  read after the transaction closed, so every valid token was answered with 401.
+  Using a token also records `last_used_at`, which a read-only transaction had
+  been silently discarding.
+- **The token filter no longer runs outside Escalated's API chain.** As a plain
+  `Filter` bean Boot registered it on every request, where it answered the
+  host's own `Bearer` routes — and the host-issued tokens sent to
+  `/escalated/api/v1/auth/*` — with 401.
+- The README named the inbound-email properties `escalated.mail.*`; they are
+  `escalated.email.*`.
+
 ## [0.1.0] - 2026-09-12
 
 ### Changed
