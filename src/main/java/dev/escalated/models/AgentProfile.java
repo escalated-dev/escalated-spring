@@ -48,7 +48,8 @@ public class AgentProfile extends BaseEntity {
     @Column
     private String phone;
 
-    @Column
+    // TEXT, as every migration creates it: a signature is no 255-character value.
+    @Column(columnDefinition = "TEXT")
     private String signature;
 
     @Column(name = "two_factor_secret")

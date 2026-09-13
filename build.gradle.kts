@@ -37,6 +37,15 @@ dependencies {
     //   implementation("dev.escalated:escalated-locale:<version>")
 
     implementation("org.flywaydb:flyway-core")
+    // Flyway 10 moved database support out of core. Without these, core
+    // answers "Unsupported Database" for both engines Escalated ships
+    // migrations for.
+    runtimeOnly("org.flywaydb:flyway-database-postgresql")
+    runtimeOnly("org.flywaydb:flyway-mysql")
+    // Compiled against, never shipped: Escalated orders its migrations ahead of
+    // the host's own Flyway when the host has Boot's Flyway support, and does
+    // nothing of the kind when it does not.
+    compileOnly("org.springframework.boot:spring-boot-flyway")
     implementation("com.fasterxml.jackson.core:jackson-databind")
 
     runtimeOnly("com.h2database:h2")
@@ -49,6 +58,9 @@ dependencies {
     testImplementation("org.springframework.boot:spring-boot-starter-data-jpa-test")
     testImplementation("org.springframework.boot:spring-boot-starter-webmvc-test")
     testImplementation("org.springframework.security:spring-security-test")
+    // Boot's Flyway support, so the upgrade test has a host Flyway that
+    // validates its own history after Escalated adopts its old rows.
+    testImplementation("org.springframework.boot:spring-boot-flyway")
 }
 
 // The database the suite runs against, chosen from the environment. H2 when

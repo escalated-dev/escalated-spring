@@ -30,7 +30,8 @@ public class EscalationRule extends BaseEntity {
     @Column(name = "action_target")
     private String actionTarget;
 
-    @Column(name = "notify_emails")
+    // TEXT, as every migration creates it: a list of addresses outgrows 255.
+    @Column(name = "notify_emails", columnDefinition = "TEXT")
     private String notifyEmails;
 
     @Column(name = "is_active", nullable = false)

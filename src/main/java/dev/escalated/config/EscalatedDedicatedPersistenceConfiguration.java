@@ -2,7 +2,6 @@ package dev.escalated.config;
 
 import javax.sql.DataSource;
 
-import org.flywaydb.core.Flyway;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.jdbc.DataSourceBuilder;
 import org.springframework.boot.jpa.EntityManagerFactoryBuilder;
@@ -65,27 +64,13 @@ public class EscalatedDedicatedPersistenceConfiguration {
         // a fact rather than a wiring detail: nothing can hold this DataSource
         // before its schema exists. A dedicated database starts empty and
         // nothing else is going to migrate it.
+        //
+        // No host history to adopt from: this database is Escalated's alone.
         if (properties.isMigrate()) {
-            migrate(dataSource);
+            EscalatedMigrations.migrate(dataSource, null);
         }
 
         return dataSource;
-    }
-
-    /**
-     * Runs Escalated's own migrations against Escalated's own database. The
-     * host's Flyway keeps running against the host's database, untouched, and
-     * the schema history tables are separate so neither sees the other's
-     * versions.
-     */
-    private void migrate(DataSource dataSource) {
-        Flyway.configure()
-                .dataSource(dataSource)
-                .locations("classpath:db/migration")
-                .table("escalated_flyway_schema_history")
-                .baselineOnMigrate(true)
-                .load()
-                .migrate();
     }
 
     @Bean(name = EscalatedPersistenceAliasRegistrar.ENTITY_MANAGER_FACTORY)

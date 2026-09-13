@@ -107,8 +107,8 @@ escalated.email.inbound-secret=${ESCALATED_INBOUND_SECRET}
 spring.datasource.url=jdbc:postgresql://localhost:5432/myapp
 spring.datasource.username=user
 spring.datasource.password=secret
+# Escalated runs its own migrations; see Database Setup
 spring.jpa.hibernate.ddl-auto=validate
-spring.flyway.enabled=true
 ```
 
 ## Ticket subjects
@@ -198,7 +198,17 @@ public class CrmSyncListener {
 
 ## Database Setup
 
-Flyway migrations are included and run automatically. The migration creates all tables prefixed with `escalated_` and seeds default roles and permissions.
+Escalated creates its tables (all prefixed `escalated_`) with Flyway migrations of its own and runs them on startup, before Hibernate validates anything. It does this itself: your application needs no Flyway configuration, and Escalated's migrations never mix with yours.
+
+- **Where they live:** `classpath:db/escalated/postgresql` and `classpath:db/escalated/mysql` (MariaDB uses the MySQL edition). They are deliberately outside `db/migration`, the location Boot's Flyway reads, so your own migrations and Escalated's cannot collide on a version number.
+- **History:** recorded in `escalated_flyway_schema_history`, never in your `flyway_schema_history`.
+- **Engines:** PostgreSQL and MySQL/MariaDB. On anything else, set `escalated.datasource.migrate=false` and create the schema yourself.
+- **Opting out:** `escalated.datasource.migrate=false` skips them, whether Escalated shares your database or has its own.
+
+Upgrading from 0.1.0, which shipped the MySQL scripts in `db/migration`:
+
+- If your own Flyway applied them, Escalated finds their rows in your `flyway_schema_history`, baselines its own history at the highest of them, and removes those rows from yours, so your Flyway does not report them missing. Nothing is run twice.
+- If Hibernate `ddl-auto` created Escalated's tables instead, they are left alone and a warning is logged, as before.
 
 ### A database of Escalated's own
 
@@ -220,7 +230,7 @@ Everything else falls back to your own `spring.datasource.*`, so a second databa
 | `escalated.datasource.driver-class-name` | derived from the URL | |
 | `escalated.datasource.platform` | detected | Hibernate dialect |
 | `escalated.datasource.ddl-auto` | `none` | Schema management belongs to Flyway |
-| `escalated.datasource.migrate` | `true` | A dedicated database starts empty and nothing else is going to migrate it |
+| `escalated.datasource.migrate` | `true` | Run Escalated's migrations on startup; applies to the shared database too |
 
 The two need not be the same engine — your application on MySQL and Escalated on PostgreSQL is a supported arrangement.
 
