@@ -1,6 +1,9 @@
 package dev.escalated.services;
 
 import dev.escalated.models.AgentProfile;
+import org.springframework.context.ApplicationEvent;
+import org.mockito.ArgumentCaptor;
+import dev.escalated.events.ReplyEvent;
 import dev.escalated.models.Reply;
 import dev.escalated.models.Ticket;
 import dev.escalated.models.TicketPriority;
@@ -27,6 +30,7 @@ import org.springframework.context.ApplicationEventPublisher;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.verify;
@@ -188,6 +192,12 @@ class TicketServiceTest {
         assertNotNull(reply);
         assertEquals("Thanks for reaching out", reply.getBody());
         assertNotNull(ticket.getFirstRespondedAt());
+
+        ArgumentCaptor<ApplicationEvent> published = ArgumentCaptor.forClass(ApplicationEvent.class);
+        verify(eventPublisher).publishEvent(published.capture());
+        assertTrue(published.getValue() instanceof ReplyEvent);
+        assertEquals(ReplyEvent.Type.CREATED, ((ReplyEvent) published.getValue()).getType());
+        assertEquals(reply, ((ReplyEvent) published.getValue()).getReply());
     }
 
     @Test

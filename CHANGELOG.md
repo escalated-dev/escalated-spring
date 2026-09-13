@@ -35,6 +35,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `/escalated/api/v1/auth/*` — with 401.
 - The README named the inbound-email properties `escalated.mail.*`; they are
   `escalated.email.*`.
+- **Webhooks and workflows run after the change that raised them, off the
+  request thread.** Both listeners were `@Async`, which does nothing without
+  `@EnableAsync`, and nothing enabled it. A webhook's HTTP call ran on the
+  request thread inside the ticket's transaction, so a failing endpoint rolled
+  the ticket back, and a receiver fetching the ticket could not yet see it.
+
+  Escalated's auto-configuration now enables async execution. Both listeners are
+  `@TransactionalEventListener`s, so they run once the change has committed.
+  Workflows load the ticket again by id on the worker thread.
+
+  **Host impact:** `@EnableAsync` applies application-wide. `@Async` methods
+  elsewhere in a host that had never enabled it now run asynchronously too.
+- **`reply.created` workflows and `reply.*` webhooks fire.**
+  `TicketService.addReply` published no event.
+- **Workflow conditions and actions are stored as JSON.** The `String` fields
+  mapped to `JSON` columns were bound as plain strings:
+  - PostgreSQL rejected the insert (`column "actions" is of type json but
+    expression is of type character varying`).
+  - H2 stored a JSON string literal the engine could not parse.
+
+  So no workflow with actions ran on either.
 
 ## [0.1.0] - 2026-09-12
 

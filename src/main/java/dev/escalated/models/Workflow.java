@@ -2,6 +2,8 @@ package dev.escalated.models;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.persistence.Column;
+import org.hibernate.type.SqlTypes;
+import org.hibernate.annotations.JdbcTypeCode;
 import jakarta.persistence.Entity;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
@@ -24,9 +26,13 @@ public class Workflow extends BaseEntity {
     @Column(name = "trigger_event", nullable = false)
     private String triggerEvent;
 
+    // A JSON column, bound as JSON. Bound as a plain string, PostgreSQL rejects the
+    // write and H2 stores a JSON string literal the workflow engine cannot parse.
+    @JdbcTypeCode(SqlTypes.JSON)
     @Column(columnDefinition = "JSON")
     private String conditions;
 
+    @JdbcTypeCode(SqlTypes.JSON)
     @Column(columnDefinition = "JSON")
     private String actions;
 

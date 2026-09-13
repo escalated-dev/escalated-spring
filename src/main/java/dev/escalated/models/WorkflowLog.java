@@ -3,6 +3,8 @@ package dev.escalated.models;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.persistence.Column;
+import org.hibernate.type.SqlTypes;
+import org.hibernate.annotations.JdbcTypeCode;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
@@ -44,6 +46,9 @@ public class WorkflowLog {
     @Column(name = "conditions_matched", nullable = false)
     private boolean conditionsMatched = true;
 
+    // A JSON column, bound as JSON. Bound as a plain string, PostgreSQL rejects the
+    // write and H2 stores a JSON string literal the workflow engine cannot parse.
+    @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "actions_executed", columnDefinition = "JSON")
     private String actionsExecutedJson;
 
