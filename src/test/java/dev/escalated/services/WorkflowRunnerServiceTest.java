@@ -14,6 +14,7 @@ import dev.escalated.models.TicketPriority;
 import dev.escalated.models.TicketStatus;
 import dev.escalated.models.Workflow;
 import dev.escalated.models.WorkflowLog;
+import dev.escalated.repositories.TicketRepository;
 import dev.escalated.repositories.WorkflowLogRepository;
 import dev.escalated.repositories.WorkflowRepository;
 import java.util.List;
@@ -38,13 +39,14 @@ class WorkflowRunnerServiceTest {
     @Mock private WorkflowRepository workflowRepository;
     @Mock private WorkflowLogRepository workflowLogRepository;
     @Mock private WorkflowExecutorService executor;
+    @Mock private TicketRepository ticketRepository;
 
     private WorkflowRunnerService runner;
 
     @BeforeEach
     void setUp() {
         runner = new WorkflowRunnerService(
-                workflowRepository, workflowLogRepository, new WorkflowEngine(), executor);
+                workflowRepository, workflowLogRepository, new WorkflowEngine(), executor, ticketRepository);
         lenient()
                 .when(workflowLogRepository.save(any(WorkflowLog.class)))
                 .thenAnswer(inv -> {

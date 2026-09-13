@@ -11,6 +11,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 import org.springframework.scheduling.annotation.EnableScheduling;
+import org.springframework.scheduling.annotation.EnableAsync;
 
 @AutoConfiguration
 @ConditionalOnProperty(prefix = "escalated", name = "enabled", havingValue = "true", matchIfMissing = true)
@@ -31,6 +32,9 @@ import org.springframework.scheduling.annotation.EnableScheduling;
         entityManagerFactoryRef = EscalatedPersistenceAliasRegistrar.ENTITY_MANAGER_FACTORY,
         transactionManagerRef = EscalatedPersistenceAliasRegistrar.TRANSACTION_MANAGER)
 @EnableScheduling
+// The webhook and workflow listeners are @Async, which is inert without this:
+// they ran on the caller's thread, inside the caller's transaction.
+@EnableAsync
 @Import(MessageSourceConfig.class)
 public class EscalatedAutoConfiguration {
 

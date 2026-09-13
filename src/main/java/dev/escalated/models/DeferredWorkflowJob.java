@@ -1,6 +1,8 @@
 package dev.escalated.models;
 
 import jakarta.persistence.Column;
+import org.hibernate.type.SqlTypes;
+import org.hibernate.annotations.JdbcTypeCode;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Index;
 import jakarta.persistence.Table;
@@ -30,6 +32,7 @@ public class DeferredWorkflowJob extends BaseEntity {
      * Remaining actions to run after the delay expires. Stored as a
      * JSON array mirroring the shape of {@code Workflow.actions}.
      */
+    @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "remaining_actions", columnDefinition = "JSON", nullable = false)
     private String remainingActionsJson;
 

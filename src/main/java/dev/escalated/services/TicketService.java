@@ -3,6 +3,7 @@ package dev.escalated.services;
 import dev.escalated.config.EscalatedTransactionManagers;
 import dev.escalated.dto.TicketDetailDto;
 import dev.escalated.events.TicketEvent;
+import dev.escalated.events.ReplyEvent;
 import dev.escalated.models.AgentProfile;
 import dev.escalated.models.ChatSession;
 import dev.escalated.models.Reply;
@@ -322,6 +323,7 @@ public class TicketService {
         }
 
         logActivity(ticket, "reply_added", (internal ? "Internal note" : "Reply") + " by " + authorName, authorEmail, null, null);
+        eventPublisher.publishEvent(new ReplyEvent(this, saved, ReplyEvent.Type.CREATED, authorEmail));
         return saved;
     }
 

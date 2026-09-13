@@ -2,9 +2,11 @@ package dev.escalated.services;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import dev.escalated.config.EscalatedTransactionManagers;
 import dev.escalated.models.Ticket;
 import dev.escalated.models.Workflow;
 import dev.escalated.models.WorkflowLog;
+import dev.escalated.repositories.TicketRepository;
 import dev.escalated.repositories.WorkflowLogRepository;
 import dev.escalated.repositories.WorkflowRepository;
 import java.time.Instant;
@@ -14,6 +16,7 @@ import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 /**
  * Orchestrates evaluation + execution of Workflows for a given trigger
@@ -40,16 +43,35 @@ public class WorkflowRunnerService {
     private final WorkflowLogRepository workflowLogRepository;
     private final WorkflowEngine engine;
     private final WorkflowExecutorService executor;
+    private final TicketRepository ticketRepository;
 
     public WorkflowRunnerService(
             WorkflowRepository workflowRepository,
             WorkflowLogRepository workflowLogRepository,
             WorkflowEngine engine,
-            WorkflowExecutorService executor) {
+            WorkflowExecutorService executor,
+            TicketRepository ticketRepository) {
         this.workflowRepository = workflowRepository;
         this.workflowLogRepository = workflowLogRepository;
         this.engine = engine;
         this.executor = executor;
+        this.ticketRepository = ticketRepository;
+    }
+
+    /**
+     * Runs the workflows for {@code triggerEvent} against the ticket with this
+     * id, loaded afresh in a transaction of its own.
+     *
+     * <p>For callers on a different thread from the change that raised the
+     * event, whose ticket instance belongs to a persistence context that has
+     * closed: actions such as {@code add_tag} walk the ticket's lazy
+     * associations, and a closed context cannot load them.
+     */
+    @Transactional(transactionManager = EscalatedTransactionManagers.ESCALATED)
+    public void runForEvent(String triggerEvent, Long ticketId) {
+        ticketRepository.findById(ticketId).ifPresentOrElse(
+                ticket -> runForEvent(triggerEvent, ticket),
+                () -> log.warn("[WorkflowRunner] {} skipped: ticket #{} no longer exists", triggerEvent, ticketId));
     }
 
     /**

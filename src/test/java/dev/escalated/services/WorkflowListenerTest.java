@@ -1,6 +1,7 @@
 package dev.escalated.services;
 
-import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -42,7 +43,7 @@ class WorkflowListenerTest {
         Ticket t = newTicket();
         listener.onTicketEvent(new TicketEvent(this, t, TicketEvent.Type.CREATED, null));
 
-        verify(runner).runForEvent(eq("ticket.created"), eq(t));
+        verify(runner).runForEvent(eq("ticket.created"), eq(1L));
     }
 
     @Test
@@ -50,7 +51,7 @@ class WorkflowListenerTest {
         Ticket t = newTicket();
         listener.onTicketEvent(new TicketEvent(this, t, TicketEvent.Type.UPDATED, null));
 
-        verify(runner).runForEvent(eq("ticket.updated"), eq(t));
+        verify(runner).runForEvent(eq("ticket.updated"), eq(1L));
     }
 
     @Test
@@ -58,7 +59,7 @@ class WorkflowListenerTest {
         Ticket t = newTicket();
         listener.onTicketEvent(new TicketEvent(this, t, TicketEvent.Type.ASSIGNED, null));
 
-        verify(runner).runForEvent(eq("ticket.assigned"), eq(t));
+        verify(runner).runForEvent(eq("ticket.assigned"), eq(1L));
     }
 
     @Test
@@ -66,7 +67,7 @@ class WorkflowListenerTest {
         Ticket t = newTicket();
         listener.onTicketEvent(new TicketEvent(this, t, TicketEvent.Type.STATUS_CHANGED, null));
 
-        verify(runner).runForEvent(eq("ticket.status_changed"), eq(t));
+        verify(runner).runForEvent(eq("ticket.status_changed"), eq(1L));
     }
 
     @Test
@@ -74,7 +75,7 @@ class WorkflowListenerTest {
         Ticket t = newTicket();
         listener.onTicketEvent(new TicketEvent(this, t, TicketEvent.Type.RESOLVED, null));
 
-        verify(runner).runForEvent(eq("ticket.status_changed"), eq(t));
+        verify(runner).runForEvent(eq("ticket.status_changed"), eq(1L));
     }
 
     @Test
@@ -82,7 +83,7 @@ class WorkflowListenerTest {
         Ticket t = newTicket();
         listener.onTicketEvent(new TicketEvent(this, t, TicketEvent.Type.PRIORITY_CHANGED, null));
 
-        verify(runner).runForEvent(eq("ticket.priority_changed"), eq(t));
+        verify(runner).runForEvent(eq("ticket.priority_changed"), eq(1L));
     }
 
     @Test
@@ -90,7 +91,7 @@ class WorkflowListenerTest {
         Ticket t = newTicket();
         listener.onTicketEvent(new TicketEvent(this, t, TicketEvent.Type.REOPENED, null));
 
-        verify(runner).runForEvent(eq("ticket.reopened"), eq(t));
+        verify(runner).runForEvent(eq("ticket.reopened"), eq(1L));
     }
 
     @Test
@@ -98,7 +99,7 @@ class WorkflowListenerTest {
         Ticket t = newTicket();
         listener.onTicketEvent(new TicketEvent(this, t, TicketEvent.Type.MERGED, null));
 
-        verify(runner, never()).runForEvent(any(), any());
+        verify(runner, never()).runForEvent(anyString(), anyLong());
     }
 
     @Test
@@ -106,7 +107,7 @@ class WorkflowListenerTest {
         Ticket t = newTicket();
         listener.onTicketEvent(new TicketEvent(this, t, TicketEvent.Type.DELETED, null));
 
-        verify(runner, never()).runForEvent(any(), any());
+        verify(runner, never()).runForEvent(anyString(), anyLong());
     }
 
     @Test
@@ -116,7 +117,7 @@ class WorkflowListenerTest {
         r.setTicket(t);
         listener.onReplyEvent(new ReplyEvent(this, r, ReplyEvent.Type.CREATED, null));
 
-        verify(runner).runForEvent(eq("reply.created"), eq(t));
+        verify(runner).runForEvent(eq("reply.created"), eq(1L));
     }
 
     @Test
@@ -126,7 +127,7 @@ class WorkflowListenerTest {
         r.setTicket(t);
         listener.onReplyEvent(new ReplyEvent(this, r, ReplyEvent.Type.UPDATED, null));
 
-        verify(runner, never()).runForEvent(any(), any());
+        verify(runner, never()).runForEvent(anyString(), anyLong());
     }
 
     @Test
@@ -134,6 +135,6 @@ class WorkflowListenerTest {
         Reply r = new Reply();
         listener.onReplyEvent(new ReplyEvent(this, r, ReplyEvent.Type.CREATED, null));
 
-        verify(runner, never()).runForEvent(any(), any());
+        verify(runner, never()).runForEvent(anyString(), anyLong());
     }
 }
