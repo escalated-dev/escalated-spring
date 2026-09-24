@@ -17,6 +17,8 @@
 
 # Escalated Spring
 
+[![Views](https://hits.sh/github.com/escalated-dev/escalated-spring.svg?style=flat&label=views&color=007ec6)](https://hits.sh/github.com/escalated-dev/escalated-spring/)
+
 An embeddable helpdesk system for Spring Boot applications. Add a full-featured support desk to any Java application with a single dependency.
 
 ## Features
