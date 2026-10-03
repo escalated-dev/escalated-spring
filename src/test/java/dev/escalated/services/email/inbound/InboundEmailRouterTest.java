@@ -107,6 +107,34 @@ class InboundEmailRouterTest {
     }
 
     @Test
+    void resolveTicket_ignoresHeadersAndSubjectOnceSecretConfigured() {
+        // Message-IDs and references are guessable; with a secret set
+        // only the signed Reply-To links mail to a ticket.
+        properties.getEmail().setInboundSecret(SECRET);
+
+        InboundMessage m = message(
+                "<ticket-42@support.example.com>",
+                "<ticket-42@support.example.com>",
+                "support@example.com",
+                "RE: [ESC-00042] help");
+
+        assertThat(router.resolveTicket(m)).isEmpty();
+    }
+
+    @Test
+    void resolveTicket_signedReplyToWinsOverHeadersOnceSecretConfigured() {
+        properties.getEmail().setInboundSecret(SECRET);
+        Ticket ticket = mockTicket(7, "ESC-00007");
+        when(ticketRepository.findById(7L)).thenReturn(Optional.of(ticket));
+
+        InboundMessage m = message(
+                "<ticket-42@support.example.com>", null,
+                MessageIdUtil.buildReplyTo(7, SECRET, DOMAIN), "RE: [ESC-00042] help");
+
+        assertThat(router.resolveTicket(m)).contains(ticket);
+    }
+
+    @Test
     void resolveTicket_ignoresSignedReplyToWhenSecretBlank() {
         // Even a valid address signed with SOME secret must be
         // ignored when the host hasn't configured one.
