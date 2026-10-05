@@ -7,7 +7,7 @@ import dev.escalated.models.TicketPriority;
 import dev.escalated.services.KnowledgeBaseService;
 import dev.escalated.services.SatisfactionRatingService;
 import dev.escalated.services.TicketService;
-import java.util.List;
+import jakarta.persistence.EntityNotFoundException;
 import java.util.Map;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -49,21 +49,35 @@ public class WidgetController {
     }
 
     @GetMapping("/tickets/{token}")
-    public ResponseEntity<Ticket> getTicketByToken(@PathVariable String token) {
-        return ResponseEntity.ok(ticketService.findByGuestToken(token));
+    public ResponseEntity<?> getTicketByToken(@PathVariable String token) {
+        try {
+            return ResponseEntity.ok(ticketService.findByGuestToken(token));
+        } catch (EntityNotFoundException ex) {
+            return invalidToken();
+        }
     }
 
     @PostMapping("/tickets/{token}/replies")
-    public ResponseEntity<Reply> addReply(@PathVariable String token, @RequestBody Map<String, String> body) {
-        Ticket ticket = ticketService.findByGuestToken(token);
+    public ResponseEntity<?> addReply(@PathVariable String token, @RequestBody Map<String, String> body) {
+        Ticket ticket;
+        try {
+            ticket = ticketService.findByGuestToken(token);
+        } catch (EntityNotFoundException ex) {
+            return invalidToken();
+        }
         Reply reply = ticketService.addReply(ticket.getId(),
                 body.get("body"), body.get("name"), body.get("email"), "customer", false);
         return ResponseEntity.status(201).body(reply);
     }
 
     @GetMapping("/tickets/{token}/replies")
-    public ResponseEntity<List<Reply>> getReplies(@PathVariable String token) {
-        Ticket ticket = ticketService.findByGuestToken(token);
+    public ResponseEntity<?> getReplies(@PathVariable String token) {
+        Ticket ticket;
+        try {
+            ticket = ticketService.findByGuestToken(token);
+        } catch (EntityNotFoundException ex) {
+            return invalidToken();
+        }
         return ResponseEntity.ok(ticketService.getReplies(ticket.getId()));
     }
 
@@ -78,5 +92,10 @@ public class WidgetController {
         int score = Integer.parseInt(body.get("rating").toString());
         String comment = (String) body.get("comment");
         return ResponseEntity.ok(ratingService.submitRating(token, score, comment));
+    }
+
+    /** Matches the NestJS reference's GuestAccessGuard. */
+    private static ResponseEntity<Map<String, String>> invalidToken() {
+        return ResponseEntity.status(403).body(Map.of("error", "Invalid guest access token"));
     }
 }
