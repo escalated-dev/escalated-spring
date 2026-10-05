@@ -39,6 +39,7 @@ public class WidgetController {
     }
 
     @PostMapping("/tickets")
+    @GuestThrottle(GuestThrottle.Scope.TICKET)
     public ResponseEntity<Ticket> createTicket(@RequestBody Map<String, String> body) {
         Ticket ticket = ticketService.create(
                 body.get("subject"),
@@ -56,10 +57,14 @@ public class WidgetController {
     }
 
     @PostMapping("/tickets/{token}/replies")
+    // Counted before the token lookup, so wrong-token guesses count too.
+    @GuestThrottle(GuestThrottle.Scope.REPLY)
     public ResponseEntity<GuestReplyDto> addReply(@PathVariable String token, @RequestBody Map<String, String> body) {
         Ticket ticket = ticketService.findByGuestToken(token);
+        // The guest token belongs to the requester, so the reply is theirs;
+        // any name or email in the body is ignored (as in the NestJS reference).
         Reply reply = ticketService.addReply(ticket.getId(),
-                body.get("body"), body.get("name"), body.get("email"), "customer", false);
+                body.get("body"), ticket.getRequesterName(), ticket.getRequesterEmail(), "customer", false);
         return ResponseEntity.status(201).body(GuestReplyDto.from(reply));
     }
 
