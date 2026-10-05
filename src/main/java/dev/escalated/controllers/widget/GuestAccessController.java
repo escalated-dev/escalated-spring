@@ -35,6 +35,8 @@ public class GuestAccessController {
     }
 
     @PostMapping("/tickets/{token}/replies")
+    // Shares the widget reply counter; counted before the token lookup.
+    @GuestThrottle(GuestThrottle.Scope.REPLY)
     public ResponseEntity<Reply> addReply(@PathVariable String token, @RequestBody Map<String, String> body) {
         Ticket ticket = ticketService.findByGuestToken(token);
         return ResponseEntity.status(201).body(ticketService.addReply(
