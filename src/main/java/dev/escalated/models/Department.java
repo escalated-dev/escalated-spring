@@ -1,5 +1,6 @@
 package dev.escalated.models;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.OneToMany;
@@ -25,9 +26,11 @@ public class Department extends BaseEntity {
     @Column(name = "sort_order")
     private int sortOrder = 0;
 
+    @JsonIgnore
     @OneToMany(mappedBy = "department")
     private List<Ticket> tickets = new ArrayList<>();
 
+    @JsonIgnore
     @OneToMany(mappedBy = "department")
     private List<AgentProfile> agents = new ArrayList<>();
 

@@ -1,5 +1,7 @@
 package dev.escalated.controllers.widget;
 
+import dev.escalated.dto.GuestReplyDto;
+import dev.escalated.dto.GuestTicketDto;
 import dev.escalated.models.KnowledgeBaseArticle;
 import dev.escalated.models.Reply;
 import dev.escalated.models.Ticket;
@@ -50,26 +52,25 @@ public class WidgetController {
     }
 
     @GetMapping("/tickets/{token}")
-    public ResponseEntity<Ticket> getTicketByToken(@PathVariable String token) {
-        return ResponseEntity.ok(ticketService.findByGuestToken(token));
+    public ResponseEntity<GuestTicketDto> getTicketByToken(@PathVariable String token) {
+        return ResponseEntity.ok(ticketService.findGuestView(token));
     }
 
     @PostMapping("/tickets/{token}/replies")
     // Counted before the token lookup, so wrong-token guesses count too.
     @GuestThrottle(GuestThrottle.Scope.REPLY)
-    public ResponseEntity<Reply> addReply(@PathVariable String token, @RequestBody Map<String, String> body) {
+    public ResponseEntity<GuestReplyDto> addReply(@PathVariable String token, @RequestBody Map<String, String> body) {
         Ticket ticket = ticketService.findByGuestToken(token);
         // The guest token belongs to the requester, so the reply is theirs;
         // any name or email in the body is ignored (as in the NestJS reference).
         Reply reply = ticketService.addReply(ticket.getId(),
                 body.get("body"), ticket.getRequesterName(), ticket.getRequesterEmail(), "customer", false);
-        return ResponseEntity.status(201).body(reply);
+        return ResponseEntity.status(201).body(GuestReplyDto.from(reply));
     }
 
     @GetMapping("/tickets/{token}/replies")
-    public ResponseEntity<List<Reply>> getReplies(@PathVariable String token) {
-        Ticket ticket = ticketService.findByGuestToken(token);
-        return ResponseEntity.ok(ticketService.getReplies(ticket.getId()));
+    public ResponseEntity<List<GuestReplyDto>> getReplies(@PathVariable String token) {
+        return ResponseEntity.ok(ticketService.findGuestReplies(token));
     }
 
     @GetMapping("/kb/search")

@@ -1,6 +1,7 @@
 package dev.escalated.controllers;
 
 import dev.escalated.controllers.widget.WidgetController;
+import dev.escalated.dto.GuestTicketDto;
 import dev.escalated.models.Ticket;
 import dev.escalated.models.TicketPriority;
 import dev.escalated.models.TicketStatus;
@@ -65,7 +66,7 @@ class WidgetControllerTest {
         ticket.setSubject("Guest Ticket");
         ticket.setGuestAccessToken("token123");
 
-        when(ticketService.findByGuestToken("token123")).thenReturn(ticket);
+        when(ticketService.findGuestView("token123")).thenReturn(GuestTicketDto.from(ticket));
 
         mockMvc.perform(get("/escalated/api/widget/tickets/token123"))
                 .andExpect(status().isOk())

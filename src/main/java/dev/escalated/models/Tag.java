@@ -1,5 +1,6 @@
 package dev.escalated.models;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.ManyToMany;
@@ -19,6 +20,7 @@ public class Tag extends BaseEntity {
     @Column
     private String color;
 
+    @JsonIgnore
     @ManyToMany(mappedBy = "tags")
     private Set<Ticket> tickets = new HashSet<>();
 

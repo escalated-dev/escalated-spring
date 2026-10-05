@@ -1,5 +1,6 @@
 package dev.escalated.models;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -69,6 +70,7 @@ public class AgentProfile extends BaseEntity {
     @OneToOne(mappedBy = "agent", cascade = CascadeType.ALL, orphanRemoval = true)
     private AgentCapacity capacity;
 
+    @JsonIgnore
     @OneToMany(mappedBy = "assignedAgent")
     private List<Ticket> assignedTickets = new ArrayList<>();
 
