@@ -1,6 +1,8 @@
 package dev.escalated.services;
 
 import dev.escalated.config.EscalatedTransactionManagers;
+import dev.escalated.dto.GuestReplyDto;
+import dev.escalated.dto.GuestTicketDto;
 import dev.escalated.dto.TicketDetailDto;
 import dev.escalated.events.TicketEvent;
 import dev.escalated.events.ReplyEvent;
@@ -454,6 +456,21 @@ public class TicketService {
     public Ticket findByGuestToken(String token) {
         return ticketRepository.findByGuestAccessToken(token)
                 .orElseThrow(() -> new EntityNotFoundException("Ticket not found for guest token"));
+    }
+
+    /** The ticket as its guest sees it: public replies only, no staff detail. */
+    @Transactional(transactionManager = EscalatedTransactionManagers.ESCALATED, readOnly = true)
+    public GuestTicketDto findGuestView(String token) {
+        return GuestTicketDto.from(findByGuestToken(token));
+    }
+
+    /** The public replies on the guest's ticket. Internal notes are never included. */
+    @Transactional(transactionManager = EscalatedTransactionManagers.ESCALATED, readOnly = true)
+    public List<GuestReplyDto> findGuestReplies(String token) {
+        Ticket ticket = findByGuestToken(token);
+        return replyRepository.findByTicketIdAndInternalFalseOrderByCreatedAtAsc(ticket.getId()).stream()
+                .map(GuestReplyDto::from)
+                .toList();
     }
 
     private String generateTicketNumber() {
