@@ -37,7 +37,10 @@ public class GuestAccessController {
     @PostMapping("/tickets/{token}/replies")
     public ResponseEntity<Reply> addReply(@PathVariable String token, @RequestBody Map<String, String> body) {
         Ticket ticket = ticketService.findByGuestToken(token);
+        // The guest token belongs to the requester, so the reply is theirs;
+        // any name or email in the body is ignored (as in the NestJS reference).
         return ResponseEntity.status(201).body(ticketService.addReply(
-                ticket.getId(), body.get("body"), body.get("name"), body.get("email"), "customer", false));
+                ticket.getId(), body.get("body"), ticket.getRequesterName(), ticket.getRequesterEmail(),
+                "customer", false));
     }
 }
