@@ -1,7 +1,6 @@
 package dev.escalated.controllers.widget;
 
 import dev.escalated.dto.GuestReplyDto;
-import dev.escalated.dto.GuestTicketDto;
 import dev.escalated.models.KnowledgeBaseArticle;
 import dev.escalated.models.Reply;
 import dev.escalated.models.Ticket;
@@ -9,7 +8,7 @@ import dev.escalated.models.TicketPriority;
 import dev.escalated.services.KnowledgeBaseService;
 import dev.escalated.services.SatisfactionRatingService;
 import dev.escalated.services.TicketService;
-import java.util.List;
+import jakarta.persistence.EntityNotFoundException;
 import java.util.Map;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -52,15 +51,24 @@ public class WidgetController {
     }
 
     @GetMapping("/tickets/{token}")
-    public ResponseEntity<GuestTicketDto> getTicketByToken(@PathVariable String token) {
-        return ResponseEntity.ok(ticketService.findGuestView(token));
+    public ResponseEntity<?> getTicketByToken(@PathVariable String token) {
+        try {
+            return ResponseEntity.ok(ticketService.findGuestView(token));
+        } catch (EntityNotFoundException ex) {
+            return invalidToken();
+        }
     }
 
     @PostMapping("/tickets/{token}/replies")
     // Counted before the token lookup, so wrong-token guesses count too.
     @GuestThrottle(GuestThrottle.Scope.REPLY)
-    public ResponseEntity<GuestReplyDto> addReply(@PathVariable String token, @RequestBody Map<String, String> body) {
-        Ticket ticket = ticketService.findByGuestToken(token);
+    public ResponseEntity<?> addReply(@PathVariable String token, @RequestBody Map<String, String> body) {
+        Ticket ticket;
+        try {
+            ticket = ticketService.findByGuestToken(token);
+        } catch (EntityNotFoundException ex) {
+            return invalidToken();
+        }
         // The guest token belongs to the requester, so the reply is theirs;
         // any name or email in the body is ignored (as in the NestJS reference).
         Reply reply = ticketService.addReply(ticket.getId(),
@@ -69,8 +77,12 @@ public class WidgetController {
     }
 
     @GetMapping("/tickets/{token}/replies")
-    public ResponseEntity<List<GuestReplyDto>> getReplies(@PathVariable String token) {
-        return ResponseEntity.ok(ticketService.findGuestReplies(token));
+    public ResponseEntity<?> getReplies(@PathVariable String token) {
+        try {
+            return ResponseEntity.ok(ticketService.findGuestReplies(token));
+        } catch (EntityNotFoundException ex) {
+            return invalidToken();
+        }
     }
 
     @GetMapping("/kb/search")
@@ -84,5 +96,10 @@ public class WidgetController {
         int score = Integer.parseInt(body.get("rating").toString());
         String comment = (String) body.get("comment");
         return ResponseEntity.ok(ratingService.submitRating(token, score, comment));
+    }
+
+    /** Matches the NestJS reference's GuestAccessGuard. */
+    private static ResponseEntity<Map<String, String>> invalidToken() {
+        return ResponseEntity.status(403).body(Map.of("error", "Invalid guest access token"));
     }
 }
