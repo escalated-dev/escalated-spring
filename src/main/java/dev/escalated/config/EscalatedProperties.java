@@ -18,6 +18,7 @@ public class EscalatedProperties {
     private WebhookProperties webhook = new WebhookProperties();
     private WidgetProperties widget = new WidgetProperties();
     private GuestAccessProperties guestAccess = new GuestAccessProperties();
+    private GuestRateLimitProperties guestRateLimit = new GuestRateLimitProperties();
     private EmailProperties email = new EmailProperties();
     private List<TicketActionProperties> ticketActions = new ArrayList<>();
     private TicketSubjectsProperties ticketSubjects = new TicketSubjectsProperties();
@@ -125,6 +126,14 @@ public class EscalatedProperties {
 
     public void setTicketSubjects(TicketSubjectsProperties ticketSubjects) {
         this.ticketSubjects = ticketSubjects;
+    }
+
+    public GuestRateLimitProperties getGuestRateLimit() {
+        return guestRateLimit;
+    }
+
+    public void setGuestRateLimit(GuestRateLimitProperties guestRateLimit) {
+        this.guestRateLimit = guestRateLimit;
     }
 
     public NewslettersProperties getNewsletters() {
@@ -316,6 +325,56 @@ public class EscalatedProperties {
 
         public void setEnabled(boolean enabled) {
             this.enabled = enabled;
+        }
+    }
+
+    /**
+     * Per-client-IP rate limits on the unauthenticated guest endpoints
+     * ({@code POST /escalated/api/widget/tickets} and the guest reply endpoints
+     * under {@code /escalated/api/widget} and {@code /escalated/api/guest}).
+     * Every accepted guest ticket or reply writes rows and sends mail, so an
+     * uncapped endpoint lets anyone flood the helpdesk and the mail provider. A
+     * request over the limit gets {@code 429} with {@code Retry-After}.
+     *
+     * <p>The client IP is {@code HttpServletRequest#getRemoteAddr()}. Behind a
+     * reverse proxy or load balancer, set {@code server.forward-headers-strategy}
+     * and configure your container's trusted proxies, or every guest shares the
+     * proxy's address.
+     *
+     * <p>Counters live in a {@code GuestRateLimitStore}: in memory, per process,
+     * unless the host defines a shared {@code GuestRateLimitStore} bean (e.g.
+     * Redis-backed) for a multi-instance deployment.
+     */
+    public static class GuestRateLimitProperties {
+        /** Set false only when the host already throttles these routes upstream. */
+        private boolean enabled = true;
+        /** Guest ticket submissions per IP per minute. */
+        private int ticketsPerMinute = 5;
+        /** Guest replies per IP per minute. */
+        private int repliesPerMinute = 10;
+
+        public boolean isEnabled() {
+            return enabled;
+        }
+
+        public void setEnabled(boolean enabled) {
+            this.enabled = enabled;
+        }
+
+        public int getTicketsPerMinute() {
+            return ticketsPerMinute;
+        }
+
+        public void setTicketsPerMinute(int ticketsPerMinute) {
+            this.ticketsPerMinute = ticketsPerMinute;
+        }
+
+        public int getRepliesPerMinute() {
+            return repliesPerMinute;
+        }
+
+        public void setRepliesPerMinute(int repliesPerMinute) {
+            this.repliesPerMinute = repliesPerMinute;
         }
     }
 

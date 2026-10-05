@@ -37,6 +37,7 @@ public class WidgetController {
     }
 
     @PostMapping("/tickets")
+    @GuestThrottle(GuestThrottle.Scope.TICKET)
     public ResponseEntity<Ticket> createTicket(@RequestBody Map<String, String> body) {
         Ticket ticket = ticketService.create(
                 body.get("subject"),
@@ -54,6 +55,8 @@ public class WidgetController {
     }
 
     @PostMapping("/tickets/{token}/replies")
+    // Counted before the token lookup, so wrong-token guesses count too.
+    @GuestThrottle(GuestThrottle.Scope.REPLY)
     public ResponseEntity<Reply> addReply(@PathVariable String token, @RequestBody Map<String, String> body) {
         Ticket ticket = ticketService.findByGuestToken(token);
         Reply reply = ticketService.addReply(ticket.getId(),

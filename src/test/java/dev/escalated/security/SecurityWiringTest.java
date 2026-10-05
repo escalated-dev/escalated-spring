@@ -10,6 +10,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import dev.escalated.config.EscalatedProperties;
 import dev.escalated.models.AgentProfile;
 import dev.escalated.models.ApiToken;
 import dev.escalated.repositories.AgentProfileRepository;
@@ -67,6 +68,7 @@ class SecurityWiringTest {
     @Autowired private AgentProfileRepository agents;
     @Autowired private ApiTokenRepository tokens;
     @Autowired private ApiTokenService tokenService;
+    @Autowired private EscalatedProperties properties;
 
     @MockitoBean private InboundEmailService inboundService;
 
@@ -128,6 +130,32 @@ class SecurityWiringTest {
                     .andExpect(status().isUnauthorized());
 
             verifyNoInteractions(inboundService);
+        }
+    }
+
+    @Nested
+    class GuestEndpoints {
+
+        @Test
+        void theGuestRateLimitIsWiredIntoABootedHost() throws Exception {
+            // Malformed bodies never reach the database, and are counted too:
+            // the limit runs before the body is read.
+            int before = properties.getGuestRateLimit().getTicketsPerMinute();
+            properties.getGuestRateLimit().setTicketsPerMinute(1);
+            try {
+                for (int expected : new int[] {400, 429}) {
+                    mockMvc.perform(post("/escalated/api/widget/tickets")
+                                    .with(request -> {
+                                        request.setRemoteAddr("192.0.2.77");
+                                        return request;
+                                    })
+                                    .contentType(MediaType.APPLICATION_JSON)
+                                    .content("not json"))
+                            .andExpect(status().is(expected));
+                }
+            } finally {
+                properties.getGuestRateLimit().setTicketsPerMinute(before);
+            }
         }
     }
 

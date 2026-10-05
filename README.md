@@ -92,6 +92,11 @@ escalated.two-factor.enabled=true
 escalated.widget.enabled=true
 escalated.guest-access.enabled=true
 
+# Per-client-IP limits on the public guest endpoints (429 + Retry-After when exceeded)
+escalated.guest-rate-limit.enabled=true
+escalated.guest-rate-limit.tickets-per-minute=5
+escalated.guest-rate-limit.replies-per-minute=10
+
 # SLA checking interval
 escalated.sla.check-interval-seconds=60
 
@@ -338,6 +343,22 @@ See the [inbound email docs](https://docs.escalated.dev/inbound-email) for provi
 | GET | `/tickets/{token}` | View ticket |
 | GET | `/tickets/{token}/replies` | View replies |
 | POST | `/tickets/{token}/replies` | Add reply |
+
+### Guest endpoint rate limits
+
+Guest ticket creation (`POST /escalated/api/widget/tickets`) is limited to 5 per
+client IP per minute and guest replies (`POST .../tickets/{token}/replies` under
+both `/widget` and `/guest`) to 10, each with its own counter. A request over the
+limit gets `429` with `Retry-After`. Replies are counted before the guest token is
+looked up, so wrong-token guesses count too. Tune or switch it off with
+`escalated.guest-rate-limit.*`; turn it off only when you already throttle these
+routes upstream.
+
+The client IP is `HttpServletRequest#getRemoteAddr()`. **Behind a reverse proxy
+or load balancer, set `server.forward-headers-strategy` (and your container's
+trusted proxies)**, or every guest shares the proxy's address. Counters are kept
+in memory per process; a multi-instance deployment should define a shared
+`dev.escalated.services.ratelimit.GuestRateLimitStore` bean (e.g. Redis-backed).
 
 ## Architecture
 
