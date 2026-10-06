@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Security
+- **Inbound email replies are accepted only from the ticket's requester.** A
+  message that threaded onto a ticket (by `In-Reply-To`, `References`, or a
+  subject reference such as `[ESC-00001]`) was added as a reply whoever sent it,
+  under the `From` name and address. A threaded message now becomes a reply only
+  when `From` matches the ticket's requester email (case-insensitive); it is
+  posted as the requester and reopens a resolved or closed ticket. Anyone else's
+  message, including one naming an agent's address, opens a new ticket and leaves
+  the matched one untouched. With `escalated.email.inbound-secret` configured,
+  only the signed Reply-To address links a message to a ticket.
+
 ## [0.1.1] - 2026-09-13
 
 ### Security

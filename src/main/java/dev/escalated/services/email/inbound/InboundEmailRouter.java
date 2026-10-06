@@ -34,6 +34,13 @@ import org.springframework.stereotype.Service;
  *       inserted by the inbound controller once the service lands.</li>
  * </ol>
  *
+ * <p>Message-IDs and ticket references are guessable, so once an
+ * inbound secret is configured (and outbound mail therefore carries the
+ * signed Reply-To) only path 3 identifies a ticket. Without a secret the
+ * unsigned paths remain as a compatibility mode. Either way a match is
+ * only a lookup: {@link InboundEmailService} still requires the sender
+ * to be the ticket's requester before posting a reply.
+ *
  * <p>Mirrors the NestJS {@code InboundRouterService} resolution order
  * and the Laravel/Rails/Django/Adonis/WordPress/.NET ports.
  */
@@ -60,6 +67,24 @@ public class InboundEmailRouter {
             return Optional.empty();
         }
 
+        // 3. Signed Reply-To on the recipient address. With a secret
+        // configured this is the only path that links mail to a ticket.
+        String secret = properties.getEmail() == null ? null : properties.getEmail().getInboundSecret();
+        if (secret != null && !secret.isBlank()) {
+            if (message.toEmail() == null) {
+                return Optional.empty();
+            }
+            Optional<Long> verified = MessageIdUtil.verifyReplyTo(message.toEmail(), secret);
+            if (verified.isEmpty()) {
+                return Optional.empty();
+            }
+            Optional<Ticket> ticket = ticketRepository.findById(verified.get());
+            if (ticket.isEmpty()) {
+                log.debug("[InboundEmailRouter] Reply-To verified but ticket #{} not found", verified.get());
+            }
+            return ticket;
+        }
+
         List<String> headerIds = candidateHeaderMessageIds(message);
 
         // 1 + 2. Parse canonical Message-IDs out of our own headers.
@@ -70,19 +95,6 @@ public class InboundEmailRouter {
                 if (ticket.isPresent()) {
                     return ticket;
                 }
-            }
-        }
-
-        // 3. Signed Reply-To on the recipient address.
-        String secret = properties.getEmail() == null ? null : properties.getEmail().getInboundSecret();
-        if (secret != null && !secret.isBlank() && message.toEmail() != null) {
-            Optional<Long> verified = MessageIdUtil.verifyReplyTo(message.toEmail(), secret);
-            if (verified.isPresent()) {
-                Optional<Ticket> ticket = ticketRepository.findById(verified.get());
-                if (ticket.isPresent()) {
-                    return ticket;
-                }
-                log.debug("[InboundEmailRouter] Reply-To verified but ticket #{} not found", verified.get());
             }
         }
 

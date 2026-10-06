@@ -1,8 +1,10 @@
 package dev.escalated.services.email.inbound;
 
+import dev.escalated.models.Contact;
 import dev.escalated.models.Reply;
 import dev.escalated.models.Ticket;
 import dev.escalated.models.TicketPriority;
+import dev.escalated.models.TicketStatus;
 import dev.escalated.services.TicketService;
 import java.util.ArrayList;
 import java.util.List;
@@ -43,26 +45,42 @@ public class InboundEmailService {
      * Process a parsed inbound message. Returns a {@link ProcessResult}
      * carrying the outcome (matched + reply id, created new ticket
      * id, or skipped).
+     *
+     * <p>A matched thread becomes a reply only when the sender is the
+     * ticket's requester; the reply is posted as the requester and
+     * reopens a resolved or closed ticket. Anyone else gets a new
+     * ticket of their own, and the matched ticket is left untouched.
      */
     public ProcessResult process(InboundMessage message) {
         Optional<Ticket> ticketMatch = router.resolveTicket(message);
 
-        if (ticketMatch.isPresent()) {
+        // A thread match alone is not enough: the sender must also be the
+        // ticket's requester, and the author is always taken from the
+        // ticket, never from the unauthenticated From header.
+        if (ticketMatch.isPresent() && isFromRequester(ticketMatch.get(), message)) {
             Ticket ticket = ticketMatch.get();
             Reply reply = ticketService.addReply(
                     ticket.getId(),
                     message.body(),
-                    message.fromName(),
-                    message.fromEmail(),
+                    ticket.getRequesterName(),
+                    ticket.getRequesterEmail(),
                     "inbound_email",
                     false
             );
+            if (ticket.getStatus() == TicketStatus.RESOLVED || ticket.getStatus() == TicketStatus.CLOSED) {
+                ticketService.changeStatus(ticket.getId(), TicketStatus.OPEN, ticket.getRequesterEmail());
+            }
             return new ProcessResult(
                     Outcome.REPLIED_TO_EXISTING,
                     ticket.getId(),
                     reply.getId(),
                     pendingDownloads(message)
             );
+        }
+
+        if (ticketMatch.isPresent()) {
+            log.info("[InboundEmailService] Inbound email matched ticket #{} but not its requester; opening a new ticket",
+                    ticketMatch.get().getId());
         }
 
         if (isNoiseEmail(message)) {
@@ -85,6 +103,20 @@ public class InboundEmailService {
                 null,
                 pendingDownloads(message)
         );
+    }
+
+    /**
+     * Whether the From address is the ticket's requester (compared
+     * case-insensitively). Staff identity is never derived from From:
+     * an agent replying by email is not the requester, so the message
+     * becomes a new ticket instead.
+     */
+    static boolean isFromRequester(Ticket ticket, InboundMessage message) {
+        String sender = Contact.normalizeEmail(message.fromEmail());
+        if (sender.isEmpty()) {
+            return false;
+        }
+        return sender.equals(Contact.normalizeEmail(ticket.getRequesterEmail()));
     }
 
     /**
