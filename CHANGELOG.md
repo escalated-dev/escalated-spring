@@ -7,7 +7,51 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-10-08
+
+### Upgrading
+
+- **Only the requester can reply by email.** A threaded message becomes a reply
+  only when `From` matches the ticket's requester email. Mail from anyone else,
+  an agent's address included, opens a new ticket, so agents reply in the app.
+- **Set `escalated.email.inbound-secret`.** With it set, only the signed
+  Reply-To address links a message to a ticket; `In-Reply-To`, `References` and
+  subject references no longer do.
+- **Accepted email replies reopen resolved and closed tickets.**
+- **Guest endpoints are rate-limited per client IP** (5 tickets and 10 replies
+  a minute). Behind a proxy, set `server.forward-headers-strategy` and trust
+  your proxies, or every guest shares one limit. A multi-instance host defines a
+  shared `GuestRateLimitStore` bean. Configure with
+  `escalated.guest-rate-limit.enabled`, `.tickets-per-minute` and
+  `.replies-per-minute`.
+- **Guest ticket responses have a new shape.** `GET .../tickets/{token}` returns
+  a guest ticket DTO with public replies only, the reply list returns public
+  replies only, and `POST .../tickets/{token}/replies` returns the reply DTO.
+  Clients that read other entity fields from these responses must stop.
+- **Guest replies ignore `name` and `email` in the request body.** They are
+  filed as the ticket's requester.
+- **An unknown guest token answers `403`** with
+  `{"error":"Invalid guest access token"}` instead of an error page.
+
+### Added
+- **Per-IP rate limit on guest ticket creation and replies.**
+  `POST /escalated/api/widget/tickets` allows 5 tickets and the guest reply
+  endpoints (`/escalated/api/widget/tickets/{token}/replies` and
+  `/escalated/api/guest/tickets/{token}/replies`, sharing one counter) 10
+  replies per client IP per minute; beyond that the response is `429` with
+  `Retry-After`. The check runs before the guest token is looked up, so
+  wrong-token requests count. Counters live in a `GuestRateLimitStore`; the
+  default is in memory (#96).
+
 ### Security
+- **Guest ticket responses leaked internal notes.** The guest token endpoints
+  returned the whole `Ticket` entity graph: every reply including internal
+  notes, the activity log, the assigned agent's email and SLA data, and the
+  guest reply list returned internal replies too. They now return
+  `GuestTicketDto` / `GuestReplyDto` with public replies only (#98).
+- **A guest could file a reply under any address.** The guest reply endpoints
+  took the author's name and email from the request body. Replies are now filed
+  as the ticket's requester, and a body without an email no longer fails (#99).
 - **Inbound email replies are accepted only from the ticket's requester.** A
   message that threaded onto a ticket (by `In-Reply-To`, `References`, or a
   subject reference such as `[ESC-00001]`) was added as a reply whoever sent it,
@@ -17,6 +61,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   message, including one naming an agent's address, opens a new ticket and leaves
   the matched one untouched. With `escalated.email.inbound-secret` configured,
   only the signed Reply-To address links a message to a ticket.
+
+### Fixed
+- **Ticket JSON nested until it was truncated.** Child-to-parent references
+  (`Reply.ticket`, `TicketActivity.ticket`, `Department.tickets` and others)
+  were serialized, so admin and agent ticket views, agent reply lists and the
+  admin department endpoints returned about 45 KB of unparseable JSON under a
+  200. Those back-references are now `@JsonIgnore` (#98).
+- **An unknown guest token got an error page.** The six guest-token endpoints
+  answer `403 {"error":"Invalid guest access token"}`, as the NestJS reference
+  does, instead of forwarding to `/error` (a 401 behind host security, or a 500)
+  (#97).
 
 ## [0.1.1] - 2026-09-13
 
