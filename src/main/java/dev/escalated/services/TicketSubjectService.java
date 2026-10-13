@@ -1,24 +1,28 @@
 package dev.escalated.services;
 
-import dev.escalated.config.EscalatedTransactionManagers;
 import dev.escalated.config.EscalatedProperties;
+import dev.escalated.config.EscalatedTransactionManagers;
 import dev.escalated.contracts.TicketSubject;
 import dev.escalated.dto.SerializedTicketSubjectDto;
 import dev.escalated.models.Ticket;
 import dev.escalated.models.TicketSubjectLink;
-import dev.escalated.repositories.TicketSubjectLinkRepository;
 import dev.escalated.repositories.TicketRepository;
+import dev.escalated.repositories.TicketSubjectLinkRepository;
+
 import jakarta.persistence.EntityNotFoundException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
+
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
+
 @Service
 public class TicketSubjectService {
+    @org.springframework.beans.factory.annotation.Autowired private TicketAccounts accounts;
 
     private final TicketSubjectLinkRepository linkRepository;
     private final TicketRepository ticketRepository;
@@ -72,8 +76,12 @@ public class TicketSubjectService {
 
     @Transactional(transactionManager = EscalatedTransactionManagers.ESCALATED)
     public TicketSubjectLink attach(Ticket ticket, String subjectType, Object subjectId, String role) {
+        dev.escalated.security.TicketAccess.assertVisible(ticket);
         assertTypeAllowed(subjectType);
         String id = String.valueOf(subjectId);
+        if (accounts != null) {
+            accounts.fromSubject(ticket, subjectType, id);
+        }
 
         Optional<TicketSubjectLink> existing =
                 linkRepository.findByTicketIdAndSubjectTypeAndSubjectId(ticket.getId(), subjectType, id);
@@ -121,12 +129,16 @@ public class TicketSubjectService {
      */
     @Transactional(transactionManager = EscalatedTransactionManagers.ESCALATED)
     public List<TicketSubjectLink> sync(Ticket ticket, List<SyncItem> items) {
+        dev.escalated.security.TicketAccess.assertVisible(ticket);
         linkRepository.deleteByTicketId(ticket.getId());
 
         List<TicketSubjectLink> links = new ArrayList<>();
         int position = 0;
         for (SyncItem item : items) {
             assertTypeAllowed(item.subjectType());
+            if (accounts != null) {
+                accounts.fromSubject(ticket, item.subjectType(), String.valueOf(item.subjectId()));
+            }
             TicketSubjectLink link = new TicketSubjectLink();
             link.setTicket(ticket);
             link.setSubjectType(item.subjectType());

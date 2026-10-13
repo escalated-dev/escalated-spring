@@ -7,10 +7,31 @@ import jakarta.persistence.UniqueConstraint;
 import jakarta.validation.constraints.NotNull;
 
 /**
- * A host user following a ticket — a notification target alongside the assignee
- * and requester. Recorded via the add_follower workflow action. Unique per
- * (ticket_id, user_id). See issue #74.
+ * A host user following a ticket — a notification target alongside the assignee and requester.
+ * Recorded via the add_follower workflow action. Unique per (ticket_id, user_id). See issue #74.
  */
+@org.hibernate.annotations.Filter(
+        name = "escalatedTicketAccess",
+        condition = dev.escalated.security.TicketAccessSql.TICKET_FOLLOWER_STANDARD,
+        deduceAliasInjectionPoints = false,
+        aliases =
+                @org.hibernate.annotations.SqlFragmentAlias(
+                        alias = "row",
+                        table = "escalated_ticket_followers"))
+@org.hibernate.annotations.DialectOverride.Filters(
+        dialect = org.hibernate.dialect.MySQLDialect.class,
+        override =
+                @org.hibernate.annotations.Filters(
+                        @org.hibernate.annotations.Filter(
+                                name = "escalatedTicketAccess",
+                                condition =
+                                        dev.escalated.security.TicketAccessSql
+                                                .TICKET_FOLLOWER_MYSQL,
+                                deduceAliasInjectionPoints = false,
+                                aliases =
+                                        @org.hibernate.annotations.SqlFragmentAlias(
+                                                alias = "row",
+                                                table = "escalated_ticket_followers"))))
 @Entity
 @Table(
         name = "escalated_ticket_followers",

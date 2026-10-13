@@ -6,15 +6,12 @@ import dev.escalated.events.CustomActionTriggeredEvent;
 import dev.escalated.models.Reply;
 import dev.escalated.models.Ticket;
 import dev.escalated.models.TicketStatus;
-import dev.escalated.services.CannedResponseService;
 import dev.escalated.services.MacroService;
 import dev.escalated.services.SideConversationService;
 import dev.escalated.services.TicketActionRegistry;
 import dev.escalated.services.TicketLinkService;
 import dev.escalated.services.TicketService;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -27,6 +24,10 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/escalated/api/agent/tickets")
@@ -56,16 +57,40 @@ public class AgentTicketController {
     private List<Map<String, Object>> customActionsForTicket(Long ticketId) {
         List<Map<String, Object>> actions = ticketActionRegistry.forTicket();
         for (Map<String, Object> action : actions) {
-            action.put("url", "/escalated/api/agent/tickets/" + ticketId + "/actions/" + action.get("key"));
+            action.put(
+                    "url",
+                    "/escalated/api/agent/tickets/" + ticketId + "/actions/" + action.get("key"));
             action.put("method", "post");
         }
         return actions;
     }
 
     @GetMapping
-    public ResponseEntity<Page<Ticket>> index(@RequestParam(required = false) Long agentId,
-                                              @RequestParam(required = false) TicketStatus status,
-                                              @PageableDefault(size = 25) Pageable pageable) {
+    public ResponseEntity<Page<Ticket>> index(
+            @RequestParam(required = false) Long agentId,
+            @RequestParam(required = false) TicketStatus status,
+            @RequestParam(required = false) String query,
+            @RequestParam(name = "department_id", required = false) Long departmentId,
+            @RequestParam(name = "ticket_type", required = false) String ticketType,
+            @RequestParam(name = "account_type", required = false) String accountType,
+            @RequestParam(name = "account_id", required = false) String accountId,
+            @PageableDefault(size = 25) Pageable pageable) {
+        if (query != null
+                || departmentId != null
+                || ticketType != null
+                || accountType != null
+                || accountId != null) {
+            return ResponseEntity.ok(
+                    ticketService.search(
+                            query,
+                            agentId,
+                            status,
+                            departmentId,
+                            ticketType,
+                            accountType,
+                            accountId,
+                            pageable));
+        }
         if (agentId != null) {
             return ResponseEntity.ok(ticketService.findByAssignedAgent(agentId, pageable));
         }
@@ -128,8 +153,10 @@ public class AgentTicketController {
     }
 
     @PostMapping("/{id}/macro/{macroId}")
-    public ResponseEntity<Void> applyMacro(@PathVariable Long id, @PathVariable Long macroId,
-                                           @RequestParam(defaultValue = "agent") String actorEmail) {
+    public ResponseEntity<Void> applyMacro(
+            @PathVariable Long id,
+            @PathVariable Long macroId,
+            @RequestParam(defaultValue = "agent") String actorEmail) {
         macroService.applyMacro(macroId, id, actorEmail);
         return ResponseEntity.ok().build();
     }

@@ -1,6 +1,7 @@
 package dev.escalated.models;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -9,9 +10,30 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
+
 import java.util.ArrayList;
 import java.util.List;
 
+@org.hibernate.annotations.Filter(
+        name = "escalatedTicketAccess",
+        condition = dev.escalated.security.TicketAccessSql.REPLY_STANDARD,
+        deduceAliasInjectionPoints = false,
+        aliases =
+                @org.hibernate.annotations.SqlFragmentAlias(
+                        alias = "row",
+                        table = "escalated_replies"))
+@org.hibernate.annotations.DialectOverride.Filters(
+        dialect = org.hibernate.dialect.MySQLDialect.class,
+        override =
+                @org.hibernate.annotations.Filters(
+                        @org.hibernate.annotations.Filter(
+                                name = "escalatedTicketAccess",
+                                condition = dev.escalated.security.TicketAccessSql.REPLY_MYSQL,
+                                deduceAliasInjectionPoints = false,
+                                aliases =
+                                        @org.hibernate.annotations.SqlFragmentAlias(
+                                                alias = "row",
+                                                table = "escalated_replies"))))
 @Entity
 @Table(name = "escalated_replies")
 public class Reply extends BaseEntity {
@@ -40,6 +62,27 @@ public class Reply extends BaseEntity {
     private String emailMessageId;
 
     @OneToMany(mappedBy = "reply", cascade = CascadeType.ALL, orphanRemoval = true)
+    @org.hibernate.annotations.Filter(
+            name = "escalatedTicketAccess",
+            condition = dev.escalated.security.TicketAccessSql.ATTACHMENT_STANDARD,
+            deduceAliasInjectionPoints = false,
+            aliases =
+                    @org.hibernate.annotations.SqlFragmentAlias(
+                            alias = "row",
+                            table = "escalated_attachments"))
+    @org.hibernate.annotations.DialectOverride.Filters(
+            dialect = org.hibernate.dialect.MySQLDialect.class,
+            override =
+                    @org.hibernate.annotations.Filters(
+                            @org.hibernate.annotations.Filter(
+                                    name = "escalatedTicketAccess",
+                                    condition =
+                                            dev.escalated.security.TicketAccessSql.ATTACHMENT_MYSQL,
+                                    deduceAliasInjectionPoints = false,
+                                    aliases =
+                                            @org.hibernate.annotations.SqlFragmentAlias(
+                                                    alias = "row",
+                                                    table = "escalated_attachments"))))
     private List<Attachment> attachments = new ArrayList<>();
 
     public Ticket getTicket() {

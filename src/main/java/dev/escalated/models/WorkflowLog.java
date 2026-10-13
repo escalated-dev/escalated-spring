@@ -2,9 +2,10 @@ package dev.escalated.models;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import jakarta.persistence.Column;
-import org.hibernate.type.SqlTypes;
-import org.hibernate.annotations.JdbcTypeCode;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
@@ -14,12 +15,34 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
+
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
+
 import java.time.Instant;
 import java.util.List;
-import java.util.Map;
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
 
+@org.hibernate.annotations.Filter(
+        name = "escalatedTicketAccess",
+        condition = dev.escalated.security.TicketAccessSql.WORKFLOW_LOG_STANDARD,
+        deduceAliasInjectionPoints = false,
+        aliases =
+                @org.hibernate.annotations.SqlFragmentAlias(
+                        alias = "row",
+                        table = "escalated_workflow_logs"))
+@org.hibernate.annotations.DialectOverride.Filters(
+        dialect = org.hibernate.dialect.MySQLDialect.class,
+        override =
+                @org.hibernate.annotations.Filters(
+                        @org.hibernate.annotations.Filter(
+                                name = "escalatedTicketAccess",
+                                condition =
+                                        dev.escalated.security.TicketAccessSql.WORKFLOW_LOG_MYSQL,
+                                deduceAliasInjectionPoints = false,
+                                aliases =
+                                        @org.hibernate.annotations.SqlFragmentAlias(
+                                                alias = "row",
+                                                table = "escalated_workflow_logs"))))
 @Entity
 @Table(name = "escalated_workflow_logs")
 public class WorkflowLog {

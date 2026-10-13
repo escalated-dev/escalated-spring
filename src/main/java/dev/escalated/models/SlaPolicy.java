@@ -11,12 +11,34 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import jakarta.validation.constraints.NotBlank;
+
 import java.util.ArrayList;
 import java.util.List;
 
 @Entity
 @Table(name = "escalated_sla_policies")
 public class SlaPolicy extends BaseEntity {
+    @Column(name = "department_id")
+    private Long departmentId;
+
+    @Column(name = "ticket_type", length = 100)
+    private String ticketType;
+
+    public Long getDepartmentId() {
+        return departmentId;
+    }
+
+    public void setDepartmentId(Long value) {
+        departmentId = value;
+    }
+
+    public String getTicketType() {
+        return ticketType;
+    }
+
+    public void setTicketType(String value) {
+        ticketType = value;
+    }
 
     @NotBlank
     @Column(nullable = false)

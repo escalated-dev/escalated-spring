@@ -6,6 +6,7 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import jakarta.validation.constraints.NotBlank;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -43,6 +44,28 @@ public class CustomField extends BaseEntity {
     private boolean active = true;
 
     @OneToMany(mappedBy = "customField", cascade = CascadeType.ALL, orphanRemoval = true)
+    @org.hibernate.annotations.Filter(
+            name = "escalatedTicketAccess",
+            condition = dev.escalated.security.TicketAccessSql.CUSTOM_FIELD_VALUE_STANDARD,
+            deduceAliasInjectionPoints = false,
+            aliases =
+                    @org.hibernate.annotations.SqlFragmentAlias(
+                            alias = "row",
+                            table = "escalated_custom_field_values"))
+    @org.hibernate.annotations.DialectOverride.Filters(
+            dialect = org.hibernate.dialect.MySQLDialect.class,
+            override =
+                    @org.hibernate.annotations.Filters(
+                            @org.hibernate.annotations.Filter(
+                                    name = "escalatedTicketAccess",
+                                    condition =
+                                            dev.escalated.security.TicketAccessSql
+                                                    .CUSTOM_FIELD_VALUE_MYSQL,
+                                    deduceAliasInjectionPoints = false,
+                                    aliases =
+                                            @org.hibernate.annotations.SqlFragmentAlias(
+                                                    alias = "row",
+                                                    table = "escalated_custom_field_values"))))
     private List<CustomFieldValue> values = new ArrayList<>();
 
     public String getName() {

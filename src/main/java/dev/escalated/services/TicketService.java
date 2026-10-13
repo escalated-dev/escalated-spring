@@ -4,10 +4,11 @@ import dev.escalated.config.EscalatedTransactionManagers;
 import dev.escalated.dto.GuestReplyDto;
 import dev.escalated.dto.GuestTicketDto;
 import dev.escalated.dto.TicketDetailDto;
-import dev.escalated.events.TicketEvent;
 import dev.escalated.events.ReplyEvent;
+import dev.escalated.events.TicketEvent;
 import dev.escalated.models.AgentProfile;
 import dev.escalated.models.ChatSession;
+import dev.escalated.models.Contact;
 import dev.escalated.models.Reply;
 import dev.escalated.models.Tag;
 import dev.escalated.models.Ticket;
@@ -17,28 +18,52 @@ import dev.escalated.models.TicketPriority;
 import dev.escalated.models.TicketStatus;
 import dev.escalated.repositories.AgentProfileRepository;
 import dev.escalated.repositories.ChatSessionRepository;
+import dev.escalated.repositories.ContactRepository;
 import dev.escalated.repositories.ReplyRepository;
 import dev.escalated.repositories.TagRepository;
 import dev.escalated.repositories.TicketActivityRepository;
 import dev.escalated.repositories.TicketLinkRepository;
-import dev.escalated.models.Contact;
-import dev.escalated.repositories.ContactRepository;
 import dev.escalated.repositories.TicketRepository;
+
 import jakarta.persistence.EntityNotFoundException;
-import java.time.Instant;
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
+
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Instant;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
+
 @Service
 public class TicketService {
+    @org.springframework.beans.factory.annotation.Autowired
+    private dev.escalated.security.TicketAccess access;
+
+    @org.springframework.beans.factory.annotation.Autowired private TicketAccounts accounts;
+    @org.springframework.beans.factory.annotation.Autowired private TicketSearch search;
+
+    @Transactional(transactionManager = EscalatedTransactionManagers.ESCALATED, readOnly = true)
+    public Page<Ticket> search(
+            String query,
+            Long agentId,
+            TicketStatus status,
+            Long departmentId,
+            String ticketType,
+            String accountType,
+            String accountId,
+            Pageable pageable) {
+        return search.find(
+                query, agentId, status, departmentId, ticketType, accountType, accountId, pageable);
+    }
+
+    @org.springframework.beans.factory.annotation.Autowired
+    private dev.escalated.repositories.DepartmentRepository departments;
 
     private final TicketRepository ticketRepository;
     private final ReplyRepository replyRepository;
@@ -142,8 +167,10 @@ public class TicketService {
 
     @Transactional(transactionManager = EscalatedTransactionManagers.ESCALATED, readOnly = true)
     public Ticket findByTicketNumber(String ticketNumber) {
-        return ticketRepository.findByTicketNumber(ticketNumber)
-                .orElseThrow(() -> new EntityNotFoundException("Ticket not found: " + ticketNumber));
+        return ticketRepository
+                .findByTicketNumber(ticketNumber)
+                .orElseThrow(
+                        () -> new EntityNotFoundException("Ticket not found: " + ticketNumber));
     }
 
     @Transactional(transactionManager = EscalatedTransactionManagers.ESCALATED, readOnly = true)
@@ -169,6 +196,18 @@ public class TicketService {
     @Transactional(transactionManager = EscalatedTransactionManagers.ESCALATED)
     public Ticket create(String subject, String body, String requesterName, String requesterEmail,
                          TicketPriority priority, Long departmentId) {
+        return create(subject, body, requesterName, requesterEmail, priority, departmentId, null);
+    }
+
+    @Transactional(transactionManager = EscalatedTransactionManagers.ESCALATED)
+    public Ticket create(
+            String subject,
+            String body,
+            String requesterName,
+            String requesterEmail,
+            TicketPriority priority,
+            Long departmentId,
+            String ticketType) {
         Ticket ticket = new Ticket();
         ticket.setSubject(subject);
         ticket.setBody(body);
@@ -189,6 +228,10 @@ public class TicketService {
             ticket.getDepartment().setId(departmentId);
         }
 
+        ticket.setTicketType(ticketType);
+        if (accounts != null) {
+            accounts.fromRequester(ticket);
+        }
         slaService.applySlaPolicy(ticket);
 
         Ticket saved = ticketRepository.save(ticket);
@@ -242,7 +285,13 @@ public class TicketService {
         if (priority != null && priority != ticket.getPriority()) {
             String oldPriority = ticket.getPriority().name();
             ticket.setPriority(priority);
-            logActivity(ticket, "priority_changed", "Priority changed", null, oldPriority, priority.name());
+            logActivity(
+                    ticket,
+                    "priority_changed",
+                    "Priority changed",
+                    null,
+                    oldPriority,
+                    priority.name());
             eventPublisher.publishEvent(
                     new TicketEvent(this, ticket, TicketEvent.Type.PRIORITY_CHANGED, null, oldPriority, priority.name()));
         }
@@ -269,7 +318,13 @@ public class TicketService {
             ticket.setClosedAt(Instant.now());
         }
 
-        logActivity(ticket, "status_changed", "Status changed", actorEmail, oldStatus.name(), newStatus.name());
+        logActivity(
+                ticket,
+                "status_changed",
+                "Status changed",
+                actorEmail,
+                oldStatus.name(),
+                newStatus.name());
         Ticket saved = ticketRepository.save(ticket);
 
         TicketEvent.Type eventType = switch (newStatus) {
@@ -286,16 +341,29 @@ public class TicketService {
     @Transactional(transactionManager = EscalatedTransactionManagers.ESCALATED)
     public Ticket assign(Long ticketId, Long agentId, String actorEmail) {
         Ticket ticket = findById(ticketId);
-        String oldAgent = ticket.getAssignedAgent() != null ? ticket.getAssignedAgent().getName() : "unassigned";
+        String oldAgent =
+                ticket.getAssignedAgent() != null
+                        ? ticket.getAssignedAgent().getName()
+                        : "unassigned";
 
         if (agentId != null) {
             AgentProfile agent = agentRepository.findById(agentId)
                     .orElseThrow(() -> new EntityNotFoundException("Agent not found: " + agentId));
+            if (access != null) {
+                access.assertAssignable(ticket, agent);
+            }
             ticket.setAssignedAgent(agent);
-            logActivity(ticket, "assigned", "Ticket assigned to " + agent.getName(), actorEmail, oldAgent, agent.getName());
+            logActivity(
+                    ticket,
+                    "assigned",
+                    "Ticket assigned to " + agent.getName(),
+                    actorEmail,
+                    oldAgent,
+                    agent.getName());
         } else {
             ticket.setAssignedAgent(null);
-            logActivity(ticket, "unassigned", "Ticket unassigned", actorEmail, oldAgent, "unassigned");
+            logActivity(
+                    ticket, "unassigned", "Ticket unassigned", actorEmail, oldAgent, "unassigned");
         }
 
         Ticket saved = ticketRepository.save(ticket);
@@ -324,7 +392,13 @@ public class TicketService {
             ticketRepository.save(ticket);
         }
 
-        logActivity(ticket, "reply_added", (internal ? "Internal note" : "Reply") + " by " + authorName, authorEmail, null, null);
+        logActivity(
+                ticket,
+                "reply_added",
+                (internal ? "Internal note" : "Reply") + " by " + authorName,
+                authorEmail,
+                null,
+                null);
         eventPublisher.publishEvent(new ReplyEvent(this, saved, ReplyEvent.Type.CREATED, authorEmail));
         return saved;
     }
@@ -372,8 +446,10 @@ public class TicketService {
             ticket.setStatus(TicketStatus.OPEN);
             ticket.setSnoozedUntil(null);
             ticketRepository.save(ticket);
-            logActivity(ticket, "unsnoozed", "Ticket automatically unsnoozed", "system", null, null);
-            eventPublisher.publishEvent(new TicketEvent(this, ticket, TicketEvent.Type.UNSNOOZED, "system"));
+            logActivity(
+                    ticket, "unsnoozed", "Ticket automatically unsnoozed", "system", null, null);
+            eventPublisher.publishEvent(
+                    new TicketEvent(this, ticket, TicketEvent.Type.UNSNOOZED, "system"));
         }
     }
 
@@ -398,8 +474,20 @@ public class TicketService {
         source.setMergedIntoTicketId(targetTicketId);
         ticketRepository.save(source);
 
-        logActivity(source, "merged", "Ticket merged into " + target.getTicketNumber(), actorEmail, null, null);
-        logActivity(target, "merge_target", "Ticket " + source.getTicketNumber() + " merged into this ticket", actorEmail, null, null);
+        logActivity(
+                source,
+                "merged",
+                "Ticket merged into " + target.getTicketNumber(),
+                actorEmail,
+                null,
+                null);
+        logActivity(
+                target,
+                "merge_target",
+                "Ticket " + source.getTicketNumber() + " merged into this ticket",
+                actorEmail,
+                null,
+                null);
 
         eventPublisher.publishEvent(new TicketEvent(this, source, TicketEvent.Type.MERGED, actorEmail));
         return target;
@@ -418,6 +506,9 @@ public class TicketService {
         newTicket.setTicketNumber(generateTicketNumber());
         newTicket.setGuestAccessToken(UUID.randomUUID().toString());
         newTicket.setDepartment(original.getDepartment());
+        newTicket.setAccountType(original.getAccountType());
+        newTicket.setAccountId(original.getAccountId());
+        newTicket.setTicketType(original.getTicketType());
 
         Ticket saved = ticketRepository.save(newTicket);
 
@@ -437,8 +528,20 @@ public class TicketService {
             }
         }
 
-        logActivity(original, "split", "Ticket split into " + saved.getTicketNumber(), actorEmail, null, null);
-        logActivity(saved, "split_from", "Split from ticket " + original.getTicketNumber(), actorEmail, null, null);
+        logActivity(
+                original,
+                "split",
+                "Ticket split into " + saved.getTicketNumber(),
+                actorEmail,
+                null,
+                null);
+        logActivity(
+                saved,
+                "split_from",
+                "Split from ticket " + original.getTicketNumber(),
+                actorEmail,
+                null,
+                null);
 
         eventPublisher.publishEvent(new TicketEvent(this, saved, TicketEvent.Type.SPLIT, actorEmail));
         return saved;
@@ -473,8 +576,45 @@ public class TicketService {
                 .toList();
     }
 
+    /** Moving streams preserves the existing SLA clock; applySlaPolicy explicitly reselects. */
+    @Transactional(transactionManager = EscalatedTransactionManagers.ESCALATED)
+    public Ticket changeDepartment(Long id, Long departmentId, String actorEmail) {
+        Ticket ticket = findById(id);
+        var department =
+                departmentId == null
+                        ? null
+                        : departments
+                                .findById(departmentId)
+                                .orElseThrow(
+                                        () -> new EntityNotFoundException("Department not found"));
+        java.util.function.Supplier<Ticket> change =
+                () -> {
+                    ticket.setDepartment(department);
+                    if (access != null
+                            && ticket.getAssignedAgent() != null
+                            && !access.canAssign(ticket, ticket.getAssignedAgent())) {
+                        ticket.setAssignedAgent(null);
+                    }
+                    logActivity(
+                            ticket,
+                            "department_changed",
+                            "Department changed",
+                            actorEmail,
+                            null,
+                            String.valueOf(departmentId));
+                    return ticketRepository.saveAndFlush(ticket);
+                };
+        return access == null ? change.get() : access.withoutRestriction(change);
+    }
+
     private String generateTicketNumber() {
-        return "ESC-" + String.format("%06d", ticketRepository.count() + 1);
+        return "ESC-"
+                + String.format(
+                        "%06d",
+                        (access == null
+                                        ? ticketRepository.count()
+                                        : access.withoutRestriction(ticketRepository::count))
+                                + 1);
     }
 
     private void logActivity(Ticket ticket, String type, String description,

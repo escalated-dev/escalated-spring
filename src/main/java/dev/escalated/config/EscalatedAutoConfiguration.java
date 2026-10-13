@@ -2,19 +2,23 @@ package dev.escalated.config;
 
 import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
-import org.springframework.boot.persistence.autoconfigure.EntityScan;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
+import org.springframework.boot.persistence.autoconfigure.EntityScan;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Conditional;
-import org.springframework.context.annotation.FilterType;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.FilterType;
 import org.springframework.context.annotation.Import;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
-import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.annotation.EnableAsync;
+import org.springframework.scheduling.annotation.EnableScheduling;
 
 @AutoConfiguration
-@ConditionalOnProperty(prefix = "escalated", name = "enabled", havingValue = "true", matchIfMissing = true)
+@ConditionalOnProperty(
+        prefix = "escalated",
+        name = "enabled",
+        havingValue = "true",
+        matchIfMissing = true)
 @EnableConfigurationProperties({EscalatedProperties.class, EscalatedDataSourceProperties.class})
 // Auto-configurations are excluded from the scan deliberately. They live in
 // this package too, and a component scan registers them as ordinary
@@ -24,11 +28,13 @@ import org.springframework.scheduling.annotation.EnableAsync;
 // suppressed the host's own DataSource entirely.
 @ComponentScan(
         basePackages = "dev.escalated",
-        excludeFilters = @ComponentScan.Filter(
-                type = FilterType.ANNOTATION,
-                classes = AutoConfiguration.class))
+        excludeFilters =
+                @ComponentScan.Filter(
+                        type = FilterType.ANNOTATION,
+                        classes = AutoConfiguration.class))
 @EnableJpaRepositories(
         basePackages = "dev.escalated.repositories",
+        repositoryBaseClass = dev.escalated.security.TicketAccessRepository.class,
         entityManagerFactoryRef = EscalatedPersistenceAliasRegistrar.ENTITY_MANAGER_FACTORY,
         transactionManagerRef = EscalatedPersistenceAliasRegistrar.TRANSACTION_MANAGER)
 @EnableScheduling

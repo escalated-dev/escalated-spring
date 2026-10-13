@@ -1,6 +1,7 @@
 package dev.escalated.models;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
@@ -11,6 +12,16 @@ import jakarta.persistence.Table;
 @Entity
 @Table(name = "escalated_escalation_rules")
 public class EscalationRule extends BaseEntity {
+    @Column(columnDefinition = "TEXT")
+    private String conditions;
+
+    public String getConditions() {
+        return conditions;
+    }
+
+    public void setConditions(String value) {
+        conditions = value;
+    }
 
     @JsonIgnore
     @ManyToOne(fetch = FetchType.LAZY)

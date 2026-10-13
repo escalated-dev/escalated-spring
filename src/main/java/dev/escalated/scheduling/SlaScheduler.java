@@ -6,11 +6,13 @@ import dev.escalated.repositories.EscalationRuleRepository;
 import dev.escalated.services.AgentService;
 import dev.escalated.services.SlaService;
 import dev.escalated.services.TicketService;
-import java.util.List;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
+
+import java.util.List;
 
 @Component
 public class SlaScheduler {
@@ -55,16 +57,26 @@ public class SlaScheduler {
     }
 
     private void applyEscalationRule(Ticket ticket, EscalationRule rule) {
-        log.info("Applying escalation rule '{}' to ticket {}", rule.getName(), ticket.getTicketNumber());
+        if (!dev.escalated.services.TicketRoutingConditions.matches(rule.getConditions(), ticket)) {
+            return;
+        }
+        log.info(
+                "Applying escalation rule '{}' to ticket {}",
+                rule.getName(),
+                ticket.getTicketNumber());
 
         switch (rule.getActionType()) {
+            case "change_department" ->
+                    ticketService.changeDepartment(
+                            ticket.getId(), Long.valueOf(rule.getActionTarget()), "system");
             case "reassign" -> {
                 if (rule.getActionTarget() != null) {
                     try {
                         Long agentId = Long.parseLong(rule.getActionTarget());
                         ticketService.assign(ticket.getId(), agentId, "system");
                     } catch (NumberFormatException ex) {
-                        log.error("Invalid agent ID in escalation rule: {}", rule.getActionTarget());
+                        log.error(
+                                "Invalid agent ID in escalation rule: {}", rule.getActionTarget());
                     }
                 }
             }

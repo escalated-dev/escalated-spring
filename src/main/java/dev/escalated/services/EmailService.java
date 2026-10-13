@@ -4,8 +4,10 @@ import dev.escalated.config.EscalatedProperties;
 import dev.escalated.models.Reply;
 import dev.escalated.models.Ticket;
 import dev.escalated.services.email.MessageIdUtil;
+
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.mail.javamail.JavaMailSender;
@@ -16,6 +18,8 @@ import org.thymeleaf.context.Context;
 
 @Service
 public class EmailService {
+    @org.springframework.beans.factory.annotation.Autowired
+    private dev.escalated.security.TicketAccess access;
 
     private static final Logger log = LoggerFactory.getLogger(EmailService.class);
 
@@ -45,6 +49,17 @@ public class EmailService {
     }
 
     public void sendReplyNotification(Ticket ticket, Reply reply) {
+        if (reply.isInternal()) {
+            return;
+        }
+        if (access != null
+                && access.enabled()
+                && !"agent".equals(reply.getAuthorType())
+                && (ticket.getAssignedAgent() == null
+                        || !access.canReceiveStaff(
+                                ticket.getId(), ticket.getAssignedAgent().getId()))) {
+            return;
+        }
         Context context = new Context();
         context.setVariable("ticket", ticket);
         context.setVariable("reply", reply);

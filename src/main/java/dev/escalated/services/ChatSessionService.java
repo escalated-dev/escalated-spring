@@ -7,13 +7,16 @@ import dev.escalated.models.Ticket;
 import dev.escalated.models.TicketPriority;
 import dev.escalated.models.TicketStatus;
 import dev.escalated.repositories.ChatSessionRepository;
+
 import jakarta.persistence.EntityNotFoundException;
-import java.time.Instant;
-import java.util.List;
-import java.util.Optional;
+
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.time.Instant;
+import java.util.List;
+import java.util.Optional;
 
 /**
  * Manages live-chat session lifecycle: creation, acceptance by an agent,
@@ -26,6 +29,13 @@ import org.springframework.transaction.annotation.Transactional;
  */
 @Service
 public class ChatSessionService {
+    @org.springframework.beans.factory.annotation.Autowired
+    private dev.escalated.security.TicketAccess access;
+
+    @org.springframework.beans.factory.annotation.Autowired
+    private org.springframework.beans.factory.ObjectProvider<
+                    dev.escalated.security.AuthorizedTicketBroadcaster>
+            broadcasters;
 
     private final ChatSessionRepository chatSessionRepository;
     private final TicketService ticketService;
@@ -43,6 +53,17 @@ public class ChatSessionService {
     }
 
     private void broadcast(String destination, Object payload) {
+        if (access != null && access.enabled()) {
+            var broadcaster = broadcasters.getIfAvailable();
+            Long ticketId =
+                    payload instanceof ChatSession session
+                            ? session.getTicketId()
+                            : payload instanceof Reply reply ? reply.getTicket().getId() : null;
+            if (broadcaster != null && ticketId != null) {
+                broadcaster.deliver(ticketId, destination, payload);
+            }
+            return;
+        }
         messagingTemplate.ifPresent(template -> template.convertAndSend(destination, payload));
     }
 
@@ -73,8 +94,14 @@ public class ChatSessionService {
         ChatRoutingService.RouteResult route = chatRoutingService.resolve(departmentId);
         if (route.departmentId() != null) {
             session.setDepartmentId(route.departmentId());
+            if (!java.util.Objects.equals(route.departmentId(), departmentId)) {
+                ticket =
+                        ticketService.changeDepartment(
+                                ticket.getId(), route.departmentId(), "system");
+            }
         }
         if (route.agentId() != null) {
+            ticketService.assign(ticket.getId(), route.agentId(), "system");
             session.setAgentId(route.agentId());
             session.setStatus("active");
             session.setAcceptedAt(Instant.now());
@@ -168,7 +195,8 @@ public class ChatSessionService {
     }
 
     public List<ChatSession> getActiveSessionsForAgent(Long agentId) {
-        return chatSessionRepository.findByAgentIdAndStatusOrderByLastActivityAtDesc(agentId, "active");
+        return chatSessionRepository.findByAgentIdAndStatusOrderByLastActivityAtDesc(
+                agentId, "active");
     }
 
     public int getQueueDepth(Long departmentId) {

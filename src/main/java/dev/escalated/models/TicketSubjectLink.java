@@ -1,6 +1,7 @@
 package dev.escalated.models;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
@@ -10,15 +11,39 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
 
+@org.hibernate.annotations.Filter(
+        name = "escalatedTicketAccess",
+        condition = dev.escalated.security.TicketAccessSql.TICKET_SUBJECT_LINK_STANDARD,
+        deduceAliasInjectionPoints = false,
+        aliases =
+                @org.hibernate.annotations.SqlFragmentAlias(
+                        alias = "row",
+                        table = "escalated_ticket_subjects"))
+@org.hibernate.annotations.DialectOverride.Filters(
+        dialect = org.hibernate.dialect.MySQLDialect.class,
+        override =
+                @org.hibernate.annotations.Filters(
+                        @org.hibernate.annotations.Filter(
+                                name = "escalatedTicketAccess",
+                                condition =
+                                        dev.escalated.security.TicketAccessSql
+                                                .TICKET_SUBJECT_LINK_MYSQL,
+                                deduceAliasInjectionPoints = false,
+                                aliases =
+                                        @org.hibernate.annotations.SqlFragmentAlias(
+                                                alias = "row",
+                                                table = "escalated_ticket_subjects"))))
 @Entity
 @Table(
         name = "escalated_ticket_subjects",
-        uniqueConstraints = @UniqueConstraint(
-                name = "uq_escalated_ticket_subjects_ticket_type_id",
-                columnNames = {"ticket_id", "subject_type", "subject_id"}),
-        indexes = @Index(
-                name = "idx_escalated_ticket_subjects_type_id",
-                columnList = "subject_type, subject_id"))
+        uniqueConstraints =
+                @UniqueConstraint(
+                        name = "uq_escalated_ticket_subjects_ticket_type_id",
+                        columnNames = {"ticket_id", "subject_type", "subject_id"}),
+        indexes =
+                @Index(
+                        name = "idx_escalated_ticket_subjects_type_id",
+                        columnList = "subject_type, subject_id"))
 public class TicketSubjectLink extends BaseEntity {
 
     @JsonIgnore

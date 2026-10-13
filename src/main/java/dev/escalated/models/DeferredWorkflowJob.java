@@ -1,24 +1,45 @@
 package dev.escalated.models;
 
 import jakarta.persistence.Column;
-import org.hibernate.type.SqlTypes;
-import org.hibernate.annotations.JdbcTypeCode;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Index;
 import jakarta.persistence.Table;
+
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
+
 import java.time.Instant;
 
 /**
- * Queue row for a paused workflow run — populated by the
- * {@code delay} workflow action when execution hits a wait clause
- * and consumed by
- * {@link dev.escalated.services.WorkflowExecutorService#runDueDeferredJobs}
- * to resume.
+ * Queue row for a paused workflow run — populated by the {@code delay} workflow action when
+ * execution hits a wait clause and consumed by {@link
+ * dev.escalated.services.WorkflowExecutorService#runDueDeferredJobs} to resume.
  *
- * <p>Rows are soft-terminal: the poller flips {@code status} to
- * {@code done} (or {@code failed}) after running so they don't get
- * re-picked up, and retains the row for audit.
+ * <p>Rows are soft-terminal: the poller flips {@code status} to {@code done} (or {@code failed})
+ * after running so they don't get re-picked up, and retains the row for audit.
  */
+@org.hibernate.annotations.Filter(
+        name = "escalatedTicketAccess",
+        condition = dev.escalated.security.TicketAccessSql.DEFERRED_WORKFLOW_JOB_STANDARD,
+        deduceAliasInjectionPoints = false,
+        aliases =
+                @org.hibernate.annotations.SqlFragmentAlias(
+                        alias = "row",
+                        table = "escalated_deferred_workflow_jobs"))
+@org.hibernate.annotations.DialectOverride.Filters(
+        dialect = org.hibernate.dialect.MySQLDialect.class,
+        override =
+                @org.hibernate.annotations.Filters(
+                        @org.hibernate.annotations.Filter(
+                                name = "escalatedTicketAccess",
+                                condition =
+                                        dev.escalated.security.TicketAccessSql
+                                                .DEFERRED_WORKFLOW_JOB_MYSQL,
+                                deduceAliasInjectionPoints = false,
+                                aliases =
+                                        @org.hibernate.annotations.SqlFragmentAlias(
+                                                alias = "row",
+                                                table = "escalated_deferred_workflow_jobs"))))
 @Entity
 @Table(
         name = "escalated_deferred_workflow_jobs",

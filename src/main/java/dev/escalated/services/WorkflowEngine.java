@@ -1,9 +1,9 @@
 package dev.escalated.services;
 
+import org.springframework.stereotype.Component;
+
 import java.util.*;
 import java.util.regex.*;
-
-import org.springframework.stereotype.Component;
 
 /**
  * Stateless evaluator for Workflow conditions and action shapes.
@@ -16,9 +16,48 @@ import org.springframework.stereotype.Component;
 @Component
 public class WorkflowEngine {
 
-    public static final List<String> OPERATORS = List.of("equals", "not_equals", "contains", "not_contains", "starts_with", "ends_with", "greater_than", "less_than", "greater_or_equal", "less_or_equal", "is_empty", "is_not_empty");
-    public static final List<String> ACTION_TYPES = List.of("change_status", "assign_agent", "change_priority", "add_tag", "remove_tag", "set_department", "add_note", "send_webhook", "set_type", "delay", "add_follower", "send_notification");
-    public static final List<String> TRIGGER_EVENTS = List.of("ticket.created", "ticket.updated", "ticket.status_changed", "ticket.assigned", "ticket.priority_changed", "ticket.tagged", "ticket.department_changed", "reply.created", "reply.agent_reply", "sla.warning", "sla.breached", "ticket.reopened");
+    public static final List<String> OPERATORS =
+            List.of(
+                    "equals",
+                    "not_equals",
+                    "contains",
+                    "not_contains",
+                    "starts_with",
+                    "ends_with",
+                    "greater_than",
+                    "less_than",
+                    "greater_or_equal",
+                    "less_or_equal",
+                    "is_empty",
+                    "is_not_empty");
+    public static final List<String> ACTION_TYPES =
+            List.of(
+                    "change_status",
+                    "assign_agent",
+                    "change_priority",
+                    "add_tag",
+                    "remove_tag",
+                    "set_department",
+                    "add_note",
+                    "send_webhook",
+                    "set_type",
+                    "delay",
+                    "add_follower",
+                    "send_notification");
+    public static final List<String> TRIGGER_EVENTS =
+            List.of(
+                    "ticket.created",
+                    "ticket.updated",
+                    "ticket.status_changed",
+                    "ticket.assigned",
+                    "ticket.priority_changed",
+                    "ticket.tagged",
+                    "ticket.department_changed",
+                    "reply.created",
+                    "reply.agent_reply",
+                    "sla.warning",
+                    "sla.breached",
+                    "ticket.reopened");
 
     @SuppressWarnings("unchecked")
     public boolean evaluateConditions(Map<String, Object> conditions, Map<String, String> ticket) {
@@ -36,6 +75,31 @@ public class WorkflowEngine {
     public boolean evaluateSingle(Map<String, String> condition, Map<String, String> ticket) {
         String field = condition.getOrDefault("field", "");
         String operator = condition.getOrDefault("operator", "equals");
+        if ("account".equals(field)) {
+            Object raw = ((Map<?, ?>) condition).get("value");
+            if (!(raw instanceof Map<?, ?> pair)
+                    || !(pair.get("type") instanceof String type)
+                    || pair.get("id") == null
+                    || type.isBlank()
+                    || String.valueOf(pair.get("id")).isBlank()
+                    || !(pair.get("id") instanceof String || pair.get("id") instanceof Number)) {
+                return false;
+            }
+            if (!List.of("equals", "not_equals").contains(operator)) {
+                return false;
+            }
+            String actualType = ticket.get("account_type");
+            String actualId = ticket.get("account_id");
+            if (actualType == null
+                    || actualType.isBlank()
+                    || actualId == null
+                    || actualId.isBlank()) {
+                return false;
+            }
+            boolean equal =
+                    type.equals(actualType) && String.valueOf(pair.get("id")).equals(actualId);
+            return "equals".equals(operator) ? equal : !equal;
+        }
         String expected = condition.getOrDefault("value", "");
         String actual = ticket.getOrDefault(field, "");
         return applyOperator(operator, actual, expected);

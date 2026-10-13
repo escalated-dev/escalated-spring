@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Opt-in department and account ticket visibility across repositories, policies,
+  HTTP/API queries, reports, bulk actions, widget lookups and ticket-owned records.
+- Host account resolvers, additional department memberships, exact account filters,
+  and account/type conditions for workflows, escalation rules and built-in automations.
+- Optional department/type SLA targets, assignment eligibility checks and authorized
+  notification/broadcast hooks. See [configuration and upgrade notes](docs/ticket-access-and-routing.md).
+
 ## [0.2.0] - 2026-10-08
 
 ### Upgrading
