@@ -7,6 +7,12 @@ import dev.escalated.models.SlaPolicy;
 import dev.escalated.models.Ticket;
 import dev.escalated.repositories.SlaPolicyRepository;
 import dev.escalated.repositories.TicketRepository;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import java.time.DayOfWeek;
 import java.time.Instant;
 import java.time.LocalDate;
@@ -14,13 +20,11 @@ import java.time.LocalTime;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.List;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class SlaService {
+    @org.springframework.beans.factory.annotation.Autowired
+    private dev.escalated.config.EscalatedProperties properties;
 
     private static final Logger log = LoggerFactory.getLogger(SlaService.class);
 
@@ -34,22 +38,63 @@ public class SlaService {
 
     @Transactional(transactionManager = EscalatedTransactionManagers.ESCALATED)
     public void applySlaPolicy(Ticket ticket) {
-        slaPolicyRepository.findByPriorityAndActiveTrue(ticket.getPriority()).ifPresent(policy -> {
-            ticket.setSlaPolicy(policy);
+        dev.escalated.security.TicketAccess.assertVisible(ticket);
+        boolean targeted = properties != null && properties.isTargetedSlas();
+        java.util.Optional<SlaPolicy> selected;
+        if (targeted) {
+            Long departmentId =
+                    ticket.getDepartment() == null ? null : ticket.getDepartment().getId();
+            selected =
+                    slaPolicyRepository.findAll().stream()
+                            .filter(p -> p.isActive() && p.getPriority() == ticket.getPriority())
+                            .filter(
+                                    p ->
+                                            p.getDepartmentId() == null
+                                                    || p.getDepartmentId().equals(departmentId))
+                            .filter(
+                                    p ->
+                                            p.getTicketType() == null
+                                                    || p.getTicketType()
+                                                            .equals(ticket.getTicketType()))
+                            .sorted(
+                                    java.util.Comparator.<SlaPolicy>comparingInt(
+                                                    p ->
+                                                            (p.getDepartmentId() == null ? 0 : 2)
+                                                                    + (p.getTicketType() == null
+                                                                            ? 0
+                                                                            : 1))
+                                            .reversed()
+                                            .thenComparing(SlaPolicy::getId))
+                            .findFirst();
+        } else {
+            selected =
+                    slaPolicyRepository
+                            .findByPriorityAndActiveTrue(ticket.getPriority())
+                            .filter(p -> p.getDepartmentId() == null && p.getTicketType() == null);
+        }
+        selected.ifPresent(
+                policy -> {
+                    ticket.setSlaPolicy(policy);
 
-            BusinessSchedule schedule = policy.getBusinessSchedule();
-            Instant now = Instant.now();
+                    BusinessSchedule schedule = policy.getBusinessSchedule();
+                    Instant now =
+                            targeted && ticket.getCreatedAt() != null
+                                    ? ticket.getCreatedAt()
+                                    : Instant.now();
 
-            if (schedule != null) {
-                ticket.setSlaFirstResponseDueAt(
-                        addBusinessMinutes(now, policy.getFirstResponseMinutes(), schedule));
-                ticket.setSlaDueAt(
-                        addBusinessMinutes(now, policy.getResolutionMinutes(), schedule));
-            } else {
-                ticket.setSlaFirstResponseDueAt(now.plusSeconds((long) policy.getFirstResponseMinutes() * 60));
-                ticket.setSlaDueAt(now.plusSeconds((long) policy.getResolutionMinutes() * 60));
-            }
-        });
+                    if (schedule != null) {
+                        ticket.setSlaFirstResponseDueAt(
+                                addBusinessMinutes(
+                                        now, policy.getFirstResponseMinutes(), schedule));
+                        ticket.setSlaDueAt(
+                                addBusinessMinutes(now, policy.getResolutionMinutes(), schedule));
+                    } else {
+                        ticket.setSlaFirstResponseDueAt(
+                                now.plusSeconds((long) policy.getFirstResponseMinutes() * 60));
+                        ticket.setSlaDueAt(
+                                now.plusSeconds((long) policy.getResolutionMinutes() * 60));
+                    }
+                });
     }
 
     @Transactional(transactionManager = EscalatedTransactionManagers.ESCALATED, readOnly = true)

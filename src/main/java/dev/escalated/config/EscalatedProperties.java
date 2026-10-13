@@ -1,12 +1,74 @@
 package dev.escalated.config;
 
+import org.springframework.boot.context.properties.ConfigurationProperties;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import org.springframework.boot.context.properties.ConfigurationProperties;
 
 @ConfigurationProperties(prefix = "escalated")
 public class EscalatedProperties {
+
+    private String visibility = "all";
+    private AccountsProperties accounts = new AccountsProperties();
+    private boolean targetedSlas = false;
+    private Map<String, String> automationConditions = new java.util.HashMap<>();
+
+    public Map<String, String> getAutomationConditions() {
+        return automationConditions;
+    }
+
+    public void setAutomationConditions(Map<String, String> value) {
+        automationConditions = value;
+    }
+
+    public String getVisibility() {
+        return visibility;
+    }
+
+    public void setVisibility(String visibility) {
+        if (!"all".equals(visibility) && !"department".equals(visibility)) {
+            throw new IllegalArgumentException("visibility must be all or department");
+        }
+        this.visibility = visibility;
+    }
+
+    public AccountsProperties getAccounts() {
+        return accounts;
+    }
+
+    public void setAccounts(AccountsProperties accounts) {
+        this.accounts = accounts;
+    }
+
+    public boolean isTargetedSlas() {
+        return targetedSlas;
+    }
+
+    public void setTargetedSlas(boolean value) {
+        targetedSlas = value;
+    }
+
+    public static class AccountsProperties {
+        private boolean enabled;
+        private boolean scopeAgents;
+
+        public boolean isEnabled() {
+            return enabled;
+        }
+
+        public void setEnabled(boolean value) {
+            enabled = value;
+        }
+
+        public boolean isScopeAgents() {
+            return scopeAgents;
+        }
+
+        public void setScopeAgents(boolean value) {
+            scopeAgents = value;
+        }
+    }
 
     private boolean enabled = true;
     private String routePrefix = "escalated";

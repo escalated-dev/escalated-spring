@@ -2,6 +2,7 @@ package dev.escalated.services;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+
 import dev.escalated.models.AgentProfile;
 import dev.escalated.models.DeferredWorkflowJob;
 import dev.escalated.models.Department;
@@ -18,15 +19,17 @@ import dev.escalated.repositories.ReplyRepository;
 import dev.escalated.repositories.TagRepository;
 import dev.escalated.repositories.TicketFollowerRepository;
 import dev.escalated.repositories.TicketRepository;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.stereotype.Service;
+
 import java.time.Instant;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.scheduling.annotation.Scheduled;
-import org.springframework.stereotype.Service;
 
 /**
  * Performs the side-effects dictated by a matched {@code Workflow}.
@@ -53,6 +56,8 @@ import org.springframework.stereotype.Service;
  */
 @Service
 public class WorkflowExecutorService {
+    @org.springframework.beans.factory.annotation.Autowired
+    private dev.escalated.security.TicketAccess access;
 
     private static final Logger log = LoggerFactory.getLogger(WorkflowExecutorService.class);
     private static final ObjectMapper MAPPER = new ObjectMapper();
@@ -91,6 +96,7 @@ public class WorkflowExecutorService {
      * @return parsed actions (never null; empty on malformed input)
      */
     public List<Map<String, Object>> execute(Ticket ticket, String actionsJson) {
+        dev.escalated.security.TicketAccess.assertVisible(ticket);
         List<Map<String, Object>> actions = parseActions(actionsJson);
         executeParsed(ticket, actions);
         return actions;
@@ -101,7 +107,8 @@ public class WorkflowExecutorService {
             Map<String, Object> action = actions.get(i);
             String type = String.valueOf(action.getOrDefault("type", ""));
             if ("delay".equals(type)) {
-                String value = action.get("value") == null ? "" : String.valueOf(action.get("value"));
+                String value =
+                        action.get("value") == null ? "" : String.valueOf(action.get("value"));
                 List<Map<String, Object>> remaining = actions.subList(i + 1, actions.size());
                 scheduleDelay(ticket, value, remaining);
                 return;
@@ -134,7 +141,11 @@ public class WorkflowExecutorService {
             case "change_priority" -> changePriority(ticket, value);
             case "change_status" -> changeStatus(ticket, value);
             case "assign_agent" -> assignAgent(ticket, value);
-            case "set_department" -> setDepartment(ticket, value);
+            case "set_department", "change_department" -> setDepartment(ticket, value);
+            case "set_type" -> {
+                ticket.setTicketType(value);
+                ticketRepository.save(ticket);
+            }
             case "add_tag" -> addTag(ticket, value);
             case "remove_tag" -> removeTag(ticket, value);
             case "add_note" -> addNote(ticket, value);
@@ -181,6 +192,9 @@ public class WorkflowExecutorService {
             log.warn("[WorkflowExecutor] assign_agent: agent #{} not found", agentId);
             return;
         }
+        if (access != null) {
+            access.assertAssignable(ticket, agent.get());
+        }
         ticket.setAssignedAgent(agent.get());
         ticketRepository.save(ticket);
     }
@@ -196,6 +210,11 @@ public class WorkflowExecutorService {
             return;
         }
         ticket.setDepartment(dept.get());
+        if (access != null
+                && ticket.getAssignedAgent() != null
+                && !access.canAssign(ticket, ticket.getAssignedAgent())) {
+            ticket.setAssignedAgent(null);
+        }
         ticketRepository.save(ticket);
     }
 
@@ -266,7 +285,8 @@ public class WorkflowExecutorService {
         Long seconds = parseLong(value);
         if (seconds == null || seconds <= 0) {
             log.warn(
-                    "[WorkflowExecutor] delay: invalid seconds value '{}', skipping remaining actions",
+                    "[WorkflowExecutor] delay: invalid seconds value '{}', skipping remaining"
+                            + " actions",
                     value);
             return;
         }

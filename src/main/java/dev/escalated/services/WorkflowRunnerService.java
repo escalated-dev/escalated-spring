@@ -2,6 +2,7 @@ package dev.escalated.services;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+
 import dev.escalated.config.EscalatedTransactionManagers;
 import dev.escalated.models.Ticket;
 import dev.escalated.models.Workflow;
@@ -9,14 +10,16 @@ import dev.escalated.models.WorkflowLog;
 import dev.escalated.repositories.TicketRepository;
 import dev.escalated.repositories.WorkflowLogRepository;
 import dev.escalated.repositories.WorkflowRepository;
-import java.time.Instant;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.time.Instant;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * Orchestrates evaluation + execution of Workflows for a given trigger
@@ -69,9 +72,15 @@ public class WorkflowRunnerService {
      */
     @Transactional(transactionManager = EscalatedTransactionManagers.ESCALATED)
     public void runForEvent(String triggerEvent, Long ticketId) {
-        ticketRepository.findById(ticketId).ifPresentOrElse(
-                ticket -> runForEvent(triggerEvent, ticket),
-                () -> log.warn("[WorkflowRunner] {} skipped: ticket #{} no longer exists", triggerEvent, ticketId));
+        ticketRepository
+                .findById(ticketId)
+                .ifPresentOrElse(
+                        ticket -> runForEvent(triggerEvent, ticket),
+                        () ->
+                                log.warn(
+                                        "[WorkflowRunner] {} skipped: ticket #{} no longer exists",
+                                        triggerEvent,
+                                        ticketId));
     }
 
     /**
@@ -155,15 +164,17 @@ public class WorkflowRunnerService {
     }
 
     /**
-     * Flattens a ticket into a string-keyed, string-valued map for the
-     * condition evaluator (which treats all fields as strings). Relations
-     * and objects are skipped.
+     * Flattens a ticket into a string-keyed, string-valued map for the condition evaluator (which
+     * treats all fields as strings). Relations and objects are skipped.
      */
-    private static Map<String, String> ticketToConditionMap(Ticket ticket) {
+    public static Map<String, String> ticketToConditionMap(Ticket ticket) {
         Map<String, String> map = new HashMap<>();
         put(map, "id", ticket.getId());
         put(map, "subject", ticket.getSubject());
         put(map, "body", ticket.getBody());
+        put(map, "ticket_type", ticket.getTicketType());
+        put(map, "account_type", ticket.getAccountType());
+        put(map, "account_id", ticket.getAccountId());
         put(map, "ticket_number", ticket.getTicketNumber());
         put(map, "requester_name", ticket.getRequesterName());
         put(map, "requester_email", ticket.getRequesterEmail());

@@ -4,8 +4,7 @@ import dev.escalated.models.Ticket;
 import dev.escalated.models.TicketStatus;
 import dev.escalated.repositories.TicketRepository;
 import dev.escalated.services.TicketService;
-import java.time.Instant;
-import java.time.temporal.ChronoUnit;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
@@ -13,8 +12,19 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
+
 @Component
 public class AutomationScheduler {
+    @org.springframework.beans.factory.annotation.Autowired
+    private dev.escalated.config.EscalatedProperties properties;
+
+    public boolean matches(String task, Ticket ticket) {
+        String conditions =
+                properties == null ? null : properties.getAutomationConditions().get(task);
+        return dev.escalated.services.TicketRoutingConditions.matches(conditions, ticket);
+    }
 
     private static final Logger log = LoggerFactory.getLogger(AutomationScheduler.class);
 
@@ -34,6 +44,9 @@ public class AutomationScheduler {
         Page<Ticket> resolved = ticketRepository.findByStatus(TicketStatus.RESOLVED, PageRequest.of(0, 100));
 
         for (Ticket ticket : resolved.getContent()) {
+            if (!matches("auto-close", ticket)) {
+                continue;
+            }
             if (ticket.getResolvedAt() != null && ticket.getResolvedAt().isBefore(threshold)) {
                 ticketService.changeStatus(ticket.getId(), TicketStatus.CLOSED, "system");
                 log.info("Auto-closed resolved ticket {} after 7 days", ticket.getTicketNumber());
@@ -47,6 +60,9 @@ public class AutomationScheduler {
 
         var unassigned = ticketRepository.findUnassignedTickets();
         for (Ticket ticket : unassigned) {
+            if (!matches("auto-assign", ticket)) {
+                continue;
+            }
             log.debug("Ticket {} is unassigned, could be auto-assigned", ticket.getTicketNumber());
         }
     }

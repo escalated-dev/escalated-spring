@@ -9,6 +9,10 @@ import dev.escalated.repositories.AgentProfileRepository;
 import dev.escalated.repositories.AgentSkillRepository;
 import dev.escalated.repositories.SkillRoutingDepartmentRepository;
 import dev.escalated.repositories.SkillRoutingTagRepository;
+
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -18,8 +22,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 /**
  * Selects agents for a ticket using explicit skill–tag and skill–department
@@ -27,6 +29,8 @@ import org.springframework.transaction.annotation.Transactional;
  */
 @Service
 public class SkillRoutingService {
+    @org.springframework.beans.factory.annotation.Autowired
+    private dev.escalated.security.TicketAccess access;
 
     private final SkillRoutingTagRepository skillRoutingTagRepository;
     private final SkillRoutingDepartmentRepository skillRoutingDepartmentRepository;
@@ -75,19 +79,23 @@ public class SkillRoutingService {
 
         List<AgentProfile> profiles = agentProfileRepository.findAllById(candidates);
         return profiles.stream()
+                .filter(ap -> access == null || access.canAssign(ticket, ap))
                 .filter(ap -> ap.isActive() && ap.isAvailable())
-                .filter(ap -> {
-                    AgentCapacity cap = ap.getCapacity();
-                    return cap == null || cap.hasCapacity();
-                })
-                .sorted(Comparator
-                        .comparing((AgentProfile ap) ->
-                                proficiencySum.getOrDefault(ap.getId(), 0))
-                        .reversed()
-                        .thenComparingDouble(ap -> {
+                .filter(
+                        ap -> {
                             AgentCapacity cap = ap.getCapacity();
-                            return cap != null ? cap.getUtilization() : 0.0;
-                        }))
+                            return cap == null || cap.hasCapacity();
+                        })
+                .sorted(
+                        Comparator.comparing(
+                                        (AgentProfile ap) ->
+                                                proficiencySum.getOrDefault(ap.getId(), 0))
+                                .reversed()
+                                .thenComparingDouble(
+                                        ap -> {
+                                            AgentCapacity cap = ap.getCapacity();
+                                            return cap != null ? cap.getUtilization() : 0.0;
+                                        }))
                 .toList();
     }
 }

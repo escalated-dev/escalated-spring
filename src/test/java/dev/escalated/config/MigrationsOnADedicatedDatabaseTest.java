@@ -3,7 +3,7 @@ package dev.escalated.config;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import hostapp.HostApplication;
-import javax.sql.DataSource;
+
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable;
@@ -16,6 +16,8 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.context.TestPropertySource;
+
+import javax.sql.DataSource;
 
 /**
  * The same migrations on a database of Escalated's own.
@@ -49,8 +51,11 @@ class MigrationsOnADedicatedDatabaseTest {
         registry.add("escalated.datasource.url", database::url);
         registry.add("escalated.datasource.username", ScratchDatabase::username);
         registry.add("escalated.datasource.password", ScratchDatabase::password);
-        registry.add("escalated.datasource.driver-class-name", () -> System.getenv("ESCALATED_TEST_DRIVER_CLASS"));
-        registry.add("escalated.datasource.platform", () -> System.getenv("ESCALATED_TEST_PLATFORM"));
+        registry.add(
+                "escalated.datasource.driver-class-name",
+                () -> System.getenv("ESCALATED_TEST_DRIVER_CLASS"));
+        registry.add(
+                "escalated.datasource.platform", () -> System.getenv("ESCALATED_TEST_PLATFORM"));
     }
 
     @AfterAll
@@ -64,11 +69,58 @@ class MigrationsOnADedicatedDatabaseTest {
     @Qualifier("escalatedDataSource")
     private DataSource escalatedDataSource;
 
+    @Autowired private dev.escalated.repositories.TicketRepository tickets;
+    @Autowired private dev.escalated.repositories.DepartmentRepository departments;
+    @Autowired private dev.escalated.repositories.AgentProfileRepository agents;
+    @Autowired private dev.escalated.security.TicketAccess access;
+    @Autowired private EscalatedProperties properties;
+
+    @Test
+    @org.springframework.transaction.annotation.Transactional(
+            transactionManager = EscalatedTransactionManagers.ESCALATED)
+    void visibilityUsesThePackageDatabaseAndOpaqueHostUserIds() {
+        var own = new dev.escalated.models.Department();
+        own.setName("Support");
+        departments.save(own);
+        var other = new dev.escalated.models.Department();
+        other.setName("Delivery");
+        departments.save(other);
+        var agent = new dev.escalated.models.AgentProfile();
+        agent.setName("Agent");
+        agent.setEmail("agent@example.test");
+        agent.setUserId("Agent-007");
+        agent.setDepartment(own);
+        agents.save(agent);
+        for (var department : java.util.List.of(own, other)) {
+            var ticket = new dev.escalated.models.Ticket();
+            ticket.setSubject("Request");
+            ticket.setBody("body");
+            ticket.setDepartment(department);
+            ticket.setRequesterName("Customer");
+            ticket.setRequesterEmail("customer@example.test");
+            ticket.setTicketNumber(java.util.UUID.randomUUID().toString());
+            tickets.saveAndFlush(ticket);
+        }
+        properties.setVisibility("department");
+        try {
+            var actor =
+                    new org.springframework.security.authentication
+                            .UsernamePasswordAuthenticationToken(
+                            agent.getEmail(), "", java.util.List.of());
+            assertThat(access.runAs(actor, () -> tickets.count())).isEqualTo(1);
+        } finally {
+            properties.setVisibility("all");
+        }
+    }
+
     @Test
     void everyMigrationIsRecordedInEscalatedsOwnHistory() {
-        Integer applied = new JdbcTemplate(escalatedDataSource).queryForObject(
-                "SELECT COUNT(*) FROM escalated_flyway_schema_history WHERE success = TRUE AND version IS NOT NULL",
-                Integer.class);
+        Integer applied =
+                new JdbcTemplate(escalatedDataSource)
+                        .queryForObject(
+                                "SELECT COUNT(*) FROM escalated_flyway_schema_history WHERE success"
+                                        + " = TRUE AND version IS NOT NULL",
+                                Integer.class);
 
         assertThat(applied).isGreaterThanOrEqualTo(11);
     }

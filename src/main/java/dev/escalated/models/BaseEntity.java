@@ -7,6 +7,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.MappedSuperclass;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.PreUpdate;
+
 import java.time.Instant;
 
 @MappedSuperclass
@@ -24,6 +25,7 @@ public abstract class BaseEntity {
 
     @PrePersist
     protected void onCreate() {
+        dev.escalated.security.TicketAccess.assertWrite(this);
         Instant now = Instant.now();
         this.createdAt = now;
         this.updatedAt = now;
@@ -31,7 +33,13 @@ public abstract class BaseEntity {
 
     @PreUpdate
     protected void onUpdate() {
+        dev.escalated.security.TicketAccess.assertWrite(this);
         this.updatedAt = Instant.now();
+    }
+
+    @jakarta.persistence.PreRemove
+    protected void onRemove() {
+        dev.escalated.security.TicketAccess.assertVisible(this);
     }
 
     public Long getId() {

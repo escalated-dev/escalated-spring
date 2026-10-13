@@ -5,8 +5,7 @@ import dev.escalated.models.Ticket;
 import dev.escalated.models.TicketPriority;
 import dev.escalated.models.TicketStatus;
 import dev.escalated.services.TicketService;
-import java.time.Instant;
-import java.util.Map;
+
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
@@ -21,6 +20,9 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.time.Instant;
+import java.util.Map;
+
 @RestController
 @RequestMapping("/escalated/api/admin/tickets")
 public class AdminTicketController {
@@ -32,8 +34,30 @@ public class AdminTicketController {
     }
 
     @GetMapping
-    public ResponseEntity<Page<Ticket>> index(@RequestParam(required = false) TicketStatus status,
-                                              @PageableDefault(size = 25) Pageable pageable) {
+    public ResponseEntity<Page<Ticket>> index(
+            @RequestParam(required = false) TicketStatus status,
+            @RequestParam(required = false) String query,
+            @RequestParam(name = "department_id", required = false) Long departmentId,
+            @RequestParam(name = "ticket_type", required = false) String ticketType,
+            @RequestParam(name = "account_type", required = false) String accountType,
+            @RequestParam(name = "account_id", required = false) String accountId,
+            @PageableDefault(size = 25) Pageable pageable) {
+        if (query != null
+                || departmentId != null
+                || ticketType != null
+                || accountType != null
+                || accountId != null) {
+            return ResponseEntity.ok(
+                    ticketService.search(
+                            query,
+                            null,
+                            status,
+                            departmentId,
+                            ticketType,
+                            accountType,
+                            accountId,
+                            pageable));
+        }
         Page<Ticket> tickets = status != null
                 ? ticketService.findByStatus(status, pageable)
                 : ticketService.findAll(pageable);
@@ -47,31 +71,56 @@ public class AdminTicketController {
 
     @PostMapping
     public ResponseEntity<Ticket> store(@RequestBody Map<String, Object> body) {
-        Ticket ticket = ticketService.create(
-                (String) body.get("subject"),
-                (String) body.get("body"),
-                (String) body.get("requester_name"),
-                (String) body.get("requester_email"),
-                body.get("priority") != null ? TicketPriority.valueOf((String) body.get("priority")) : null,
-                body.get("department_id") != null ? Long.valueOf(body.get("department_id").toString()) : null
-        );
+        if (body.containsKey("ticket_type")) {
+            return ResponseEntity.status(201)
+                    .body(
+                            ticketService.create(
+                                    (String) body.get("subject"),
+                                    (String) body.get("body"),
+                                    (String) body.get("requester_name"),
+                                    (String) body.get("requester_email"),
+                                    body.get("priority") == null
+                                            ? null
+                                            : TicketPriority.valueOf((String) body.get("priority")),
+                                    body.get("department_id") == null
+                                            ? null
+                                            : Long.valueOf(body.get("department_id").toString()),
+                                    (String) body.get("ticket_type")));
+        }
+        Ticket ticket =
+                ticketService.create(
+                        (String) body.get("subject"),
+                        (String) body.get("body"),
+                        (String) body.get("requester_name"),
+                        (String) body.get("requester_email"),
+                        body.get("priority") != null
+                                ? TicketPriority.valueOf((String) body.get("priority"))
+                                : null,
+                        body.get("department_id") != null
+                                ? Long.valueOf(body.get("department_id").toString())
+                                : null);
         return ResponseEntity.status(201).body(ticket);
     }
 
     @PutMapping("/{id}")
     public ResponseEntity<Ticket> update(@PathVariable Long id, @RequestBody Map<String, Object> body) {
-        Ticket ticket = ticketService.update(id,
-                (String) body.get("subject"),
-                (String) body.get("body"),
-                body.get("priority") != null ? TicketPriority.valueOf((String) body.get("priority")) : null
-        );
+        Ticket ticket =
+                ticketService.update(
+                        id,
+                        (String) body.get("subject"),
+                        (String) body.get("body"),
+                        body.get("priority") != null
+                                ? TicketPriority.valueOf((String) body.get("priority"))
+                                : null);
         return ResponseEntity.ok(ticket);
     }
 
     @PostMapping("/{id}/assign")
     public ResponseEntity<Ticket> assign(@PathVariable Long id, @RequestBody Map<String, Object> body) {
-        Long agentId = body.get("agent_id") != null ? Long.valueOf(body.get("agent_id").toString()) : null;
-        return ResponseEntity.ok(ticketService.assign(id, agentId, (String) body.get("actor_email")));
+        Long agentId =
+                body.get("agent_id") != null ? Long.valueOf(body.get("agent_id").toString()) : null;
+        return ResponseEntity.ok(
+                ticketService.assign(id, agentId, (String) body.get("actor_email")));
     }
 
     @PostMapping("/{id}/status")
@@ -89,7 +138,8 @@ public class AdminTicketController {
     @PostMapping("/{id}/merge")
     public ResponseEntity<Ticket> merge(@PathVariable Long id, @RequestBody Map<String, Object> body) {
         Long targetId = Long.valueOf(body.get("target_ticket_id").toString());
-        return ResponseEntity.ok(ticketService.merge(id, targetId, (String) body.get("actor_email")));
+        return ResponseEntity.ok(
+                ticketService.merge(id, targetId, (String) body.get("actor_email")));
     }
 
     @PostMapping("/{id}/split")

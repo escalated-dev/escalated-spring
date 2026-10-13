@@ -1,6 +1,7 @@
 package dev.escalated.models;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -14,6 +15,7 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import jakarta.validation.constraints.NotBlank;
+
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -21,9 +23,105 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+@org.hibernate.annotations.FilterDef(
+        name = "escalatedTicketAccess",
+        autoEnabled = true,
+        applyToLoadByKey = true,
+        parameters = {
+            @org.hibernate.annotations.ParamDef(
+                    name = "departmentRestricted",
+                    type = Boolean.class,
+                    resolver =
+                            dev.escalated.security.TicketAccessContext.DepartmentRestricted.class),
+            @org.hibernate.annotations.ParamDef(
+                    name = "accountRestricted",
+                    type = Boolean.class,
+                    resolver = dev.escalated.security.TicketAccessContext.AccountRestricted.class),
+            @org.hibernate.annotations.ParamDef(
+                    name = "agentId",
+                    type = Long.class,
+                    resolver = dev.escalated.security.TicketAccessContext.AgentId.class),
+            @org.hibernate.annotations.ParamDef(
+                    name = "accountType",
+                    type = String.class,
+                    resolver = dev.escalated.security.TicketAccessContext.AccountType.class),
+            @org.hibernate.annotations.ParamDef(
+                    name = "accountId",
+                    type = String.class,
+                    resolver = dev.escalated.security.TicketAccessContext.AccountId.class),
+            @org.hibernate.annotations.ParamDef(
+                    name = "accountTypeLength",
+                    type = Integer.class,
+                    resolver = dev.escalated.security.TicketAccessContext.AccountTypeLength.class),
+            @org.hibernate.annotations.ParamDef(
+                    name = "accountIdLength",
+                    type = Integer.class,
+                    resolver = dev.escalated.security.TicketAccessContext.AccountIdLength.class)
+        })
+@org.hibernate.annotations.Filter(
+        name = "escalatedTicketAccess",
+        condition = dev.escalated.security.TicketAccessSql.TICKET_STANDARD,
+        deduceAliasInjectionPoints = false,
+        aliases =
+                @org.hibernate.annotations.SqlFragmentAlias(
+                        alias = "row",
+                        table = "escalated_tickets"))
+@org.hibernate.annotations.DialectOverride.Filters(
+        dialect = org.hibernate.dialect.MySQLDialect.class,
+        override =
+                @org.hibernate.annotations.Filters(
+                        @org.hibernate.annotations.Filter(
+                                name = "escalatedTicketAccess",
+                                condition = dev.escalated.security.TicketAccessSql.TICKET_MYSQL,
+                                deduceAliasInjectionPoints = false,
+                                aliases =
+                                        @org.hibernate.annotations.SqlFragmentAlias(
+                                                alias = "row",
+                                                table = "escalated_tickets"))))
 @Entity
-@Table(name = "escalated_tickets")
+@org.hibernate.annotations.DynamicUpdate
+@Table(
+        name = "escalated_tickets",
+        indexes =
+                @jakarta.persistence.Index(
+                        name = "escalated_tickets_account_idx",
+                        columnList = "account_type,account_id"))
 public class Ticket extends BaseEntity {
+    @Column(name = "account_type", length = 191)
+    private String accountType;
+
+    @Column(name = "account_id", length = 191)
+    private String accountId;
+
+    @Column(name = "ticket_type", length = 100)
+    private String ticketType;
+
+    @JsonProperty("account_type")
+    public String getAccountType() {
+        return accountType;
+    }
+
+    public void setAccountType(String value) {
+        accountType = value;
+    }
+
+    @JsonProperty("account_id")
+    public String getAccountId() {
+        return accountId;
+    }
+
+    public void setAccountId(String value) {
+        accountId = value;
+    }
+
+    @JsonProperty("ticket_type")
+    public String getTicketType() {
+        return ticketType;
+    }
+
+    public void setTicketType(String value) {
+        ticketType = value;
+    }
 
     @NotBlank
     @Column(nullable = false)
@@ -101,18 +199,125 @@ public class Ticket extends BaseEntity {
     private boolean locked = false;
 
     @OneToMany(mappedBy = "ticket", cascade = CascadeType.ALL, orphanRemoval = true)
+    @org.hibernate.annotations.Filter(
+            name = "escalatedTicketAccess",
+            condition = dev.escalated.security.TicketAccessSql.REPLY_STANDARD,
+            deduceAliasInjectionPoints = false,
+            aliases =
+                    @org.hibernate.annotations.SqlFragmentAlias(
+                            alias = "row",
+                            table = "escalated_replies"))
+    @org.hibernate.annotations.DialectOverride.Filters(
+            dialect = org.hibernate.dialect.MySQLDialect.class,
+            override =
+                    @org.hibernate.annotations.Filters(
+                            @org.hibernate.annotations.Filter(
+                                    name = "escalatedTicketAccess",
+                                    condition = dev.escalated.security.TicketAccessSql.REPLY_MYSQL,
+                                    deduceAliasInjectionPoints = false,
+                                    aliases =
+                                            @org.hibernate.annotations.SqlFragmentAlias(
+                                                    alias = "row",
+                                                    table = "escalated_replies"))))
     private List<Reply> replies = new ArrayList<>();
 
     @OneToMany(mappedBy = "ticket", cascade = CascadeType.ALL, orphanRemoval = true)
+    @org.hibernate.annotations.Filter(
+            name = "escalatedTicketAccess",
+            condition = dev.escalated.security.TicketAccessSql.ATTACHMENT_STANDARD,
+            deduceAliasInjectionPoints = false,
+            aliases =
+                    @org.hibernate.annotations.SqlFragmentAlias(
+                            alias = "row",
+                            table = "escalated_attachments"))
+    @org.hibernate.annotations.DialectOverride.Filters(
+            dialect = org.hibernate.dialect.MySQLDialect.class,
+            override =
+                    @org.hibernate.annotations.Filters(
+                            @org.hibernate.annotations.Filter(
+                                    name = "escalatedTicketAccess",
+                                    condition =
+                                            dev.escalated.security.TicketAccessSql.ATTACHMENT_MYSQL,
+                                    deduceAliasInjectionPoints = false,
+                                    aliases =
+                                            @org.hibernate.annotations.SqlFragmentAlias(
+                                                    alias = "row",
+                                                    table = "escalated_attachments"))))
     private List<Attachment> attachments = new ArrayList<>();
 
     @OneToMany(mappedBy = "ticket", cascade = CascadeType.ALL, orphanRemoval = true)
+    @org.hibernate.annotations.Filter(
+            name = "escalatedTicketAccess",
+            condition = dev.escalated.security.TicketAccessSql.TICKET_ACTIVITY_STANDARD,
+            deduceAliasInjectionPoints = false,
+            aliases =
+                    @org.hibernate.annotations.SqlFragmentAlias(
+                            alias = "row",
+                            table = "escalated_ticket_activities"))
+    @org.hibernate.annotations.DialectOverride.Filters(
+            dialect = org.hibernate.dialect.MySQLDialect.class,
+            override =
+                    @org.hibernate.annotations.Filters(
+                            @org.hibernate.annotations.Filter(
+                                    name = "escalatedTicketAccess",
+                                    condition =
+                                            dev.escalated.security.TicketAccessSql
+                                                    .TICKET_ACTIVITY_MYSQL,
+                                    deduceAliasInjectionPoints = false,
+                                    aliases =
+                                            @org.hibernate.annotations.SqlFragmentAlias(
+                                                    alias = "row",
+                                                    table = "escalated_ticket_activities"))))
     private List<TicketActivity> activities = new ArrayList<>();
 
     @OneToMany(mappedBy = "ticket", cascade = CascadeType.ALL, orphanRemoval = true)
+    @org.hibernate.annotations.Filter(
+            name = "escalatedTicketAccess",
+            condition = dev.escalated.security.TicketAccessSql.CUSTOM_FIELD_VALUE_STANDARD,
+            deduceAliasInjectionPoints = false,
+            aliases =
+                    @org.hibernate.annotations.SqlFragmentAlias(
+                            alias = "row",
+                            table = "escalated_custom_field_values"))
+    @org.hibernate.annotations.DialectOverride.Filters(
+            dialect = org.hibernate.dialect.MySQLDialect.class,
+            override =
+                    @org.hibernate.annotations.Filters(
+                            @org.hibernate.annotations.Filter(
+                                    name = "escalatedTicketAccess",
+                                    condition =
+                                            dev.escalated.security.TicketAccessSql
+                                                    .CUSTOM_FIELD_VALUE_MYSQL,
+                                    deduceAliasInjectionPoints = false,
+                                    aliases =
+                                            @org.hibernate.annotations.SqlFragmentAlias(
+                                                    alias = "row",
+                                                    table = "escalated_custom_field_values"))))
     private List<CustomFieldValue> customFieldValues = new ArrayList<>();
 
     @OneToMany(mappedBy = "ticket", cascade = CascadeType.ALL, orphanRemoval = true)
+    @org.hibernate.annotations.Filter(
+            name = "escalatedTicketAccess",
+            condition = dev.escalated.security.TicketAccessSql.SIDE_CONVERSATION_STANDARD,
+            deduceAliasInjectionPoints = false,
+            aliases =
+                    @org.hibernate.annotations.SqlFragmentAlias(
+                            alias = "row",
+                            table = "escalated_side_conversations"))
+    @org.hibernate.annotations.DialectOverride.Filters(
+            dialect = org.hibernate.dialect.MySQLDialect.class,
+            override =
+                    @org.hibernate.annotations.Filters(
+                            @org.hibernate.annotations.Filter(
+                                    name = "escalatedTicketAccess",
+                                    condition =
+                                            dev.escalated.security.TicketAccessSql
+                                                    .SIDE_CONVERSATION_MYSQL,
+                                    deduceAliasInjectionPoints = false,
+                                    aliases =
+                                            @org.hibernate.annotations.SqlFragmentAlias(
+                                                    alias = "row",
+                                                    table = "escalated_side_conversations"))))
     private List<SideConversation> sideConversations = new ArrayList<>();
 
     @ManyToMany
@@ -124,12 +329,78 @@ public class Ticket extends BaseEntity {
     private Set<Tag> tags = new HashSet<>();
 
     @OneToMany(mappedBy = "sourceTicket", cascade = CascadeType.ALL)
+    @org.hibernate.annotations.Filter(
+            name = "escalatedTicketAccess",
+            condition = dev.escalated.security.TicketAccessSql.TICKET_LINK_STANDARD,
+            deduceAliasInjectionPoints = false,
+            aliases =
+                    @org.hibernate.annotations.SqlFragmentAlias(
+                            alias = "row",
+                            table = "escalated_ticket_links"))
+    @org.hibernate.annotations.DialectOverride.Filters(
+            dialect = org.hibernate.dialect.MySQLDialect.class,
+            override =
+                    @org.hibernate.annotations.Filters(
+                            @org.hibernate.annotations.Filter(
+                                    name = "escalatedTicketAccess",
+                                    condition =
+                                            dev.escalated.security.TicketAccessSql
+                                                    .TICKET_LINK_MYSQL,
+                                    deduceAliasInjectionPoints = false,
+                                    aliases =
+                                            @org.hibernate.annotations.SqlFragmentAlias(
+                                                    alias = "row",
+                                                    table = "escalated_ticket_links"))))
     private List<TicketLink> outgoingLinks = new ArrayList<>();
 
     @OneToMany(mappedBy = "targetTicket", cascade = CascadeType.ALL)
+    @org.hibernate.annotations.Filter(
+            name = "escalatedTicketAccess",
+            condition = dev.escalated.security.TicketAccessSql.TICKET_LINK_STANDARD,
+            deduceAliasInjectionPoints = false,
+            aliases =
+                    @org.hibernate.annotations.SqlFragmentAlias(
+                            alias = "row",
+                            table = "escalated_ticket_links"))
+    @org.hibernate.annotations.DialectOverride.Filters(
+            dialect = org.hibernate.dialect.MySQLDialect.class,
+            override =
+                    @org.hibernate.annotations.Filters(
+                            @org.hibernate.annotations.Filter(
+                                    name = "escalatedTicketAccess",
+                                    condition =
+                                            dev.escalated.security.TicketAccessSql
+                                                    .TICKET_LINK_MYSQL,
+                                    deduceAliasInjectionPoints = false,
+                                    aliases =
+                                            @org.hibernate.annotations.SqlFragmentAlias(
+                                                    alias = "row",
+                                                    table = "escalated_ticket_links"))))
     private List<TicketLink> incomingLinks = new ArrayList<>();
 
     @OneToMany(mappedBy = "ticket", cascade = CascadeType.ALL)
+    @org.hibernate.annotations.Filter(
+            name = "escalatedTicketAccess",
+            condition = dev.escalated.security.TicketAccessSql.SATISFACTION_RATING_STANDARD,
+            deduceAliasInjectionPoints = false,
+            aliases =
+                    @org.hibernate.annotations.SqlFragmentAlias(
+                            alias = "row",
+                            table = "escalated_satisfaction_ratings"))
+    @org.hibernate.annotations.DialectOverride.Filters(
+            dialect = org.hibernate.dialect.MySQLDialect.class,
+            override =
+                    @org.hibernate.annotations.Filters(
+                            @org.hibernate.annotations.Filter(
+                                    name = "escalatedTicketAccess",
+                                    condition =
+                                            dev.escalated.security.TicketAccessSql
+                                                    .SATISFACTION_RATING_MYSQL,
+                                    deduceAliasInjectionPoints = false,
+                                    aliases =
+                                            @org.hibernate.annotations.SqlFragmentAlias(
+                                                    alias = "row",
+                                                    table = "escalated_satisfaction_ratings"))))
     private List<SatisfactionRating> satisfactionRatings = new ArrayList<>();
 
     public String getSubject() {
@@ -311,7 +582,7 @@ public class Ticket extends BaseEntity {
     }
 
     public List<Reply> getReplies() {
-        return replies;
+        return dev.escalated.security.TicketAccess.visibleCollection(replies);
     }
 
     public void setReplies(List<Reply> replies) {
@@ -319,7 +590,7 @@ public class Ticket extends BaseEntity {
     }
 
     public List<Attachment> getAttachments() {
-        return attachments;
+        return dev.escalated.security.TicketAccess.visibleCollection(attachments);
     }
 
     public void setAttachments(List<Attachment> attachments) {
@@ -327,7 +598,7 @@ public class Ticket extends BaseEntity {
     }
 
     public List<TicketActivity> getActivities() {
-        return activities;
+        return dev.escalated.security.TicketAccess.visibleCollection(activities);
     }
 
     public void setActivities(List<TicketActivity> activities) {
@@ -335,7 +606,7 @@ public class Ticket extends BaseEntity {
     }
 
     public List<CustomFieldValue> getCustomFieldValues() {
-        return customFieldValues;
+        return dev.escalated.security.TicketAccess.visibleCollection(customFieldValues);
     }
 
     public void setCustomFieldValues(List<CustomFieldValue> customFieldValues) {
@@ -343,7 +614,7 @@ public class Ticket extends BaseEntity {
     }
 
     public List<SideConversation> getSideConversations() {
-        return sideConversations;
+        return dev.escalated.security.TicketAccess.visibleCollection(sideConversations);
     }
 
     public void setSideConversations(List<SideConversation> sideConversations) {
@@ -359,7 +630,7 @@ public class Ticket extends BaseEntity {
     }
 
     public List<TicketLink> getOutgoingLinks() {
-        return outgoingLinks;
+        return dev.escalated.security.TicketAccess.visibleCollection(outgoingLinks);
     }
 
     public void setOutgoingLinks(List<TicketLink> outgoingLinks) {
@@ -367,7 +638,7 @@ public class Ticket extends BaseEntity {
     }
 
     public List<TicketLink> getIncomingLinks() {
-        return incomingLinks;
+        return dev.escalated.security.TicketAccess.visibleCollection(incomingLinks);
     }
 
     public void setIncomingLinks(List<TicketLink> incomingLinks) {
@@ -375,7 +646,7 @@ public class Ticket extends BaseEntity {
     }
 
     public List<SatisfactionRating> getSatisfactionRatings() {
-        return satisfactionRatings;
+        return dev.escalated.security.TicketAccess.visibleCollection(satisfactionRatings);
     }
 
     public void setSatisfactionRatings(List<SatisfactionRating> satisfactionRatings) {

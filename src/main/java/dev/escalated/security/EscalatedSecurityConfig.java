@@ -16,9 +16,13 @@ public class EscalatedSecurityConfig {
 
     private final ApiTokenAuthenticationFilter apiTokenFilter;
     private final EscalatedAuthorization authorization;
+    private final TicketVisibilityFilter ticketVisibilityFilter;
 
-    public EscalatedSecurityConfig(ApiTokenAuthenticationFilter apiTokenFilter,
-                                   EscalatedAuthorization authorization) {
+    public EscalatedSecurityConfig(
+            ApiTokenAuthenticationFilter apiTokenFilter,
+            EscalatedAuthorization authorization,
+            TicketAccess ticketAccess) {
+        this.ticketVisibilityFilter = new TicketVisibilityFilter(ticketAccess);
         this.apiTokenFilter = apiTokenFilter;
         this.authorization = authorization;
     }
@@ -39,53 +43,81 @@ public class EscalatedSecurityConfig {
     }
 
     @Bean
+    public FilterRegistrationBean<TicketVisibilityFilter> escalatedVisibilityFilterRegistration() {
+        FilterRegistrationBean<TicketVisibilityFilter> registration =
+                new FilterRegistrationBean<>(ticketVisibilityFilter);
+        registration.setEnabled(false);
+        return registration;
+    }
+
+    @Bean
     @Order(1)
     public SecurityFilterChain escalatedApiSecurityFilterChain(HttpSecurity http) throws Exception {
-        http
-                .securityMatcher("/escalated/api/**")
+        http.securityMatcher("/escalated/api/**")
                 .csrf(csrf -> csrf.disable())
-                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .sessionManagement(
+                        session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .addFilterBefore(apiTokenFilter, UsernamePasswordAuthenticationFilter.class)
-                .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/escalated/api/widget/**").permitAll()
-                        .requestMatchers("/escalated/api/csat/**").permitAll()
-                        .requestMatchers("/escalated/api/guest/**").permitAll()
-                        // The JSON auth endpoints carry tokens the host issued
-                        // and check them through the host's
-                        // EscalatedApiAuthenticator, answering 401 themselves.
-                        .requestMatchers("/escalated/api/v1/auth/**").permitAll()
-                        // Being logged in is not being staff. The same two
-                        // gates as every other Escalated host: admin, and
-                        // agent-or-admin.
-                        .requestMatchers("/escalated/api/admin/**").access(authorization.admin())
-                        .requestMatchers("/escalated/api/agent/**").access(authorization.agent())
-                        .anyRequest().authenticated()
-                );
+                .addFilterBefore(
+                        ticketVisibilityFilter,
+                        org.springframework.security.web.access.intercept.AuthorizationFilter.class)
+                .authorizeHttpRequests(
+                        auth ->
+                                auth.requestMatchers("/escalated/api/widget/**")
+                                        .permitAll()
+                                        .requestMatchers("/escalated/api/csat/**")
+                                        .permitAll()
+                                        .requestMatchers("/escalated/api/guest/**")
+                                        .permitAll()
+                                        // The JSON auth endpoints carry tokens the host issued
+                                        // and check them through the host's
+                                        // EscalatedApiAuthenticator, answering 401 themselves.
+                                        .requestMatchers("/escalated/api/v1/auth/**")
+                                        .permitAll()
+                                        // Being logged in is not being staff. The same two
+                                        // gates as every other Escalated host: admin, and
+                                        // agent-or-admin.
+                                        .requestMatchers("/escalated/api/admin/**")
+                                        .access(authorization.admin())
+                                        .requestMatchers("/escalated/api/agent/**")
+                                        .access(authorization.agent())
+                                        .anyRequest()
+                                        .authenticated());
         return http.build();
     }
 
     @Bean
     @Order(2)
     public SecurityFilterChain escalatedWebSecurityFilterChain(HttpSecurity http) throws Exception {
-        http
-                .securityMatcher("/escalated/**")
-                .csrf(csrf -> csrf.ignoringRequestMatchers(
-                        "/escalated/api/**",
-                        "/escalated/n/**",
-                        "/escalated/webhook/**",
-                        "/escalated/webhooks/newsletter/**"))
-                .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/escalated/ws/**").permitAll()
-                        .requestMatchers("/escalated/kb/**").permitAll()
-                        .requestMatchers("/escalated/n/**").permitAll()
-                        // Mail providers have no session and no CSRF token.
-                        // InboundEmailController authenticates them by the
-                        // shared-secret header, and refuses everything while
-                        // no secret is configured.
-                        .requestMatchers("/escalated/webhook/**").permitAll()
-                        .requestMatchers("/escalated/webhooks/newsletter/**").permitAll()
-                        .anyRequest().authenticated()
-                );
+        http.securityMatcher("/escalated/**")
+                .csrf(
+                        csrf ->
+                                csrf.ignoringRequestMatchers(
+                                        "/escalated/api/**",
+                                        "/escalated/n/**",
+                                        "/escalated/webhook/**",
+                                        "/escalated/webhooks/newsletter/**"))
+                .addFilterBefore(
+                        ticketVisibilityFilter,
+                        org.springframework.security.web.access.intercept.AuthorizationFilter.class)
+                .authorizeHttpRequests(
+                        auth ->
+                                auth.requestMatchers("/escalated/ws/**")
+                                        .permitAll()
+                                        .requestMatchers("/escalated/kb/**")
+                                        .permitAll()
+                                        .requestMatchers("/escalated/n/**")
+                                        .permitAll()
+                                        // Mail providers have no session and no CSRF token.
+                                        // InboundEmailController authenticates them by the
+                                        // shared-secret header, and refuses everything while
+                                        // no secret is configured.
+                                        .requestMatchers("/escalated/webhook/**")
+                                        .permitAll()
+                                        .requestMatchers("/escalated/webhooks/newsletter/**")
+                                        .permitAll()
+                                        .anyRequest()
+                                        .authenticated());
         return http.build();
     }
 }

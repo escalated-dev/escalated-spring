@@ -21,6 +21,8 @@
 
 An embeddable helpdesk system for Spring Boot applications. Add a full-featured support desk to any Java application with a single dependency.
 
+For opt-in department/account visibility and targeted SLAs, see [ticket access and routing](docs/ticket-access-and-routing.md).
+
 ## Features
 
 1. **Ticket CRUD** -- Full lifecycle management with statuses, priorities, and assignments

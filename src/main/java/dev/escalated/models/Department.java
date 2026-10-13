@@ -1,11 +1,13 @@
 package dev.escalated.models;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import jakarta.validation.constraints.NotBlank;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -28,6 +30,26 @@ public class Department extends BaseEntity {
 
     @JsonIgnore
     @OneToMany(mappedBy = "department")
+    @org.hibernate.annotations.Filter(
+            name = "escalatedTicketAccess",
+            condition = dev.escalated.security.TicketAccessSql.TICKET_STANDARD,
+            deduceAliasInjectionPoints = false,
+            aliases =
+                    @org.hibernate.annotations.SqlFragmentAlias(
+                            alias = "row",
+                            table = "escalated_tickets"))
+    @org.hibernate.annotations.DialectOverride.Filters(
+            dialect = org.hibernate.dialect.MySQLDialect.class,
+            override =
+                    @org.hibernate.annotations.Filters(
+                            @org.hibernate.annotations.Filter(
+                                    name = "escalatedTicketAccess",
+                                    condition = dev.escalated.security.TicketAccessSql.TICKET_MYSQL,
+                                    deduceAliasInjectionPoints = false,
+                                    aliases =
+                                            @org.hibernate.annotations.SqlFragmentAlias(
+                                                    alias = "row",
+                                                    table = "escalated_tickets"))))
     private List<Ticket> tickets = new ArrayList<>();
 
     @JsonIgnore

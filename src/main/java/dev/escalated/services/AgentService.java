@@ -10,16 +10,21 @@ import dev.escalated.repositories.AgentProfileRepository;
 import dev.escalated.repositories.AgentSkillRepository;
 import dev.escalated.repositories.SkillRepository;
 import dev.escalated.repositories.TicketRepository;
+
 import jakarta.persistence.EntityNotFoundException;
+
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class AgentService {
+    @org.springframework.beans.factory.annotation.Autowired
+    private dev.escalated.security.TicketAccess access;
 
     private final AgentProfileRepository agentRepository;
     private final AgentCapacityRepository capacityRepository;
@@ -134,6 +139,23 @@ public class AgentService {
 
     @Transactional(transactionManager = EscalatedTransactionManagers.ESCALATED, readOnly = true)
     public Optional<AgentProfile> findBestAvailableAgent(Long departmentId, Set<Long> requiredSkillIds) {
+        if (access != null && access.enabled()) {
+            return Optional.empty();
+        }
+        return findBestAvailableAgent(null, departmentId, requiredSkillIds);
+    }
+
+    @Transactional(transactionManager = EscalatedTransactionManagers.ESCALATED, readOnly = true)
+    public Optional<AgentProfile> findBestAvailableAgentForTicket(
+            dev.escalated.models.Ticket ticket, Set<Long> requiredSkillIds) {
+        return findBestAvailableAgent(
+                ticket,
+                ticket.getDepartment() == null ? null : ticket.getDepartment().getId(),
+                requiredSkillIds);
+    }
+
+    private Optional<AgentProfile> findBestAvailableAgent(
+            dev.escalated.models.Ticket ticket, Long departmentId, Set<Long> requiredSkillIds) {
         List<AgentProfile> candidates;
 
         if (requiredSkillIds != null && !requiredSkillIds.isEmpty()) {
@@ -147,7 +169,7 @@ public class AgentService {
                                         agent.getId(), sid)))
                         .toList();
             }
-        } else if (departmentId != null) {
+        } else if (departmentId != null && (access == null || !access.enabled())) {
             candidates = agentRepository.findByDepartmentIdAndActiveTrueOrderByName(departmentId).stream()
                     .filter(AgentProfile::isAvailable)
                     .toList();
@@ -156,14 +178,22 @@ public class AgentService {
         }
 
         return candidates.stream()
-                .filter(agent -> {
-                    AgentCapacity cap = agent.getCapacity();
-                    return cap == null || cap.hasCapacity();
-                })
-                .min(Comparator.comparingDouble(agent -> {
-                    AgentCapacity cap = agent.getCapacity();
-                    return cap != null ? cap.getUtilization() : 0.0;
-                }));
+                .filter(
+                        agent ->
+                                access == null
+                                        || !access.enabled()
+                                        || ticket != null && access.canAssign(ticket, agent))
+                .filter(
+                        agent -> {
+                            AgentCapacity cap = agent.getCapacity();
+                            return cap == null || cap.hasCapacity();
+                        })
+                .min(
+                        Comparator.comparingDouble(
+                                agent -> {
+                                    AgentCapacity cap = agent.getCapacity();
+                                    return cap != null ? cap.getUtilization() : 0.0;
+                                }));
     }
 
     @Transactional(transactionManager = EscalatedTransactionManagers.ESCALATED)

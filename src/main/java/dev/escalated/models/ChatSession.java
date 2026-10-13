@@ -6,12 +6,34 @@ import jakarta.persistence.FetchType;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+
 import java.time.Instant;
 
 /**
- * Represents a live chat session. Under the hood a chat is a Ticket
- * with channel "chat"; this entity tracks the real-time session metadata.
+ * Represents a live chat session. Under the hood a chat is a Ticket with channel "chat"; this
+ * entity tracks the real-time session metadata.
  */
+@org.hibernate.annotations.Filter(
+        name = "escalatedTicketAccess",
+        condition = dev.escalated.security.TicketAccessSql.CHAT_SESSION_STANDARD,
+        deduceAliasInjectionPoints = false,
+        aliases =
+                @org.hibernate.annotations.SqlFragmentAlias(
+                        alias = "row",
+                        table = "escalated_chat_sessions"))
+@org.hibernate.annotations.DialectOverride.Filters(
+        dialect = org.hibernate.dialect.MySQLDialect.class,
+        override =
+                @org.hibernate.annotations.Filters(
+                        @org.hibernate.annotations.Filter(
+                                name = "escalatedTicketAccess",
+                                condition =
+                                        dev.escalated.security.TicketAccessSql.CHAT_SESSION_MYSQL,
+                                deduceAliasInjectionPoints = false,
+                                aliases =
+                                        @org.hibernate.annotations.SqlFragmentAlias(
+                                                alias = "row",
+                                                table = "escalated_chat_sessions"))))
 @Entity
 @Table(name = "escalated_chat_sessions")
 public class ChatSession extends BaseEntity {
