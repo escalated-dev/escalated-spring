@@ -50,15 +50,30 @@ Wbudowywalny system helpdesk dla aplikacji Spring Boot. Dodaj w pełni funkcjona
 ## Wymagania
 
 - Java 17+
-- Spring Boot 3.2+
+- Spring Boot 4.1.x
 - Relacyjna baza danych (PostgreSQL, MySQL lub H2 do programowania)
 
 ## Instalacja
 
+Najpierw zbuduj bieżący kod źródłowy w lokalnym repozytorium Maven:
+
+```bash
+git clone https://github.com/escalated-dev/escalated-spring.git
+cd escalated-spring
+./gradlew publishToMavenLocal
+```
+
 Dodaj zależność do pliku `build.gradle.kts`:
 
 ```kotlin
-implementation("dev.escalated:escalated-spring:0.1.0")
+repositories {
+    mavenLocal()
+    mavenCentral()
+}
+
+dependencies {
+    implementation("dev.escalated:escalated-spring:0.2.0")
+}
 ```
 
 Lub `pom.xml`:
@@ -67,7 +82,7 @@ Lub `pom.xml`:
 <dependency>
     <groupId>dev.escalated</groupId>
     <artifactId>escalated-spring</artifactId>
-    <version>0.1.0</version>
+    <version>0.2.0</version>
 </dependency>
 ```
 

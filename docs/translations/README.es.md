@@ -50,15 +50,30 @@ Un sistema de mesa de ayuda integrable para aplicaciones Spring Boot. Agregue un
 ## Requisitos
 
 - Java 17+
-- Spring Boot 3.2+
+- Spring Boot 4.1.x
 - Una base de datos relacional (PostgreSQL, MySQL o H2 para desarrollo)
 
 ## Instalación
 
+Primero, compila el código fuente actual en tu repositorio Maven local:
+
+```bash
+git clone https://github.com/escalated-dev/escalated-spring.git
+cd escalated-spring
+./gradlew publishToMavenLocal
+```
+
 Agregue la dependencia a su `build.gradle.kts`:
 
 ```kotlin
-implementation("dev.escalated:escalated-spring:0.1.0")
+repositories {
+    mavenLocal()
+    mavenCentral()
+}
+
+dependencies {
+    implementation("dev.escalated:escalated-spring:0.2.0")
+}
 ```
 
 O `pom.xml`:
@@ -67,7 +82,7 @@ O `pom.xml`:
 <dependency>
     <groupId>dev.escalated</groupId>
     <artifactId>escalated-spring</artifactId>
-    <version>0.1.0</version>
+    <version>0.2.0</version>
 </dependency>
 ```
 

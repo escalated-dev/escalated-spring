@@ -50,15 +50,30 @@
 ## 要求
 
 - Java 17+
-- Spring Boot 3.2+
+- Spring Boot 4.1.x
 - 关系型数据库（PostgreSQL、MySQL 或用于开发的 H2）
 
 ## 安装
 
+首先将当前源码构建到本地 Maven 仓库：
+
+```bash
+git clone https://github.com/escalated-dev/escalated-spring.git
+cd escalated-spring
+./gradlew publishToMavenLocal
+```
+
 将依赖项添加到 `build.gradle.kts`：
 
 ```kotlin
-implementation("dev.escalated:escalated-spring:0.1.0")
+repositories {
+    mavenLocal()
+    mavenCentral()
+}
+
+dependencies {
+    implementation("dev.escalated:escalated-spring:0.2.0")
+}
 ```
 
 或 `pom.xml`：
@@ -67,7 +82,7 @@ implementation("dev.escalated:escalated-spring:0.1.0")
 <dependency>
     <groupId>dev.escalated</groupId>
     <artifactId>escalated-spring</artifactId>
-    <version>0.1.0</version>
+    <version>0.2.0</version>
 </dependency>
 ```
 

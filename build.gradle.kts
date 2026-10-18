@@ -1,5 +1,16 @@
+buildscript {
+    repositories {
+        mavenCentral()
+    }
+    dependencies {
+        // The Boot Gradle plugin resolves its own graph, outside the app BOM.
+        classpath(platform("tools.jackson:jackson-bom:3.1.8"))
+        classpath("org.apache.commons:commons-lang3:3.21.0")
+    }
+}
+
 plugins {
-    java
+    `java-library`
     id("org.springframework.boot") version "4.1.1"
     id("io.spring.dependency-management") version "1.1.7"
     `maven-publish`
@@ -8,6 +19,12 @@ plugins {
 
 group = "dev.escalated"
 version = "0.2.0"
+
+// Security patches within the release lines managed by Boot 4.1.1. Keep each
+// Jackson family aligned rather than overriding only core or databind.
+extra["jackson-2-bom.version"] = "2.21.8"
+extra["jackson-bom.version"] = "3.1.8"
+extra["tomcat.version"] = "11.0.27"
 
 java {
     sourceCompatibility = JavaVersion.VERSION_17
@@ -19,21 +36,37 @@ repositories {
 }
 
 dependencies {
-    implementation("org.springframework.boot:spring-boot-starter-web")
-    implementation("org.springframework.boot:spring-boot-starter-data-jpa")
-    implementation("org.springframework.boot:spring-boot-starter-mail")
-    implementation("org.springframework.boot:spring-boot-starter-websocket")
-    implementation("org.springframework.boot:spring-boot-starter-validation")
-    implementation("org.springframework.boot:spring-boot-starter-security")
-    implementation("org.springframework.boot:spring-boot-starter-thymeleaf")
+    // Export patched families to Gradle consumers as well as the generated POM.
+    api(platform("com.fasterxml.jackson:jackson-bom:2.21.8"))
+    api(platform("tools.jackson:jackson-bom:3.1.8"))
+    // These types occur in public controllers, repository interfaces,
+    // constructors and annotations, so hosts need them on the compile classpath.
+    api("org.springframework.boot:spring-boot-starter-web")
+    api("org.springframework.boot:spring-boot-starter-data-jpa")
+    api("org.springframework.boot:spring-boot-starter-mail")
+    api("org.springframework.boot:spring-boot-starter-websocket")
+    api("org.springframework.boot:spring-boot-starter-validation")
+    api("org.springframework.boot:spring-boot-starter-security")
+    api("org.springframework.boot:spring-boot-starter-thymeleaf")
     implementation("org.springframework.boot:spring-boot-autoconfigure")
+    // Public services still accept Jackson 2 ObjectMapper. Boot 4 defaults to
+    // Jackson 3, so its compatibility module supplies the existing mapper API
+    // (and Java time modules) while preserving host-defined mapper beans.
+    implementation("org.springframework.boot:spring-boot-jackson2")
+    // Publish the patched transitive versions explicitly for POM consumers,
+    // which do not inherit Gradle's platform constraints from this library.
+    implementation("tools.jackson.core:jackson-databind")
+    implementation("com.fasterxml.jackson.datatype:jackson-datatype-jdk8")
+    implementation("com.fasterxml.jackson.datatype:jackson-datatype-jsr310")
+    implementation("com.fasterxml.jackson.module:jackson-module-parameter-names")
+    // Servlet types are also part of the public controller/filter API.
+    api("org.apache.tomcat.embed:tomcat-embed-core")
+    api("org.apache.tomcat.embed:tomcat-embed-el")
+    api("org.apache.tomcat.embed:tomcat-embed-websocket")
 
-    // Central translations: shipped as a Maven artifact via dev.escalated:escalated-locale
-    // but currently vendored at src/main/resources/META-INF/escalated/locale/ until the
-    // Maven Central publish pipeline is online (see escalated-locale's publish.yml — the
-    // MAVEN_USERNAME / MAVEN_PASSWORD / MAVEN_GPG_PASSPHRASE secrets are not configured,
-    // so the maven publish job no-ops and the artifact is unresolvable). Once the artifact
-    // is published, replace the vendored .properties files with:
+    // Canonical translations from escalated-locale/packages/maven are embedded
+    // under META-INF/escalated/locale/. Once the shared Maven artifact is
+    // available, these copies can be replaced with:
     //   implementation("dev.escalated:escalated-locale:<version>")
 
     implementation("org.flywaydb:flyway-core")
@@ -46,7 +79,7 @@ dependencies {
     // the host's own Flyway when the host has Boot's Flyway support, and does
     // nothing of the kind when it does not.
     compileOnly("org.springframework.boot:spring-boot-flyway")
-    implementation("com.fasterxml.jackson.core:jackson-databind")
+    api("com.fasterxml.jackson.core:jackson-databind")
 
     runtimeOnly("com.h2database:h2")
     runtimeOnly("org.postgresql:postgresql")
@@ -61,6 +94,19 @@ dependencies {
     // Boot's Flyway support, so the upgrade test has a host Flyway that
     // validates its own history after Escalated adopts its old rows.
     testImplementation("org.springframework.boot:spring-boot-flyway")
+
+    constraints {
+        // Align compile-time API constraints with the published runtime versions.
+        add("api", "org.apache.tomcat.embed:tomcat-embed-core:11.0.27")
+        add("api", "org.apache.tomcat.embed:tomcat-embed-el:11.0.27")
+        add("api", "org.apache.tomcat.embed:tomcat-embed-websocket:11.0.27")
+        add("checkstyle", "commons-beanutils:commons-beanutils:1.11.0") {
+            because("GHSA-wxr5-93ph-8wr9")
+        }
+        add("checkstyle", "org.codehaus.plexus:plexus-utils:3.6.2") {
+            because("GHSA-6fmv-xxpf-w3cw")
+        }
+    }
 }
 
 // The database the suite runs against, chosen from the environment. H2 when
@@ -115,6 +161,17 @@ publishing {
     publications {
         create<MavenPublication>("mavenJava") {
             from(components["java"])
+            // Boot manages dependency versions in the build. Export those
+            // resolved versions so standalone Maven/Gradle consumers receive
+            // valid metadata rather than dependencies without versions.
+            versionMapping {
+                usage("java-api") {
+                    fromResolutionOf("runtimeClasspath")
+                }
+                usage("java-runtime") {
+                    fromResolutionResult()
+                }
+            }
             pom {
                 name.set("Escalated Spring")
                 description.set("Embeddable helpdesk system for Spring Boot applications")
@@ -136,4 +193,5 @@ tasks.named<org.springframework.boot.gradle.tasks.bundling.BootJar>("bootJar") {
 
 tasks.named<Jar>("jar") {
     enabled = true
+    archiveClassifier.set("")
 }

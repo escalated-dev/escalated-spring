@@ -50,15 +50,30 @@ Spring Bootアプリケーション向けの組み込み可能なヘルプデス
 ## 要件
 
 - Java 17+
-- Spring Boot 3.2+
+- Spring Boot 4.1.x
 - リレーショナルデータベース（PostgreSQL、MySQL、または開発用H2）
 
 ## インストール
 
+最初に、現在のソースをローカル Maven リポジトリにビルドします。
+
+```bash
+git clone https://github.com/escalated-dev/escalated-spring.git
+cd escalated-spring
+./gradlew publishToMavenLocal
+```
+
 `build.gradle.kts`に依存関係を追加します：
 
 ```kotlin
-implementation("dev.escalated:escalated-spring:0.1.0")
+repositories {
+    mavenLocal()
+    mavenCentral()
+}
+
+dependencies {
+    implementation("dev.escalated:escalated-spring:0.2.0")
+}
 ```
 
 または`pom.xml`：
@@ -67,7 +82,7 @@ implementation("dev.escalated:escalated-spring:0.1.0")
 <dependency>
     <groupId>dev.escalated</groupId>
     <artifactId>escalated-spring</artifactId>
-    <version>0.1.0</version>
+    <version>0.2.0</version>
 </dependency>
 ```
 

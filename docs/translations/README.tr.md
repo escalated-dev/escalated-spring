@@ -50,15 +50,30 @@ Spring Boot uygulamaları için gömülebilir yardım masası sistemi. Tek bir b
 ## Gereksinimler
 
 - Java 17+
-- Spring Boot 3.2+
+- Spring Boot 4.1.x
 - İlişkisel bir veritabanı (PostgreSQL, MySQL veya geliştirme için H2)
 
 ## Kurulum
 
+Önce güncel kaynak kodunu yerel Maven deponuza derleyin:
+
+```bash
+git clone https://github.com/escalated-dev/escalated-spring.git
+cd escalated-spring
+./gradlew publishToMavenLocal
+```
+
 Bağımlılığı `build.gradle.kts` dosyanıza ekleyin:
 
 ```kotlin
-implementation("dev.escalated:escalated-spring:0.1.0")
+repositories {
+    mavenLocal()
+    mavenCentral()
+}
+
+dependencies {
+    implementation("dev.escalated:escalated-spring:0.2.0")
+}
 ```
 
 Veya `pom.xml`:
@@ -67,7 +82,7 @@ Veya `pom.xml`:
 <dependency>
     <groupId>dev.escalated</groupId>
     <artifactId>escalated-spring</artifactId>
-    <version>0.1.0</version>
+    <version>0.2.0</version>
 </dependency>
 ```
 
