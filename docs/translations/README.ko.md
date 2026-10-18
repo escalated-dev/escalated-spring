@@ -50,15 +50,30 @@ Spring Boot 애플리케이션을 위한 내장 가능한 헬프데스크 시스
 ## 요구 사항
 
 - Java 17+
-- Spring Boot 3.2+
+- Spring Boot 4.1.x
 - 관계형 데이터베이스 (PostgreSQL, MySQL 또는 개발용 H2)
 
 ## 설치
 
+먼저 현재 소스를 로컬 Maven 저장소에 빌드하세요:
+
+```bash
+git clone https://github.com/escalated-dev/escalated-spring.git
+cd escalated-spring
+./gradlew publishToMavenLocal
+```
+
 `build.gradle.kts`에 종속성을 추가합니다:
 
 ```kotlin
-implementation("dev.escalated:escalated-spring:0.1.0")
+repositories {
+    mavenLocal()
+    mavenCentral()
+}
+
+dependencies {
+    implementation("dev.escalated:escalated-spring:0.2.0")
+}
 ```
 
 또는 `pom.xml`:
@@ -67,7 +82,7 @@ implementation("dev.escalated:escalated-spring:0.1.0")
 <dependency>
     <groupId>dev.escalated</groupId>
     <artifactId>escalated-spring</artifactId>
-    <version>0.1.0</version>
+    <version>0.2.0</version>
 </dependency>
 ```
 

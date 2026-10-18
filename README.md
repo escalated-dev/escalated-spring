@@ -55,15 +55,32 @@ For opt-in department/account visibility and targeted SLAs, see [ticket access a
 ## Requirements
 
 - Java 17+
-- Spring Boot 3.2+
+- Spring Boot 4.1.x (the current build uses 4.1.1)
 - A relational database (PostgreSQL, MySQL, or H2 for development)
 
 ## Installation
 
-Add the dependency to your `build.gradle.kts`:
+Build the current source into your local Maven repository first:
+
+```bash
+git clone https://github.com/escalated-dev/escalated-spring.git
+cd escalated-spring
+./gradlew publishToMavenLocal
+```
+
+On Windows, use `gradlew.bat` for the Gradle commands in this README.
+
+Add the local artifact to your host application’s `build.gradle.kts`:
 
 ```kotlin
-implementation("dev.escalated:escalated-spring:0.1.0")
+repositories {
+    mavenLocal()
+    mavenCentral()
+}
+
+dependencies {
+    implementation("dev.escalated:escalated-spring:0.2.0")
+}
 ```
 
 Or `pom.xml`:
@@ -72,7 +89,7 @@ Or `pom.xml`:
 <dependency>
     <groupId>dev.escalated</groupId>
     <artifactId>escalated-spring</artifactId>
-    <version>0.1.0</version>
+    <version>0.2.0</version>
 </dependency>
 ```
 
@@ -428,7 +445,18 @@ Enable with `escalated.broadcasting.enabled=true`. Connect to `/escalated/ws` vi
 
 # Run checkstyle
 ./gradlew checkstyleMain checkstyleTest
+
+# Verify the wrapper checksum and boot a host from the documented Maven package
+python scripts/verify_package.py
+
+# Audit the resolved runtime, test, processor, Checkstyle and Gradle-plugin graphs
+python scripts/verify_dependencies.py
 ```
+
+Package verification requires Python 3, Java 17+ and Maven 3.9+. Alternatively,
+`python scripts/verify_package.py --maven-docker` runs the Maven consumer with
+Java 17 in Docker. It checks Gradle metadata, POM-only resolution and actual
+Maven compilation, host startup and dependency audits.
 
 ## Newsletters (optional, partial port)
 
