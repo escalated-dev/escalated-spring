@@ -28,3 +28,7 @@ Thumbs.db
 # Runtime
 /bin/
 out/
+
+# Python verification helpers
+__pycache__/
+*.pyc

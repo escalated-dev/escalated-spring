@@ -24,6 +24,14 @@ jobs:
         uses: gradle/actions/setup-gradle@v6
       - name: Run Tests
         run: ./gradlew test
+      - name: Set up Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: '3.12'
+      - name: Verify wrapper checksum and documented package installation
+        run: python scripts/verify_package.py
+      - name: Audit runtime, test and build dependencies
+        run: python scripts/verify_dependencies.py
       - name: Upload Test Results
         uses: actions/upload-artifact@v7
         if: always()
