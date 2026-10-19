@@ -14,6 +14,7 @@ plugins {
     id("org.springframework.boot") version "4.1.1"
     id("io.spring.dependency-management") version "1.1.7"
     `maven-publish`
+    signing
     checkstyle
 }
 
@@ -29,6 +30,18 @@ extra["tomcat.version"] = "11.0.27"
 java {
     sourceCompatibility = JavaVersion.VERSION_17
     targetCompatibility = JavaVersion.VERSION_17
+    // Maven Central requires both alongside the main jar.
+    withSourcesJar()
+    withJavadocJar()
+}
+
+tasks.withType<Javadoc>().configureEach {
+    // Javadoc is published as-is; missing tags must not fail a release.
+    (options as StandardJavadocDocletOptions).apply {
+        addBooleanOption("Xdoclint:none", true)
+        addStringOption("encoding", "UTF-8")
+        quiet()
+    }
 }
 
 repositories {
@@ -180,9 +193,82 @@ publishing {
                     license {
                         name.set("MIT License")
                         url.set("https://opensource.org/licenses/MIT")
+                        distribution.set("repo")
                     }
                 }
+                developers {
+                    developer {
+                        id.set("escalated-dev")
+                        name.set("Escalated")
+                        url.set("https://escalated.dev")
+                        organization.set("Escalated")
+                        organizationUrl.set("https://escalated.dev")
+                    }
+                }
+                scm {
+                    url.set("https://github.com/escalated-dev/escalated-spring")
+                    connection.set("scm:git:https://github.com/escalated-dev/escalated-spring.git")
+                    developerConnection.set("scm:git:ssh://git@github.com/escalated-dev/escalated-spring.git")
+                    tag.set("v${project.version}")
+                }
+                issueManagement {
+                    system.set("GitHub")
+                    url.set("https://github.com/escalated-dev/escalated-spring/issues")
+                }
             }
+        }
+    }
+    repositories {
+        // A local Maven-layout directory that the release workflow zips into a
+        // Central Portal bundle (see centralBundle and RELEASE.md).
+        maven {
+            name = "centralStaging"
+            url = uri(layout.buildDirectory.dir("central-staging"))
+        }
+    }
+}
+
+// Signing uses an ASCII-armored key held in memory, never a keyring on disk.
+// Supplied as -PsigningKey/-PsigningPassword (or ORG_GRADLE_PROJECT_signingKey /
+// ORG_GRADLE_PROJECT_signingPassword). Without a key, publications are left
+// unsigned so publishToMavenLocal keeps working for contributors; the
+// centralBundle task refuses to build an unsigned bundle.
+val signingKey = providers.gradleProperty("signingKey")
+val signingPassword = providers.gradleProperty("signingPassword")
+
+signing {
+    isRequired = signingKey.isPresent
+    if (signingKey.isPresent) {
+        useInMemoryPgpKeys(signingKey.get(), signingPassword.orNull ?: "")
+        sign(publishing.publications["mavenJava"])
+    }
+}
+
+val centralStagingDir = layout.buildDirectory.dir("central-staging")
+
+val cleanCentralStaging = tasks.register<Delete>("cleanCentralStaging") {
+    delete(centralStagingDir)
+}
+
+tasks.named("publishMavenJavaPublicationToCentralStagingRepository") {
+    dependsOn(cleanCentralStaging)
+}
+
+// build/central-bundle.zip: the Maven-layout upload the Central Portal
+// Publisher API accepts (POST /api/v1/publisher/upload).
+tasks.register<Zip>("centralBundle") {
+    group = "publishing"
+    description = "Zips the signed staging repository into a Maven Central Portal bundle."
+    dependsOn("publishMavenJavaPublicationToCentralStagingRepository")
+    from(centralStagingDir)
+    // Gradle writes maven-metadata.xml for the staging repo; Central rejects it.
+    exclude("**/maven-metadata.xml*")
+    archiveFileName.set("central-bundle.zip")
+    destinationDirectory.set(layout.buildDirectory)
+    val hasKey = signingKey.isPresent
+    doFirst {
+        if (!hasKey) {
+            throw GradleException("centralBundle needs a signing key (-PsigningKey / ORG_GRADLE_PROJECT_signingKey)")
         }
     }
 }
