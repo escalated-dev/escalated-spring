@@ -408,7 +408,8 @@ public class EscalatedProperties {
 
     /**
      * Per-client-IP rate limits on the unauthenticated guest endpoints
-     * ({@code POST /escalated/api/widget/tickets} and the guest reply endpoints
+     * ({@code POST /escalated/api/widget/tickets}, {@code POST /escalated/api/widget/chat/start},
+     * which shares the ticket counter, and the guest reply endpoints
      * under {@code /escalated/api/widget} and {@code /escalated/api/guest}).
      * Every accepted guest ticket or reply writes rows and sends mail, so an
      * uncapped endpoint lets anyone flood the helpdesk and the mail provider. A
@@ -426,7 +427,7 @@ public class EscalatedProperties {
     public static class GuestRateLimitProperties {
         /** Set false only when the host already throttles these routes upstream. */
         private boolean enabled = true;
-        /** Guest ticket submissions per IP per minute. */
+        /** Guest ticket submissions and widget chat starts, together, per IP per minute. */
         private int ticketsPerMinute = 5;
         /** Guest replies per IP per minute. */
         private int repliesPerMinute = 10;

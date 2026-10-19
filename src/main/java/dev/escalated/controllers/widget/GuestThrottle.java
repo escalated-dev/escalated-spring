@@ -18,6 +18,7 @@ public @interface GuestThrottle {
 
     /** Each scope has its own counter per IP. */
     enum Scope {
+        /** Guest ticket submissions and widget chat starts (each files a ticket). */
         TICKET,
         REPLY
     }

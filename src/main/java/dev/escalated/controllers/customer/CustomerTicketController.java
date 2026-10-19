@@ -1,6 +1,6 @@
 package dev.escalated.controllers.customer;
 
-import dev.escalated.dto.TicketDetailDto;
+import dev.escalated.dto.CustomerTicketDto;
 import dev.escalated.models.Reply;
 import dev.escalated.models.Ticket;
 import dev.escalated.models.TicketPriority;
@@ -29,6 +29,10 @@ import org.springframework.web.server.ResponseStatusException;
  * against the ticket's requester email. Someone else's ticket answers 404, so
  * its existence is not revealed. An {@code email} query parameter or body
  * field naming someone else is ignored.
+ *
+ * <p>{@code show} answers with {@link CustomerTicketDto}, never the agent
+ * detail view: public replies only, no internal notes, linked tickets or other
+ * staff data.
  */
 @RestController
 @RequestMapping("/escalated/api/customer/tickets")
@@ -47,9 +51,8 @@ public class CustomerTicketController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<TicketDetailDto> show(@PathVariable Long id, Authentication authentication) {
-        Ticket ticket = ticketService.findRequestedBy(id, customerEmail(authentication));
-        return ResponseEntity.ok(ticketService.findByIdWithDetail(ticket.getId()));
+    public ResponseEntity<CustomerTicketDto> show(@PathVariable Long id, Authentication authentication) {
+        return ResponseEntity.ok(ticketService.findCustomerView(id, customerEmail(authentication)));
     }
 
     @PostMapping

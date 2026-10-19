@@ -11,9 +11,14 @@ import dev.escalated.models.Reply;
 import dev.escalated.models.Ticket;
 import dev.escalated.models.TicketPriority;
 import dev.escalated.repositories.ReplyRepository;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import dev.escalated.repositories.TicketRepository;
+import dev.escalated.services.ChatSessionService;
+import dev.escalated.services.TicketLinkService;
 import dev.escalated.services.TicketService;
 import hostapp.HostApplication;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
@@ -44,6 +49,10 @@ class CustomerTicketOwnershipTest {
     @Autowired private TicketService ticketService;
     @Autowired private TicketRepository tickets;
     @Autowired private ReplyRepository replies;
+    @Autowired private TicketLinkService links;
+    @Autowired private ChatSessionService chats;
+
+    private final ObjectMapper json = new ObjectMapper();
 
     private String alice;
     private String bob;
@@ -141,6 +150,71 @@ class CustomerTicketOwnershipTest {
                 .andExpect(jsonPath("$[?(@.body == 'Agents only')]").isEmpty());
     }
 
+    @Test
+    void theOwnersTicketHoldsNoInternalNotesLinkedTicketsOrStaffData() throws Exception {
+        String note = "INTERNAL-NOTE-" + UUID.randomUUID();
+        String agentEmail = "agent-" + UUID.randomUUID() + "@example.com";
+        ticketService.addReply(alicesTicket.getId(), "Public answer", "Agent Ann", agentEmail, "agent", false);
+        ticketService.addReply(alicesTicket.getId(), note, "Agent Ann", agentEmail, "agent", true);
+        links.create(alicesTicket.getId(), bobsTicket.getId(), "related");
+
+        String raw = mockMvc.perform(get(CUSTOMER + "/{id}", alicesTicket.getId()).with(user(alice)))
+                .andExpect(status().isOk())
+                .andReturn().getResponse().getContentAsString();
+
+        assertThat(raw)
+                .doesNotContain(note)
+                .doesNotContain("Bob's medical claim")
+                .doesNotContain(bobsTicket.getTicketNumber())
+                .doesNotContain(agentEmail)
+                .doesNotContain("related_tickets")
+                .doesNotContain("requester_ticket_count")
+                .doesNotContain("activities");
+        if (alicesTicket.getGuestAccessToken() != null) {
+            assertThat(raw).doesNotContain(alicesTicket.getGuestAccessToken());
+        }
+    }
+
+    @Test
+    void theOwnersTicketIsTheCustomerView() throws Exception {
+        ticketService.addReply(alicesTicket.getId(), "Public answer", "Agent Ann", "agent@example.com", "agent", false);
+
+        String raw = mockMvc.perform(get(CUSTOMER + "/{id}", alicesTicket.getId()).with(user(alice)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.reference").value(alicesTicket.getTicketNumber()))
+                .andExpect(jsonPath("$.subject").value("Alice's order"))
+                .andExpect(jsonPath("$.description").value("Mine"))
+                .andExpect(jsonPath("$.replies.length()").value(1))
+                .andExpect(jsonPath("$.replies[0].body").value("Public answer"))
+                .andExpect(jsonPath("$.replies[0].is_agent").value(true))
+                .andExpect(jsonPath("$.satisfaction_rating").isEmpty())
+                .andReturn().getResponse().getContentAsString();
+
+        assertThat(fieldNames(json.readTree(raw))).containsExactlyInAnyOrder(
+                "id", "reference", "subject", "description", "status", "priority", "channel",
+                "department", "requester_name", "created_at", "updated_at", "resolved_at",
+                "closed_at", "attachments", "replies", "satisfaction_rating", "chat_messages");
+    }
+
+    @Test
+    void aChatTicketsMessagesHoldNoInternalNotes() throws Exception {
+        String note = "CHAT-NOTE-" + UUID.randomUUID();
+        Long ticketId = chats.startForWidget("Alice", alice, "Hello?", null, null).session().getTicketId();
+        ticketService.addReply(ticketId, "Hi Alice", "Agent Ann", "agent@example.com", "agent", false);
+        ticketService.addReply(ticketId, note, "Agent Ann", "agent@example.com", "agent", true);
+
+        String raw = mockMvc.perform(get(CUSTOMER + "/{id}", ticketId).with(user(alice)))
+                .andExpect(status().isOk())
+                .andReturn().getResponse().getContentAsString();
+
+        assertThat(raw).doesNotContain(note).doesNotContain("agent@example.com");
+        JsonNode body = json.readTree(raw);
+        assertThat(body.get("channel").asText()).isEqualTo("chat");
+        assertThat(body.get("chat_messages").findValuesAsText("body")).contains("Hi Alice");
+        assertThat(body.has("chat_metadata")).isFalse();
+        assertThat(body.has("chat_session_id")).isFalse();
+    }
+
     // --- store ---
 
     @Test
@@ -159,5 +233,11 @@ class CustomerTicketOwnershipTest {
     @Test
     void anonymousRequestsAreRefused() throws Exception {
         mockMvc.perform(get(CUSTOMER).param("email", bob)).andExpect(status().is4xxClientError());
+    }
+
+    private static List<String> fieldNames(JsonNode node) {
+        List<String> names = new ArrayList<>();
+        node.fieldNames().forEachRemaining(names::add);
+        return names;
     }
 }

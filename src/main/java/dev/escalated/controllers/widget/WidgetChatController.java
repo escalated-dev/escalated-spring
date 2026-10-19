@@ -67,6 +67,8 @@ public class WidgetChatController {
     }
 
     @PostMapping("/start")
+    // Every chat files a ticket, so starting one counts against the ticket limit.
+    @GuestThrottle(GuestThrottle.Scope.TICKET)
     public ResponseEntity<Map<String, Object>> start(@RequestBody Map<String, Object> body,
                                                      HttpServletRequest request) {
         Object department = body.containsKey("department_id") ? body.get("department_id") : body.get("departmentId");
