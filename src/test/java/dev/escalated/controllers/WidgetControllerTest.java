@@ -5,6 +5,7 @@ import dev.escalated.dto.GuestTicketDto;
 import dev.escalated.models.Ticket;
 import dev.escalated.models.TicketPriority;
 import dev.escalated.models.TicketStatus;
+import dev.escalated.services.DepartmentService;
 import dev.escalated.services.KnowledgeBaseService;
 import dev.escalated.services.SatisfactionRatingService;
 import dev.escalated.services.TicketService;
@@ -40,6 +41,8 @@ class WidgetControllerTest {
     private KnowledgeBaseService knowledgeBaseService;
     @MockitoBean
     private SatisfactionRatingService ratingService;
+    @MockitoBean
+    private DepartmentService departmentService;
 
     @Test
     void createTicket_shouldReturnCreatedTicket() throws Exception {

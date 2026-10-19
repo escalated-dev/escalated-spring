@@ -24,6 +24,32 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `@escalated-dev/escalated` 0.12.1 bundle), and an optional `metadata` object on
   widget tickets and chats, stored in the new `escalated_tickets.metadata` column
   (migration `V13`). See [embedding the widget](docs/embedding-the-widget.md).
+- The widget API matches the shared widget (`@escalated-dev/escalated` 0.12.x):
+  `GET /widget/articles?q=` and `GET /widget/articles/{slug}`;
+  `POST /widget/tickets` reads `description` (`body` still works), files into
+  an active `department_id`, answers 422 `{message, errors}` when `subject`,
+  `email` or the description is missing, and adds top-level `message`,
+  `reference` and `guest_access_token` to the ticket fields;
+  `GET /widget/chat/{id}/messages`, `POST .../typing` and `POST .../rate`;
+  `/widget/config` adds `status_lookup_enabled: false`.
+
+### Changed
+
+- `POST /widget/chat/start` answers with `id` set to the chat's widget token
+  (a string) instead of the numeric session id, plus `messages` and `agent`;
+  the other session fields stay.
+- A widget ticket with a description but no `body` used to fail with a 500;
+  it is now stored.
+
+### Security
+
+- Widget chat routes are keyed by an unguessable token instead of the numeric
+  session id. Before, anyone could post into or end any chat by counting
+  `POST /widget/chat/{sessionId}/messages` and `/end`, with any author name.
+  The token is 256 random bits, stored only as a SHA-256 hash (migration
+  `V14`, `escalated_chat_sessions.widget_token_hash`); numeric ids now get 404.
+  Chats started before upgrading have no token and can no longer be reached
+  from the widget; agents can still answer and end them.
 
 ## [0.2.0] - 2026-10-08
 

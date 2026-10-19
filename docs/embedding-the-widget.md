@@ -102,7 +102,8 @@ renders:
   "departments": [{"id": 1, "name": "Support"}],
   "kb_enabled": false,
   "guest_tickets_enabled": true,
-  "accepts_metadata": true
+  "accepts_metadata": true,
+  "status_lookup_enabled": false
 }
 ```
 
@@ -110,6 +111,32 @@ Colour, position and greeting come from the `widget_color`,
 `widget_position` and `widget_greeting` settings; `departments` lists active
 departments; `kb_enabled` is `escalated.knowledge-base.enabled`. With
 `escalated.widget.enabled=false` it answers 403 with `{"enabled": false}`.
+`status_lookup_enabled` is `false` because this backend has no mailbox
+verification, so the widget hides its Status tab; there is no lookup of a
+ticket by email address.
+
+### Widget routes
+
+All under `/escalated/api/widget`. These are the requests the shared widget
+sends.
+
+| Route | Request | Answer |
+|---|---|---|
+| `GET /articles?q=` | `q`, 2 characters or more | `{"articles": [{title, slug, excerpt}]}`, published articles only |
+| `GET /articles/{slug}` | | `{title, slug, body, excerpt, category}`; drafts and unknown slugs 404 |
+| `POST /tickets` | `name`, `email`, `subject`, `description` (or `body`), `department_id`, `metadata` | 201: the ticket's fields plus `message`, `reference` (the ticket number) and `guest_access_token`. Missing `subject`, `email` or `description` is a 422 `{message, errors}` |
+| `POST /chat/start` | `name`, `email`, `message`, `department_id`, `metadata` | 201 `{id, status, messages, agent, ticketId, ...}` |
+| `GET /chat/{id}/messages` | | `{messages: [{id, body, is_agent, author: {name}, created_at}], typing, agent, ended}` (internal notes left out) |
+| `POST /chat/{id}/messages` | `{body}` | 201; filed as the visitor, whatever name the body carries |
+| `POST /chat/{id}/typing`, `POST /chat/{id}/end` | | 200 |
+| `POST /chat/{id}/rate` | `{rating: 1-5, comment}` | 200; stored as the chat ticket's satisfaction rating |
+
+A chat's `id` is a random 256-bit token returned once by `/chat/start`. Only
+its SHA-256 hash is stored (`escalated_chat_sessions.widget_token_hash`,
+migration `V14`). The numeric session id is not accepted by any widget route:
+an unknown token, a number included, is a 404. An unknown or inactive
+`department_id` is ignored. `typing` is always `null` for now: agents have no
+typing signal in this backend.
 
 ### Host parameters
 

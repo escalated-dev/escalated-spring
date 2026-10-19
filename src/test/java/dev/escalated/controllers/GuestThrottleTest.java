@@ -15,6 +15,7 @@ import dev.escalated.controllers.widget.WidgetController;
 import dev.escalated.models.Reply;
 import dev.escalated.models.Ticket;
 import dev.escalated.security.ApiTokenAuthenticationFilter;
+import dev.escalated.services.DepartmentService;
 import dev.escalated.services.KnowledgeBaseService;
 import dev.escalated.services.SatisfactionRatingService;
 import dev.escalated.services.TicketService;
@@ -65,6 +66,7 @@ class GuestThrottleTest {
     @MockitoBean private TicketService ticketService;
     @MockitoBean private KnowledgeBaseService knowledgeBaseService;
     @MockitoBean private SatisfactionRatingService ratingService;
+    @MockitoBean private DepartmentService departmentService;
 
     private String ip;
 
