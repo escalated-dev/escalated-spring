@@ -8,6 +8,8 @@ import dev.escalated.models.TicketPriority;
 import dev.escalated.services.KnowledgeBaseService;
 import dev.escalated.services.SatisfactionRatingService;
 import dev.escalated.services.TicketService;
+import dev.escalated.widget.WidgetMetadata;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.persistence.EntityNotFoundException;
 import java.util.Map;
 import org.springframework.data.domain.Page;
@@ -39,14 +41,17 @@ public class WidgetController {
 
     @PostMapping("/tickets")
     @GuestThrottle(GuestThrottle.Scope.TICKET)
-    public ResponseEntity<Ticket> createTicket(@RequestBody Map<String, String> body) {
+    public ResponseEntity<Ticket> createTicket(@RequestBody Map<String, Object> body, HttpServletRequest request) {
+        Map<String, Object> metadata = WidgetMetadata.fromRequest(body.get("metadata"), request);
         Ticket ticket = ticketService.create(
-                body.get("subject"),
-                body.get("body"),
-                body.get("name"),
-                body.get("email"),
+                WidgetRequestBodies.text(body, "subject"),
+                WidgetRequestBodies.text(body, "body"),
+                WidgetRequestBodies.text(body, "name"),
+                WidgetRequestBodies.text(body, "email"),
                 TicketPriority.MEDIUM,
-                null);
+                null,
+                null,
+                metadata);
         return ResponseEntity.status(201).body(ticket);
     }
 

@@ -3,10 +3,12 @@ package dev.escalated.controllers.admin;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import dev.escalated.models.EscalatedSettings;
 import dev.escalated.services.SettingsService;
+import dev.escalated.widget.WidgetOrigins;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -17,6 +19,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.server.ResponseStatusException;
 
 @RestController
 @RequestMapping("/escalated/api/admin/settings")
@@ -44,6 +47,9 @@ public class AdminSettingsController {
 
     @PostMapping
     public ResponseEntity<Void> store(@RequestBody Map<String, String> body) {
+        if (WidgetOrigins.SETTING.equals(body.get("key"))) {
+            validateWidgetOrigins(body.get("value"));
+        }
         settingsService.set(body.get("key"), body.get("value"), body.get("group"));
         return ResponseEntity.ok().build();
     }
@@ -52,6 +58,20 @@ public class AdminSettingsController {
     public ResponseEntity<Void> destroy(@PathVariable String key) {
         settingsService.delete(key);
         return ResponseEntity.noContent().build();
+    }
+
+    /**
+     * {@code widget_allowed_origins}: one origin per line (or comma separated),
+     * each {@code scheme://host[:port]} or {@code https://*.example.com}.
+     * Rejects the whole value if any entry is not one.
+     */
+    private static void validateWidgetOrigins(String value) {
+        List<String> invalid = WidgetOrigins.invalidEntries(value);
+        if (!invalid.isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.UNPROCESSABLE_ENTITY,
+                    WidgetOrigins.SETTING + " must list origins such as https://shop.example.com"
+                            + " or https://*.example.com, without a path; not valid: " + String.join(", ", invalid));
+        }
     }
 
     // --- Public-ticket guest policy ---

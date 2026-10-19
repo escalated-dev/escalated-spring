@@ -369,12 +369,28 @@ public class EscalatedProperties {
     public static class WidgetProperties {
         private boolean enabled = true;
 
+        /**
+         * Other sites allowed to embed the widget, each {@code scheme://host[:port]}
+         * or {@code https://*.example.com}. Empty by default: no other site gets
+         * CORS access until one is listed here or in the
+         * {@code widget_allowed_origins} admin setting.
+         */
+        private List<String> allowedOrigins = new ArrayList<>();
+
         public boolean isEnabled() {
             return enabled;
         }
 
         public void setEnabled(boolean enabled) {
             this.enabled = enabled;
+        }
+
+        public List<String> getAllowedOrigins() {
+            return allowedOrigins;
+        }
+
+        public void setAllowedOrigins(List<String> allowedOrigins) {
+            this.allowedOrigins = allowedOrigins == null ? new ArrayList<>() : allowedOrigins;
         }
     }
 

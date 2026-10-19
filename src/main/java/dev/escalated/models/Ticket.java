@@ -195,6 +195,22 @@ public class Ticket extends BaseEntity {
     @Column(name = "channel", nullable = false, length = 30)
     private String channel = "email";
 
+    /**
+     * Host parameters sent with a widget ticket or chat (order number, page URL,
+     * the embedding site as {@code embedded_on}, ...). Visitor supplied: unverified.
+     */
+    @Column(name = "metadata", columnDefinition = "TEXT")
+    @jakarta.persistence.Convert(converter = JsonMetadataConverter.class)
+    private java.util.Map<String, Object> metadata;
+
+    public java.util.Map<String, Object> getMetadata() {
+        return metadata;
+    }
+
+    public void setMetadata(java.util.Map<String, Object> metadata) {
+        this.metadata = metadata;
+    }
+
     @Column(name = "is_locked", nullable = false)
     private boolean locked = false;
 
