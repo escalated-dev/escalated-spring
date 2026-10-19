@@ -15,6 +15,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   and account/type conditions for workflows, escalation rules and built-in automations.
 - Optional department/type SLA targets, assignment eligibility checks and authorized
   notification/broadcast hooks. See [configuration and upgrade notes](docs/ticket-access-and-routing.md).
+- Embedding the widget on other sites. Origins listed in
+  `escalated.widget.allowed-origins` (`ESCALATED_WIDGET_ALLOWED_ORIGINS`) or the
+  `widget_allowed_origins` admin setting get CORS on `/escalated/api/widget/**`,
+  including preflights and error answers, and are always treated as guests.
+  Nothing changes until an origin is listed. Adds `GET /escalated/api/widget/config`
+  (with `accepts_metadata: true`), `GET /escalated/api/widget/embed.js` (the
+  `@escalated-dev/escalated` 0.12.1 bundle), and an optional `metadata` object on
+  widget tickets and chats, stored in the new `escalated_tickets.metadata` column
+  (migration `V13`). See [embedding the widget](docs/embedding-the-widget.md).
 
 ## [0.2.0] - 2026-10-08
 
