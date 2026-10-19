@@ -2,6 +2,7 @@ package dev.escalated.services;
 
 import dev.escalated.config.EscalatedTransactionManagers;
 import dev.escalated.dto.CustomerTicketDto;
+import dev.escalated.dto.CustomerTicketSummaryDto;
 import dev.escalated.dto.GuestReplyDto;
 import dev.escalated.dto.GuestTicketDto;
 import dev.escalated.dto.TicketDetailDto;
@@ -198,6 +199,12 @@ public class TicketService {
     @Transactional(transactionManager = EscalatedTransactionManagers.ESCALATED, readOnly = true)
     public Page<Ticket> findRequestedBy(String email, Pageable pageable) {
         return ticketRepository.findByRequesterEmailIgnoreCase(email, pageable);
+    }
+
+    /** The customer's own tickets as they see them in their list (see {@link CustomerTicketSummaryDto}). */
+    @Transactional(transactionManager = EscalatedTransactionManagers.ESCALATED, readOnly = true)
+    public Page<CustomerTicketSummaryDto> findCustomerTickets(String email, Pageable pageable) {
+        return findRequestedBy(email, pageable).map(CustomerTicketSummaryDto::from);
     }
 
     /**

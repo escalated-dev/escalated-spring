@@ -1,6 +1,7 @@
 package dev.escalated.controllers.customer;
 
 import dev.escalated.dto.CustomerTicketDto;
+import dev.escalated.dto.CustomerTicketSummaryDto;
 import dev.escalated.models.Reply;
 import dev.escalated.models.Ticket;
 import dev.escalated.models.TicketPriority;
@@ -30,9 +31,10 @@ import org.springframework.web.server.ResponseStatusException;
  * its existence is not revealed. An {@code email} query parameter or body
  * field naming someone else is ignored.
  *
- * <p>{@code show} answers with {@link CustomerTicketDto}, never the agent
- * detail view: public replies only, no internal notes, linked tickets or other
- * staff data.
+ * <p>{@code show} and {@code store} answer with {@link CustomerTicketDto} and
+ * {@code index} with {@link CustomerTicketSummaryDto}, never the ticket entity
+ * or the agent detail view: public replies only, no internal notes, linked
+ * tickets or other staff data.
  */
 @RestController
 @RequestMapping("/escalated/api/customer/tickets")
@@ -45,9 +47,9 @@ public class CustomerTicketController {
     }
 
     @GetMapping
-    public ResponseEntity<Page<Ticket>> index(Authentication authentication,
-                                              @PageableDefault(size = 25) Pageable pageable) {
-        return ResponseEntity.ok(ticketService.findRequestedBy(customerEmail(authentication), pageable));
+    public ResponseEntity<Page<CustomerTicketSummaryDto>> index(Authentication authentication,
+                                                                @PageableDefault(size = 25) Pageable pageable) {
+        return ResponseEntity.ok(ticketService.findCustomerTickets(customerEmail(authentication), pageable));
     }
 
     @GetMapping("/{id}")
@@ -56,16 +58,18 @@ public class CustomerTicketController {
     }
 
     @PostMapping
-    public ResponseEntity<Ticket> store(@RequestBody Map<String, Object> body, Authentication authentication) {
+    public ResponseEntity<CustomerTicketDto> store(@RequestBody Map<String, Object> body,
+                                                   Authentication authentication) {
         String email = customerEmail(authentication);
         Object name = body.get("name");
-        return ResponseEntity.status(201).body(ticketService.create(
+        Ticket ticket = ticketService.create(
                 (String) body.get("subject"),
                 (String) body.get("body"),
                 name instanceof String text && !text.isBlank() ? text : email,
                 email,
                 body.get("priority") != null ? TicketPriority.valueOf((String) body.get("priority")) : TicketPriority.MEDIUM,
-                null));
+                null);
+        return ResponseEntity.status(201).body(ticketService.findCustomerView(ticket.getId(), email));
     }
 
     @PostMapping("/{id}/replies")

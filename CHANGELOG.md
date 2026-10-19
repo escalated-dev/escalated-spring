@@ -76,6 +76,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   widget's), `satisfaction_rating` (`{rating, comment, created_at}` or `null`)
   and, for a live chat, `chat_messages` (the same public replies; `null`
   otherwise). Clients reading any other field from this endpoint must stop.
+- `GET /escalated/api/customer/tickets` and `POST /escalated/api/customer/tickets`
+  answered with the ticket entity itself, so a customer's own list carried every
+  internal note (in `replies`, and through `last_reply_author`), the activity
+  log, the assigned agent's profile, SLA data, tags, metadata and the guest
+  access token. The list (still a page: `content`, `totalElements`, ...) now
+  holds customer summaries: `id`, `reference`, `subject`, `status`, `priority`,
+  `channel`, `department` (`{name}`), `requester_name`, `created_at`,
+  `updated_at`, `resolved_at`, `closed_at`, and `last_reply_at` /
+  `last_reply_author` over public replies only. Creating a ticket answers `201`
+  with the same customer view as `GET /customer/tickets/{id}`. Clients reading
+  any other field from these endpoints must stop.
 - `POST /escalated/api/widget/chat/start` had no rate limit, so anyone could
   create chat tickets without bound. It now shares the guest ticket limit
   (`escalated.guest-rate-limit.tickets-per-minute`, 5 per client IP per minute
