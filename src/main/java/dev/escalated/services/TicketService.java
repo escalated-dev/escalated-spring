@@ -193,6 +193,34 @@ public class TicketService {
         return ticketRepository.findByRequesterEmail(email, pageable);
     }
 
+    /** The tickets a customer (identified by email, any case) requested. */
+    @Transactional(transactionManager = EscalatedTransactionManagers.ESCALATED, readOnly = true)
+    public Page<Ticket> findRequestedBy(String email, Pageable pageable) {
+        return ticketRepository.findByRequesterEmailIgnoreCase(email, pageable);
+    }
+
+    /**
+     * A ticket the customer with this email requested.
+     *
+     * @throws EntityNotFoundException when there is no such ticket or it is
+     *     someone else's, so the two cannot be told apart
+     */
+    @Transactional(transactionManager = EscalatedTransactionManagers.ESCALATED, readOnly = true)
+    public Ticket findRequestedBy(Long id, String email) {
+        Ticket ticket = ticketRepository.findById(id).orElse(null);
+        if (ticket == null || email == null || ticket.getRequesterEmail() == null
+                || !ticket.getRequesterEmail().equalsIgnoreCase(email.trim())) {
+            throw new EntityNotFoundException("Ticket not found: " + id);
+        }
+        return ticket;
+    }
+
+    /** A ticket's replies without internal notes, oldest first. */
+    @Transactional(transactionManager = EscalatedTransactionManagers.ESCALATED, readOnly = true)
+    public List<Reply> getPublicReplies(Long ticketId) {
+        return replyRepository.findByTicketIdAndInternalFalseOrderByCreatedAtAsc(ticketId);
+    }
+
     @Transactional(transactionManager = EscalatedTransactionManagers.ESCALATED)
     public Ticket create(String subject, String body, String requesterName, String requesterEmail,
                          TicketPriority priority, Long departmentId) {
