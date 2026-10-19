@@ -7,12 +7,14 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import dev.escalated.models.AgentProfile;
 import dev.escalated.models.Reply;
 import dev.escalated.models.Ticket;
 import dev.escalated.models.TicketPriority;
 import dev.escalated.repositories.ReplyRepository;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import dev.escalated.repositories.AgentProfileRepository;
 import dev.escalated.repositories.TicketRepository;
 import dev.escalated.services.ChatSessionService;
 import dev.escalated.services.TicketLinkService;
@@ -51,6 +53,7 @@ class CustomerTicketOwnershipTest {
     @Autowired private ReplyRepository replies;
     @Autowired private TicketLinkService links;
     @Autowired private ChatSessionService chats;
+    @Autowired private AgentProfileRepository agents;
 
     private final ObjectMapper json = new ObjectMapper();
 
@@ -215,6 +218,72 @@ class CustomerTicketOwnershipTest {
         assertThat(body.has("chat_session_id")).isFalse();
     }
 
+    @Test
+    void theListHoldsNoInternalNotesOrStaffData() throws Exception {
+        String note = "LIST-NOTE-" + UUID.randomUUID();
+        AgentProfile agent = staffAgent();
+        ticketService.assign(alicesTicket.getId(), agent.getId(), agent.getEmail());
+        ticketService.addTag(alicesTicket.getId(), "vip-" + UUID.randomUUID().toString().substring(0, 8));
+        ticketService.addReply(alicesTicket.getId(), "Public answer", agent.getName(), agent.getEmail(), "agent", false);
+        ticketService.addReply(alicesTicket.getId(), note, "Secret Squirrel", agent.getEmail(), "agent", true);
+
+        String raw = mockMvc.perform(get(CUSTOMER).with(user(alice)))
+                .andExpect(status().isOk())
+                .andReturn().getResponse().getContentAsString();
+
+        assertThat(raw)
+                .doesNotContain(note)
+                .doesNotContain("Secret Squirrel")
+                .doesNotContain(agent.getEmail())
+                .doesNotContain("activities")
+                .doesNotContain("assignedAgent")
+                .doesNotContain("guestAccessToken")
+                .doesNotContain("vip-");
+    }
+
+    @Test
+    void theListItemsAreTheCustomerSummary() throws Exception {
+        ticketService.addReply(alicesTicket.getId(), "Public answer", "Agent Ann", "agent@example.com", "agent", false);
+        ticketService.addReply(alicesTicket.getId(), "Later note", "Agent Bea", "agent@example.com", "agent", true);
+
+        JsonNode item = json.readTree(mockMvc.perform(get(CUSTOMER).with(user(alice)))
+                        .andExpect(status().isOk())
+                        .andExpect(jsonPath("$.totalElements").value(1))
+                        .andReturn().getResponse().getContentAsString())
+                .get("content").get(0);
+
+        assertThat(fieldNames(item)).containsExactlyInAnyOrder(
+                "id", "reference", "subject", "status", "priority", "channel", "department",
+                "requester_name", "created_at", "updated_at", "resolved_at", "closed_at",
+                "last_reply_at", "last_reply_author");
+        assertThat(item.get("reference").asText()).isEqualTo(alicesTicket.getTicketNumber());
+        assertThat(item.get("last_reply_author").asText()).isEqualTo("Agent Ann");
+    }
+
+    @Test
+    void aNewTicketIsAnsweredWithTheCustomerView() throws Exception {
+        String raw = mockMvc.perform(post(CUSTOMER)
+                        .with(user(alice))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"subject\":\"Shape check\",\"body\":\"Hello\"}"))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.subject").value("Shape check"))
+                .andExpect(jsonPath("$.description").value("Hello"))
+                .andReturn().getResponse().getContentAsString();
+
+        Ticket stored = tickets.findAll().stream()
+                .filter(t -> "Shape check".equals(t.getSubject()) && alice.equals(t.getRequesterEmail()))
+                .findFirst().orElseThrow();
+        if (stored.getGuestAccessToken() != null) {
+            assertThat(raw).doesNotContain(stored.getGuestAccessToken());
+        }
+        assertThat(raw).doesNotContain("activities").doesNotContain("guestAccessToken");
+        assertThat(fieldNames(json.readTree(raw))).containsExactlyInAnyOrder(
+                "id", "reference", "subject", "description", "status", "priority", "channel",
+                "department", "requester_name", "created_at", "updated_at", "resolved_at",
+                "closed_at", "attachments", "replies", "satisfaction_rating", "chat_messages");
+    }
+
     // --- store ---
 
     @Test
@@ -233,6 +302,15 @@ class CustomerTicketOwnershipTest {
     @Test
     void anonymousRequestsAreRefused() throws Exception {
         mockMvc.perform(get(CUSTOMER).param("email", bob)).andExpect(status().is4xxClientError());
+    }
+
+    private AgentProfile staffAgent() {
+        AgentProfile agent = new AgentProfile();
+        String unique = UUID.randomUUID().toString();
+        agent.setName("Agent " + unique);
+        agent.setEmail("staff-" + unique + "@example.com");
+        agent.setAgent(true);
+        return agents.save(agent);
     }
 
     private static List<String> fieldNames(JsonNode node) {
