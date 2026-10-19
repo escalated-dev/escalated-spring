@@ -1,6 +1,7 @@
 package dev.escalated.services;
 
 import dev.escalated.config.EscalatedTransactionManagers;
+import dev.escalated.dto.CustomerTicketDto;
 import dev.escalated.dto.GuestReplyDto;
 import dev.escalated.dto.GuestTicketDto;
 import dev.escalated.dto.TicketDetailDto;
@@ -213,6 +214,18 @@ public class TicketService {
             throw new EntityNotFoundException("Ticket not found: " + id);
         }
         return ticket;
+    }
+
+    /**
+     * The customer's own ticket as they see it: public replies only, no staff
+     * detail (see {@link CustomerTicketDto}).
+     *
+     * @throws EntityNotFoundException when there is no such ticket or it is
+     *     someone else's
+     */
+    @Transactional(transactionManager = EscalatedTransactionManagers.ESCALATED, readOnly = true)
+    public CustomerTicketDto findCustomerView(Long id, String email) {
+        return CustomerTicketDto.from(findRequestedBy(id, email));
     }
 
     /** A ticket's replies without internal notes, oldest first. */

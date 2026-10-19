@@ -282,7 +282,7 @@ class WidgetApiContractTest {
         String body = "{\"name\":\"Visitor Vi\",\"email\":\"vi-" + unique() + "@example.com\","
                 + "\"department_id\":null"
                 + (message == null ? "" : ",\"message\":" + json.writeValueAsString(message)) + "}";
-        return json.readTree(mockMvc.perform(post(WIDGET + "/chat/start")
+        return json.readTree(mockMvc.perform(guest(post(WIDGET + "/chat/start"))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(body))
                 .andExpect(status().isCreated())

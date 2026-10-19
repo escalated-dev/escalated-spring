@@ -18,7 +18,7 @@ import org.springframework.web.servlet.HandlerInterceptor;
 /**
  * Per-client-IP rate limit for the unauthenticated guest endpoints marked
  * {@link GuestThrottle}. Limits come from {@code escalated.guest-rate-limit.*}
- * (defaults: 5 ticket submissions and 10 replies per IP per minute), each
+ * (defaults: 5 ticket submissions or chat starts and 10 replies per IP per minute), each
  * scope with its own counter, over a 60-second window.
  *
  * <p>An interceptor runs before argument resolution, so requests with a wrong

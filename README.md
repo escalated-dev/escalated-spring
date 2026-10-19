@@ -371,8 +371,9 @@ See the [inbound email docs](https://docs.escalated.dev/inbound-email) for provi
 
 ### Guest endpoint rate limits
 
-Guest ticket creation (`POST /escalated/api/widget/tickets`) is limited to 5 per
-client IP per minute and guest replies (`POST .../tickets/{token}/replies` under
+Guest ticket creation (`POST /escalated/api/widget/tickets`) and widget chat starts
+(`POST /escalated/api/widget/chat/start`, which files a ticket too) share a limit of
+5 per client IP per minute, and guest replies (`POST .../tickets/{token}/replies` under
 both `/widget` and `/guest`) to 10, each with its own counter. A request over the
 limit gets `429` with `Retry-After`. Replies are counted before the guest token is
 looked up, so wrong-token guesses count too. Tune or switch it off with

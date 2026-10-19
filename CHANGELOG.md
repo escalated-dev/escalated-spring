@@ -64,6 +64,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   parameter is ignored, a new ticket is filed under the signed-in user, replies
   are filed as the ticket's requester whatever the body says, and the reply list
   leaves out internal notes.
+- `GET /escalated/api/customer/tickets/{id}` answered with the agent detail view,
+  so the owner of a live chat could read internal notes in `chat_messages`, and
+  any owner saw linked tickets' subjects and numbers (`related_tickets`),
+  `requester_ticket_count`, `chat_metadata`, `custom_actions`, `subjects` and the
+  ticket entity's staff fields (activity log, assigned agent, SLA, tags, guest
+  token, metadata). It now answers with a customer view: `id`, `reference`,
+  `subject`, `description`, `status`, `priority`, `channel`, `department`
+  (`{name}`), `requester_name`, `created_at`, `updated_at`, `resolved_at`,
+  `closed_at`, `attachments`, `replies` (public replies only, as the guest
+  widget's), `satisfaction_rating` (`{rating, comment, created_at}` or `null`)
+  and, for a live chat, `chat_messages` (the same public replies; `null`
+  otherwise). Clients reading any other field from this endpoint must stop.
+- `POST /escalated/api/widget/chat/start` had no rate limit, so anyone could
+  create chat tickets without bound. It now shares the guest ticket limit
+  (`escalated.guest-rate-limit.tickets-per-minute`, 5 per client IP per minute
+  together with `POST /widget/tickets`) and answers `429` with `Retry-After`,
+  which an allowed widget origin can read.
 
 ## [0.2.0] - 2026-10-08
 

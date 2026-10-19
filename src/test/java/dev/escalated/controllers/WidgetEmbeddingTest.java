@@ -12,6 +12,8 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import dev.escalated.services.SettingsService;
 import hostapp.HostApplication;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.junit.jupiter.api.AfterEach;
@@ -249,7 +251,7 @@ class WidgetEmbeddingTest {
 
     @Test
     void chatMetadataIsKeptOnTheChatsTicket() throws Exception {
-        MockHttpServletResponse response = mockMvc.perform(post(WIDGET + "/chat/start")
+        MockHttpServletResponse response = mockMvc.perform(guest(post(WIDGET + "/chat/start"))
                         .header("Origin", SHOP)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
@@ -305,6 +307,55 @@ class WidgetEmbeddingTest {
         assertThat(response.getHeader("Access-Control-Allow-Origin")).isEqualTo(SHOP);
         assertThat(response.getHeader("Access-Control-Expose-Headers")).isEqualTo("Retry-After");
         assertThat(response.getHeader("Retry-After")).isNotBlank();
+    }
+
+    @Test
+    void startingChatsIsRateLimitedAndTheAnswerCarriesTheGrant() throws Exception {
+        String ip = nextIp();
+        List<Integer> statuses = new ArrayList<>();
+        MockHttpServletResponse response = null;
+        for (int i = 0; i < 6; i++) {
+            response = mockMvc.perform(post(WIDGET + "/chat/start")
+                            .with(request -> {
+                                request.setRemoteAddr(ip);
+                                return request;
+                            })
+                            .header("Origin", SHOP)
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content("{\"name\":\"Visitor\",\"email\":\"chat" + i + "@example.com\",\"message\":\"Hi\"}"))
+                    .andReturn().getResponse();
+            statuses.add(response.getStatus());
+        }
+
+        assertThat(statuses).containsExactly(201, 201, 201, 201, 201, 429);
+        assertThat(response.getHeader("Access-Control-Allow-Origin")).isEqualTo(SHOP);
+        assertThat(response.getHeader("Access-Control-Expose-Headers")).isEqualTo("Retry-After");
+        assertThat(Integer.parseInt(response.getHeader("Retry-After"))).isBetween(1, 60);
+    }
+
+    @Test
+    void chatsAndTicketsShareTheTicketLimit() throws Exception {
+        String ip = nextIp();
+        for (int i = 0; i < 5; i++) {
+            mockMvc.perform(post(WIDGET + "/tickets")
+                            .with(request -> {
+                                request.setRemoteAddr(ip);
+                                return request;
+                            })
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(ticketBody(null)))
+                    .andExpect(status().isCreated());
+        }
+
+        mockMvc.perform(post(WIDGET + "/chat/start")
+                        .with(request -> {
+                            request.setRemoteAddr(ip);
+                            return request;
+                        })
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"name\":\"Visitor\",\"email\":\"visitor@example.com\"}"))
+                .andExpect(status().isTooManyRequests())
+                .andExpect(header().exists("Retry-After"));
     }
 
     // --- /config ---
