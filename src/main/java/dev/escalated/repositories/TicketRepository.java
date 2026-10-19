@@ -50,6 +50,8 @@ public interface TicketRepository
 
     Page<Ticket> findByRequesterEmail(String email, Pageable pageable);
 
+    Page<Ticket> findByRequesterEmailIgnoreCase(String email, Pageable pageable);
+
     Page<Ticket> findByAssignedAgentId(Long agentId, Pageable pageable);
 
     Page<Ticket> findByDepartmentId(Long departmentId, Pageable pageable);

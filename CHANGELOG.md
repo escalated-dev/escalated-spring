@@ -51,6 +51,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   Chats started before upgrading have no token and can no longer be reached
   from the widget; agents can still answer and end them.
 
+### Security
+
+- The customer ticket endpoints (`/escalated/api/customer/tickets`) now serve
+  only the signed-in user's own tickets: the principal's name (their email) must
+  match the ticket's requester email, ignoring case. Before, any signed-in user
+  could list anyone's tickets with `?email=`, and read, list the replies of, or
+  reply to any ticket by id. Someone else's ticket now answers 404. The `email`
+  parameter is ignored, a new ticket is filed under the signed-in user, replies
+  are filed as the ticket's requester whatever the body says, and the reply list
+  leaves out internal notes.
+
 ## [0.2.0] - 2026-10-08
 
 ### Upgrading
