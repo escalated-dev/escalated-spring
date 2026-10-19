@@ -87,6 +87,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `last_reply_author` over public replies only. Creating a ticket answers `201`
   with the same customer view as `GET /customer/tickets/{id}`. Clients reading
   any other field from these endpoints must stop.
+- `GET` and `POST /escalated/api/customer/tickets/{id}/replies` answered with
+  the reply entity, so a customer saw each agent's email address (`authorEmail`),
+  mail headers (`emailMessageId`) and the `internal` flag. Both now answer with
+  the guest reply shape: `id`, `body`, `author_name`, `author_type`, `is_agent`,
+  `created_at`, `attachments` (snake_case; the old camelCase `authorName`,
+  `authorType` and `createdAt` are gone). The list still holds public replies
+  only.
 - `POST /escalated/api/widget/chat/start` had no rate limit, so anyone could
   create chat tickets without bound. It now shares the guest ticket limit
   (`escalated.guest-rate-limit.tickets-per-minute`, 5 per client IP per minute

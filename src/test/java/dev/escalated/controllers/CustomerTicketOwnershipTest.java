@@ -284,6 +284,44 @@ class CustomerTicketOwnershipTest {
                 "closed_at", "attachments", "replies", "satisfaction_rating", "chat_messages");
     }
 
+    @Test
+    void theReplyListHoldsNoAgentEmailOrStaffFields() throws Exception {
+        AgentProfile agent = staffAgent();
+        ticketService.addReply(alicesTicket.getId(), "Public answer", agent.getName(), agent.getEmail(), "agent", false);
+
+        String raw = mockMvc.perform(get(CUSTOMER + "/{id}/replies", alicesTicket.getId()).with(user(alice)))
+                .andExpect(status().isOk())
+                .andReturn().getResponse().getContentAsString();
+
+        assertThat(raw)
+                .doesNotContain(agent.getEmail())
+                .doesNotContain("authorEmail")
+                .doesNotContain("emailMessageId")
+                .doesNotContain("\"internal\"");
+        JsonNode list = json.readTree(raw);
+        assertThat(list).hasSize(1);
+        assertThat(fieldNames(list.get(0))).containsExactlyInAnyOrder(
+                "id", "body", "author_name", "author_type", "is_agent", "created_at", "attachments");
+        assertThat(list.get(0).get("is_agent").asBoolean()).isTrue();
+    }
+
+    @Test
+    void aNewReplyIsAnsweredWithTheCustomerReplyView() throws Exception {
+        String raw = mockMvc.perform(post(CUSTOMER + "/{id}/replies", alicesTicket.getId())
+                        .with(user(alice))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"body\":\"Thanks\"}"))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.body").value("Thanks"))
+                .andExpect(jsonPath("$.author_name").value("Alice"))
+                .andExpect(jsonPath("$.is_agent").value(false))
+                .andReturn().getResponse().getContentAsString();
+
+        assertThat(raw).doesNotContain("authorEmail").doesNotContain("emailMessageId");
+        assertThat(fieldNames(json.readTree(raw))).containsExactlyInAnyOrder(
+                "id", "body", "author_name", "author_type", "is_agent", "created_at", "attachments");
+    }
+
     // --- store ---
 
     @Test
