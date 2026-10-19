@@ -14,6 +14,8 @@ public interface ChatSessionRepository extends JpaRepository<ChatSession, Long> 
 
     Optional<ChatSession> findByTicketId(Long ticketId);
 
+    Optional<ChatSession> findByWidgetTokenHash(String widgetTokenHash);
+
     List<ChatSession> findByStatusOrderByCreatedAtAsc(String status);
 
     List<ChatSession> findByAgentIdAndStatusOrderByLastActivityAtDesc(Long agentId, String status);
