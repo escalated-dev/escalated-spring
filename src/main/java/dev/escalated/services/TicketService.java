@@ -208,7 +208,25 @@ public class TicketService {
             TicketPriority priority,
             Long departmentId,
             String ticketType) {
+        return create(subject, body, requesterName, requesterEmail, priority, departmentId, ticketType, null);
+    }
+
+    /**
+     * Create a ticket carrying host metadata (see {@code WidgetMetadata}),
+     * stored with the ticket in the same insert.
+     */
+    @Transactional(transactionManager = EscalatedTransactionManagers.ESCALATED)
+    public Ticket create(
+            String subject,
+            String body,
+            String requesterName,
+            String requesterEmail,
+            TicketPriority priority,
+            Long departmentId,
+            String ticketType,
+            java.util.Map<String, Object> metadata) {
         Ticket ticket = new Ticket();
+        ticket.setMetadata(metadata);
         ticket.setSubject(subject);
         ticket.setBody(body);
         ticket.setRequesterName(requesterName);

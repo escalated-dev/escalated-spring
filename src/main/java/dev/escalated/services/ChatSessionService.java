@@ -73,6 +73,16 @@ public class ChatSessionService {
     @Transactional(transactionManager = EscalatedTransactionManagers.ESCALATED)
     public ChatSession start(String visitorName, String visitorEmail,
                              String initialMessage, Long departmentId) {
+        return start(visitorName, visitorEmail, initialMessage, departmentId, null);
+    }
+
+    /**
+     * Start a chat whose ticket carries host metadata (see {@code WidgetMetadata}).
+     */
+    @Transactional(transactionManager = EscalatedTransactionManagers.ESCALATED)
+    public ChatSession start(String visitorName, String visitorEmail,
+                             String initialMessage, Long departmentId,
+                             java.util.Map<String, Object> metadata) {
         Ticket ticket = ticketService.create(
                 "Chat with " + visitorName,
                 initialMessage != null ? initialMessage : "",
@@ -81,6 +91,9 @@ public class ChatSessionService {
                 TicketPriority.MEDIUM,
                 departmentId);
         ticket.setChannel("chat");
+        if (metadata != null) {
+            ticket.setMetadata(metadata);
+        }
 
         ChatSession session = new ChatSession();
         session.setTicketId(ticket.getId());

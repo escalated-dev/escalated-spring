@@ -4,6 +4,8 @@ import dev.escalated.models.ChatSession;
 import dev.escalated.models.Reply;
 import dev.escalated.services.ChatAvailabilityService;
 import dev.escalated.services.ChatSessionService;
+import dev.escalated.widget.WidgetMetadata;
+import jakarta.servlet.http.HttpServletRequest;
 import java.util.Map;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -38,13 +40,17 @@ public class WidgetChatController {
     }
 
     @PostMapping("/start")
-    public ResponseEntity<ChatSession> start(@RequestBody Map<String, String> body) {
-        Long deptId = body.containsKey("departmentId") ? Long.parseLong(body.get("departmentId")) : null;
+    public ResponseEntity<ChatSession> start(@RequestBody Map<String, Object> body, HttpServletRequest request) {
+        String department = WidgetRequestBodies.text(body, "departmentId");
+        Long deptId = body.containsKey("departmentId") ? Long.parseLong(department) : null;
+        Map<String, Object> metadata = WidgetMetadata.fromRequest(body.get("metadata"), request);
+        String name = WidgetRequestBodies.text(body, "name");
         ChatSession session = chatSessionService.start(
-                body.getOrDefault("name", "Visitor"),
-                body.get("email"),
-                body.get("message"),
-                deptId);
+                body.containsKey("name") ? name : "Visitor",
+                WidgetRequestBodies.text(body, "email"),
+                WidgetRequestBodies.text(body, "message"),
+                deptId,
+                metadata);
         return ResponseEntity.status(201).body(session);
     }
 

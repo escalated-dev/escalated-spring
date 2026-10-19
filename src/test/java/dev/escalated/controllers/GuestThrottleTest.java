@@ -75,7 +75,7 @@ class GuestThrottleTest {
         Ticket ticket = new Ticket();
         ticket.setId(1L);
         ticket.setGuestAccessToken("guest-token");
-        when(ticketService.create(any(), any(), any(), any(), any(), any())).thenReturn(ticket);
+        when(ticketService.create(any(), any(), any(), any(), any(), any(), any(), any())).thenReturn(ticket);
         when(ticketService.findByGuestToken("guest-token")).thenReturn(ticket);
         when(ticketService.findByGuestToken("wrong")).thenThrow(new ResponseStatusException(HttpStatus.NOT_FOUND));
         when(ticketService.addReply(anyLong(), any(), any(), any(), any(), anyBoolean())).thenReturn(new Reply());
@@ -89,7 +89,7 @@ class GuestThrottleTest {
     @Test
     void sixthGuestTicketFromOneIpWithinAMinute_gets429() throws Exception {
         assertThat(createTickets(6)).containsExactly(201, 201, 201, 201, 201, 429);
-        verify(ticketService, times(5)).create(any(), any(), any(), any(), any(), any());
+        verify(ticketService, times(5)).create(any(), any(), any(), any(), any(), any(), any(), any());
     }
 
     @Test

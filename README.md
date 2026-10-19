@@ -23,6 +23,8 @@ An embeddable helpdesk system for Spring Boot applications. Add a full-featured 
 
 For opt-in department/account visibility and targeted SLAs, see [ticket access and routing](docs/ticket-access-and-routing.md).
 
+To run the support widget on other sites (a store, a marketing site), see [embedding the widget](docs/embedding-the-widget.md).
+
 ## Features
 
 1. **Ticket CRUD** -- Full lifecycle management with statuses, priorities, and assignments
@@ -109,6 +111,8 @@ escalated.knowledge-base.enabled=true
 escalated.broadcasting.enabled=false
 escalated.two-factor.enabled=true
 escalated.widget.enabled=true
+# Other sites allowed to embed the widget (none by default); see docs/embedding-the-widget.md
+escalated.widget.allowed-origins=
 escalated.guest-access.enabled=true
 
 # Per-client-IP limits on the public guest endpoints (429 + Retry-After when exceeded)
@@ -350,7 +354,9 @@ See the [inbound email docs](https://docs.escalated.dev/inbound-email) for provi
 ### Widget (`/escalated/api/widget/`)
 | Method | Path | Description |
 |--------|------|-------------|
-| POST | `/tickets` | Create ticket (public) |
+| GET | `/config` | Widget configuration |
+| GET | `/embed.js` | Standalone widget script |
+| POST | `/tickets` | Create ticket (public; optional `metadata` object) |
 | GET | `/tickets/{token}` | View ticket by guest token |
 | POST | `/tickets/{token}/replies` | Reply via guest token |
 | GET | `/kb/search?query=` | Search knowledge base |

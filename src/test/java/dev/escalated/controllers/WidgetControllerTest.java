@@ -49,7 +49,7 @@ class WidgetControllerTest {
         ticket.setTicketNumber("ESC-000001");
         ticket.setGuestAccessToken("abc123");
 
-        when(ticketService.create(any(), any(), any(), any(), any(), any())).thenReturn(ticket);
+        when(ticketService.create(any(), any(), any(), any(), any(), any(), any(), any())).thenReturn(ticket);
 
         mockMvc.perform(post("/escalated/api/widget/tickets")
                         .contentType(MediaType.APPLICATION_JSON)
