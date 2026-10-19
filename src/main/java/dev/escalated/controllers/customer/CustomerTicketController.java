@@ -2,6 +2,7 @@ package dev.escalated.controllers.customer;
 
 import dev.escalated.dto.CustomerTicketDto;
 import dev.escalated.dto.CustomerTicketSummaryDto;
+import dev.escalated.dto.GuestReplyDto;
 import dev.escalated.models.Reply;
 import dev.escalated.models.Ticket;
 import dev.escalated.models.TicketPriority;
@@ -34,7 +35,8 @@ import org.springframework.web.server.ResponseStatusException;
  * <p>{@code show} and {@code store} answer with {@link CustomerTicketDto} and
  * {@code index} with {@link CustomerTicketSummaryDto}, never the ticket entity
  * or the agent detail view: public replies only, no internal notes, linked
- * tickets or other staff data.
+ * tickets or other staff data. The reply endpoints answer with
+ * {@link GuestReplyDto}: no author emails or mail headers.
  */
 @RestController
 @RequestMapping("/escalated/api/customer/tickets")
@@ -73,18 +75,18 @@ public class CustomerTicketController {
     }
 
     @PostMapping("/{id}/replies")
-    public ResponseEntity<Reply> addReply(@PathVariable Long id, @RequestBody Map<String, String> body,
-                                          Authentication authentication) {
+    public ResponseEntity<GuestReplyDto> addReply(@PathVariable Long id, @RequestBody Map<String, String> body,
+                                                  Authentication authentication) {
         Ticket ticket = ticketService.findRequestedBy(id, customerEmail(authentication));
         // Filed as the ticket's requester; any name or email in the body is ignored.
-        return ResponseEntity.status(201).body(ticketService.addReply(ticket.getId(),
-                body.get("body"), ticket.getRequesterName(), ticket.getRequesterEmail(), "customer", false));
+        Reply reply = ticketService.addReply(ticket.getId(),
+                body.get("body"), ticket.getRequesterName(), ticket.getRequesterEmail(), "customer", false);
+        return ResponseEntity.status(201).body(GuestReplyDto.from(reply));
     }
 
     @GetMapping("/{id}/replies")
-    public ResponseEntity<List<Reply>> replies(@PathVariable Long id, Authentication authentication) {
-        Ticket ticket = ticketService.findRequestedBy(id, customerEmail(authentication));
-        return ResponseEntity.ok(ticketService.getPublicReplies(ticket.getId()));
+    public ResponseEntity<List<GuestReplyDto>> replies(@PathVariable Long id, Authentication authentication) {
+        return ResponseEntity.ok(ticketService.findCustomerReplies(id, customerEmail(authentication)));
     }
 
     private static String customerEmail(Authentication authentication) {

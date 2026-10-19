@@ -235,6 +235,21 @@ public class TicketService {
         return CustomerTicketDto.from(findRequestedBy(id, email));
     }
 
+    /**
+     * The public replies on the customer's own ticket, as they see them: no
+     * internal notes, no author emails.
+     *
+     * @throws EntityNotFoundException when there is no such ticket or it is
+     *     someone else's
+     */
+    @Transactional(transactionManager = EscalatedTransactionManagers.ESCALATED, readOnly = true)
+    public List<GuestReplyDto> findCustomerReplies(Long id, String email) {
+        Ticket ticket = findRequestedBy(id, email);
+        return getPublicReplies(ticket.getId()).stream()
+                .map(GuestReplyDto::from)
+                .toList();
+    }
+
     /** A ticket's replies without internal notes, oldest first. */
     @Transactional(transactionManager = EscalatedTransactionManagers.ESCALATED, readOnly = true)
     public List<Reply> getPublicReplies(Long ticketId) {
