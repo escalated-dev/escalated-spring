@@ -65,6 +65,11 @@ public class ChatSession extends BaseEntity {
     @Column(name = "last_activity_at", nullable = false)
     private Instant lastActivityAt = Instant.now();
 
+    /** SHA-256 (hex) of the token the widget addresses this chat by; never serialised. */
+    @com.fasterxml.jackson.annotation.JsonIgnore
+    @Column(name = "widget_token_hash", length = 64)
+    private String widgetTokenHash;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "ticket_id", insertable = false, updatable = false)
     private Ticket ticket;
@@ -143,6 +148,15 @@ public class ChatSession extends BaseEntity {
 
     public void setLastActivityAt(Instant lastActivityAt) {
         this.lastActivityAt = lastActivityAt;
+    }
+
+    @com.fasterxml.jackson.annotation.JsonIgnore
+    public String getWidgetTokenHash() {
+        return widgetTokenHash;
+    }
+
+    public void setWidgetTokenHash(String widgetTokenHash) {
+        this.widgetTokenHash = widgetTokenHash;
     }
 
     public Ticket getTicket() {

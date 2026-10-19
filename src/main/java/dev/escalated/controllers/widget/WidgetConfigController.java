@@ -59,6 +59,9 @@ public class WidgetConfigController {
         config.put("guest_tickets_enabled", true);
         // Tickets and chats keep host parameters sent as `metadata`.
         config.put("accepts_metadata", true);
+        // No mailbox verification here, so no status lookup by email: the
+        // widget hides its Status tab. Guests follow a ticket by its token.
+        config.put("status_lookup_enabled", false);
         return ResponseEntity.ok(config);
     }
 }

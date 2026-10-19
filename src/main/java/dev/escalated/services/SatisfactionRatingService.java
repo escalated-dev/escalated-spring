@@ -46,6 +46,28 @@ public class SatisfactionRatingService {
         return ratingRepository.save(rating);
     }
 
+    /**
+     * Record the requester's rating of a ticket (a widget chat's ticket), or
+     * replace the one they already gave.
+     */
+    @Transactional(transactionManager = EscalatedTransactionManagers.ESCALATED)
+    public SatisfactionRating rateTicket(Long ticketId, int score, String comment) {
+        SatisfactionRating rating = ratingRepository.findByTicketId(ticketId).stream()
+                .findFirst()
+                .orElseGet(() -> {
+                    Ticket ticket = ticketRepository.findById(ticketId)
+                            .orElseThrow(() -> new EntityNotFoundException("Ticket not found: " + ticketId));
+                    SatisfactionRating created = new SatisfactionRating();
+                    created.setTicket(ticket);
+                    created.setRaterEmail(ticket.getRequesterEmail());
+                    created.setRaterName(ticket.getRequesterName());
+                    return created;
+                });
+        rating.setRating(score);
+        rating.setComment(comment);
+        return ratingRepository.save(rating);
+    }
+
     @Transactional(transactionManager = EscalatedTransactionManagers.ESCALATED, readOnly = true)
     public List<SatisfactionRating> findByTicket(Long ticketId) {
         return ratingRepository.findByTicketId(ticketId);

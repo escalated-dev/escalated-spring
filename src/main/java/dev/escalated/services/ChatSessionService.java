@@ -83,6 +83,51 @@ public class ChatSessionService {
     public ChatSession start(String visitorName, String visitorEmail,
                              String initialMessage, Long departmentId,
                              java.util.Map<String, Object> metadata) {
+        return start(visitorName, visitorEmail, initialMessage, departmentId, metadata, null);
+    }
+
+    /**
+     * Start a chat from the public widget. The widget addresses the chat by
+     * the returned random token from then on; only its hash is stored, and
+     * the numeric session id is never accepted from the widget.
+     */
+    @Transactional(transactionManager = EscalatedTransactionManagers.ESCALATED)
+    public WidgetChat startForWidget(String visitorName, String visitorEmail,
+                                     String initialMessage, Long departmentId,
+                                     java.util.Map<String, Object> metadata) {
+        String token = WidgetChatTokens.generate();
+        ChatSession session = start(visitorName, visitorEmail, initialMessage, departmentId,
+                metadata, WidgetChatTokens.hash(token));
+        return new WidgetChat(session, token);
+    }
+
+    /** A chat started from the widget, with the token the widget uses for it. */
+    public record WidgetChat(ChatSession session, String token) {
+    }
+
+    /**
+     * The chat a widget token belongs to.
+     *
+     * @throws EntityNotFoundException for a blank or unknown token
+     */
+    @Transactional(transactionManager = EscalatedTransactionManagers.ESCALATED, readOnly = true)
+    public ChatSession findByWidgetToken(String token) {
+        if (token == null || token.isBlank()) {
+            throw new EntityNotFoundException("Chat session not found");
+        }
+        return chatSessionRepository.findByWidgetTokenHash(WidgetChatTokens.hash(token))
+                .orElseThrow(() -> new EntityNotFoundException("Chat session not found"));
+    }
+
+    /** Tell the agents' side that the visitor is typing. Nothing is stored. */
+    public void visitorTyping(ChatSession session) {
+        broadcast("/topic/chat/" + session.getId() + "/typing",
+                java.util.Map.of("name", session.getVisitorName(), "is_agent", false));
+    }
+
+    private ChatSession start(String visitorName, String visitorEmail,
+                              String initialMessage, Long departmentId,
+                              java.util.Map<String, Object> metadata, String widgetTokenHash) {
         Ticket ticket = ticketService.create(
                 "Chat with " + visitorName,
                 initialMessage != null ? initialMessage : "",
@@ -102,6 +147,7 @@ public class ChatSessionService {
         session.setDepartmentId(departmentId);
         session.setStatus("waiting");
         session.setLastActivityAt(Instant.now());
+        session.setWidgetTokenHash(widgetTokenHash);
 
         // Apply routing rules
         ChatRoutingService.RouteResult route = chatRoutingService.resolve(departmentId);

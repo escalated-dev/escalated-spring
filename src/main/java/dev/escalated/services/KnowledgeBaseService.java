@@ -55,6 +55,21 @@ public class KnowledgeBaseService {
                 .orElseThrow(() -> new EntityNotFoundException("Article not found: " + slug));
     }
 
+    /**
+     * A published article by slug with its category loaded, or {@code null}
+     * for an unknown slug or a draft.
+     */
+    @Transactional(transactionManager = EscalatedTransactionManagers.ESCALATED, readOnly = true)
+    public KnowledgeBaseArticle findPublishedArticle(String slug) {
+        KnowledgeBaseArticle article = articleRepository.findBySlug(slug)
+                .filter(KnowledgeBaseArticle::isPublished)
+                .orElse(null);
+        if (article != null && article.getCategory() != null) {
+            org.hibernate.Hibernate.initialize(article.getCategory());
+        }
+        return article;
+    }
+
     @Transactional(transactionManager = EscalatedTransactionManagers.ESCALATED, readOnly = true)
     public Page<KnowledgeBaseArticle> findPublishedArticles(Pageable pageable) {
         return articleRepository.findByPublishedTrueOrderByPublishedAtDesc(pageable);
