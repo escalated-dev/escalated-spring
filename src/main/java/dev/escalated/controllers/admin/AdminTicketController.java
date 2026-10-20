@@ -10,6 +10,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -116,36 +117,41 @@ public class AdminTicketController {
     }
 
     @PostMapping("/{id}/assign")
-    public ResponseEntity<Ticket> assign(@PathVariable Long id, @RequestBody Map<String, Object> body) {
+    public ResponseEntity<Ticket> assign(@PathVariable Long id, @RequestBody Map<String, Object> body,
+                                         Authentication authentication) {
         Long agentId =
                 body.get("agent_id") != null ? Long.valueOf(body.get("agent_id").toString()) : null;
         return ResponseEntity.ok(
-                ticketService.assign(id, agentId, (String) body.get("actor_email")));
+                ticketService.assign(id, agentId, actor(authentication)));
     }
 
     @PostMapping("/{id}/status")
-    public ResponseEntity<Ticket> changeStatus(@PathVariable Long id, @RequestBody Map<String, String> body) {
+    public ResponseEntity<Ticket> changeStatus(@PathVariable Long id, @RequestBody Map<String, String> body,
+                                               Authentication authentication) {
         return ResponseEntity.ok(ticketService.changeStatus(
-                id, TicketStatus.valueOf(body.get("status")), body.get("actor_email")));
+                id, TicketStatus.valueOf(body.get("status")), actor(authentication)));
     }
 
     @PostMapping("/{id}/snooze")
-    public ResponseEntity<Ticket> snooze(@PathVariable Long id, @RequestBody Map<String, String> body) {
+    public ResponseEntity<Ticket> snooze(@PathVariable Long id, @RequestBody Map<String, String> body,
+                                         Authentication authentication) {
         Instant until = Instant.parse(body.get("until"));
-        return ResponseEntity.ok(ticketService.snooze(id, until, body.get("actor_email")));
+        return ResponseEntity.ok(ticketService.snooze(id, until, actor(authentication)));
     }
 
     @PostMapping("/{id}/merge")
-    public ResponseEntity<Ticket> merge(@PathVariable Long id, @RequestBody Map<String, Object> body) {
+    public ResponseEntity<Ticket> merge(@PathVariable Long id, @RequestBody Map<String, Object> body,
+                                        Authentication authentication) {
         Long targetId = Long.valueOf(body.get("target_ticket_id").toString());
         return ResponseEntity.ok(
-                ticketService.merge(id, targetId, (String) body.get("actor_email")));
+                ticketService.merge(id, targetId, actor(authentication)));
     }
 
     @PostMapping("/{id}/split")
-    public ResponseEntity<Ticket> split(@PathVariable Long id, @RequestBody Map<String, String> body) {
+    public ResponseEntity<Ticket> split(@PathVariable Long id, @RequestBody Map<String, String> body,
+                                        Authentication authentication) {
         return ResponseEntity.ok(ticketService.split(
-                id, body.get("new_subject"), body.get("reply_ids"), body.get("actor_email")));
+                id, body.get("new_subject"), body.get("reply_ids"), actor(authentication)));
     }
 
     @PostMapping("/{id}/tags")
@@ -154,9 +160,17 @@ public class AdminTicketController {
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> destroy(@PathVariable Long id,
-                                        @RequestParam(defaultValue = "admin") String actorEmail) {
-        ticketService.delete(id, actorEmail);
+    public ResponseEntity<Void> destroy(@PathVariable Long id, Authentication authentication) {
+        ticketService.delete(id, actor(authentication));
         return ResponseEntity.noContent().build();
+    }
+
+    /**
+     * The actor recorded in activity and audit rows: the signed-in admin. An
+     * {@code actor_email} in the request is ignored, so the log cannot be
+     * written in someone else's name.
+     */
+    private static String actor(Authentication authentication) {
+        return authentication == null ? null : authentication.getName();
     }
 }
