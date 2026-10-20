@@ -44,6 +44,8 @@ import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilde
 @TestPropertySource(properties = {
     "spring.mail.host=localhost",
     "escalated.widget.allowed-origins=https://shop.example.com, https://*.brand.test",
+    // The widget's article routes answer 404 while the knowledge base is off.
+    "escalated.knowledge-base.enabled=true",
 })
 class WidgetEmbeddingTest {
 
@@ -431,7 +433,7 @@ class WidgetEmbeddingTest {
     /** The metadata stored for the ticket a response created, read back from the table. */
     private Map<String, Object> savedMetadata(MockHttpServletResponse response) throws Exception {
         JsonNode body = json.readTree(response.getContentAsString());
-        return storedMetadata("guest_access_token = ?", body.get("guestAccessToken").asText());
+        return storedMetadata("guest_access_token = ?", body.get("guest_access_token").asText());
     }
 
     @SuppressWarnings("unchecked")

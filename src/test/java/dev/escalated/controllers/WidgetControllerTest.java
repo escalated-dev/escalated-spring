@@ -58,8 +58,10 @@ class WidgetControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"subject\":\"Widget Ticket\",\"body\":\"Help!\",\"name\":\"Guest\",\"email\":\"guest@test.com\"}"))
                 .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.subject").value("Widget Ticket"))
-                .andExpect(jsonPath("$.guestAccessToken").value("abc123"));
+                .andExpect(jsonPath("$.reference").value("ESC-000001"))
+                .andExpect(jsonPath("$.guest_access_token").value("abc123"))
+                .andExpect(jsonPath("$.subject").doesNotExist())
+                .andExpect(jsonPath("$.guestAccessToken").doesNotExist());
     }
 
     @Test

@@ -47,8 +47,8 @@ public class WidgetController {
 
     /**
      * The shared widget sends {@code description}; older clients send
-     * {@code body}, which still works. The answer is the ticket as before plus
-     * top-level {@code message}, {@code reference} and {@code guest_access_token}.
+     * {@code body}, which still works. The answer is {@link WidgetTicketCreated}:
+     * {@code message}, {@code reference}, {@code guest_access_token}, {@code expires_at}.
      */
     @PostMapping("/tickets")
     @GuestThrottle(GuestThrottle.Scope.TICKET)
@@ -87,7 +87,7 @@ public class WidgetController {
                 WidgetRequestBodies.activeDepartment(body.get("department_id"), departmentService),
                 null,
                 metadata);
-        return ResponseEntity.status(201).body(new WidgetTicketCreated(ticket));
+        return ResponseEntity.status(201).body(WidgetTicketCreated.of(ticket));
     }
 
     @GetMapping("/tickets/{token}")

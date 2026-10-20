@@ -1,38 +1,28 @@
 package dev.escalated.controllers.widget;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.annotation.JsonUnwrapped;
 import dev.escalated.models.Ticket;
 
 /**
- * The answer to a widget ticket: the ticket's fields as before, plus the
- * top-level keys the shared widget reads.
+ * The answer to a widget ticket, in the Laravel reference's shape:
+ * {@code message}, {@code reference}, {@code guest_access_token} and
+ * {@code expires_at}. Nothing else.
+ *
+ * <p>It used to unwrap the whole {@code Ticket} entity. The ticket's contact is
+ * looked up by email and reused, so an anonymous POST naming someone else's
+ * address got back that contact's stored name, host user id and metadata.
  */
-final class WidgetTicketCreated {
+@JsonInclude(JsonInclude.Include.ALWAYS)
+record WidgetTicketCreated(
+        @JsonProperty("message") String message,
+        @JsonProperty("reference") String reference,
+        @JsonProperty("guest_access_token") String guestAccessToken,
+        // Guest tokens on this port do not expire yet; the key is there for the widget.
+        @JsonProperty("expires_at") String expiresAt) {
 
-    private final Ticket ticket;
-
-    WidgetTicketCreated(Ticket ticket) {
-        this.ticket = ticket;
-    }
-
-    @JsonUnwrapped
-    public Ticket getTicket() {
-        return ticket;
-    }
-
-    @JsonProperty("message")
-    public String getMessage() {
-        return "Ticket created.";
-    }
-
-    @JsonProperty("reference")
-    public String getReference() {
-        return ticket.getTicketNumber();
-    }
-
-    @JsonProperty("guest_access_token")
-    public String getGuestAccessTokenForWidget() {
-        return ticket.getGuestAccessToken();
+    static WidgetTicketCreated of(Ticket ticket) {
+        return new WidgetTicketCreated(
+                "Ticket created successfully.", ticket.getTicketNumber(), ticket.getGuestAccessToken(), null);
     }
 }
