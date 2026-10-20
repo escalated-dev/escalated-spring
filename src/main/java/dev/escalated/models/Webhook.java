@@ -17,6 +17,8 @@ public class Webhook extends BaseEntity {
     @Column(nullable = false)
     private String url;
 
+    /** HMAC signing key: accepted on write, never echoed back. */
+    @com.fasterxml.jackson.annotation.JsonProperty(access = com.fasterxml.jackson.annotation.JsonProperty.Access.WRITE_ONLY)
     @Column
     private String secret;
 
@@ -46,6 +48,7 @@ public class Webhook extends BaseEntity {
         this.url = url;
     }
 
+    @com.fasterxml.jackson.annotation.JsonProperty(access = com.fasterxml.jackson.annotation.JsonProperty.Access.WRITE_ONLY)
     public String getSecret() {
         return secret;
     }

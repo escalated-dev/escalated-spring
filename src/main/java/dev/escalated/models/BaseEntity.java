@@ -11,6 +11,8 @@ import jakarta.persistence.PreUpdate;
 import java.time.Instant;
 
 @MappedSuperclass
+// Hibernate proxies carry these two bean properties; they are never data.
+@com.fasterxml.jackson.annotation.JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 public abstract class BaseEntity {
 
     @Id

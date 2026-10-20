@@ -189,6 +189,8 @@ public class Ticket extends BaseEntity {
     @Column(name = "email_message_id")
     private String emailMessageId;
 
+    /** The guest's bearer capability for this ticket; staff JSON never carries it. */
+    @com.fasterxml.jackson.annotation.JsonIgnore
     @Column(name = "guest_access_token")
     private String guestAccessToken;
 
@@ -573,6 +575,7 @@ public class Ticket extends BaseEntity {
         this.emailMessageId = emailMessageId;
     }
 
+    @com.fasterxml.jackson.annotation.JsonIgnore
     public String getGuestAccessToken() {
         return guestAccessToken;
     }

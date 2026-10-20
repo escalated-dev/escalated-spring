@@ -38,6 +38,7 @@ public class NewsletterDelivery {
     private String status = "pending";
 
     @Column(name = "tracking_token", nullable = false, length = 40)
+    @com.fasterxml.jackson.annotation.JsonIgnore
     private String trackingToken;
 
     @Column(name = "sent_at")

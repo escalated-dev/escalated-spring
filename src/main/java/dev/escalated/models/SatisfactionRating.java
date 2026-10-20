@@ -52,6 +52,7 @@ public class SatisfactionRating extends BaseEntity {
     @Column(name = "rater_name")
     private String raterName;
 
+    @JsonIgnore
     @Column(name = "access_token", unique = true)
     private String accessToken;
 
@@ -95,6 +96,7 @@ public class SatisfactionRating extends BaseEntity {
         this.raterName = raterName;
     }
 
+    @JsonIgnore
     public String getAccessToken() {
         return accessToken;
     }
