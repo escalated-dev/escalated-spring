@@ -55,6 +55,8 @@ public class AgentProfile extends BaseEntity {
     @Column(columnDefinition = "TEXT")
     private String signature;
 
+    /** TOTP seed. A credential: never serialised, whoever asks. */
+    @JsonIgnore
     @Column(name = "two_factor_secret")
     private String twoFactorSecret;
 
@@ -176,6 +178,7 @@ public class AgentProfile extends BaseEntity {
         this.signature = signature;
     }
 
+    @JsonIgnore
     public String getTwoFactorSecret() {
         return twoFactorSecret;
     }

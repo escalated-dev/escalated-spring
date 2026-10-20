@@ -1,11 +1,14 @@
 package dev.escalated.controllers.agent;
 
+import dev.escalated.models.AgentProfile;
 import dev.escalated.models.ChatSession;
 import dev.escalated.models.Reply;
+import dev.escalated.repositories.AgentProfileRepository;
 import dev.escalated.services.ChatSessionService;
 import java.util.List;
 import java.util.Map;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -22,9 +25,11 @@ import org.springframework.web.bind.annotation.RestController;
 public class AgentChatController {
 
     private final ChatSessionService chatSessionService;
+    private final AgentProfileRepository agents;
 
-    public AgentChatController(ChatSessionService chatSessionService) {
+    public AgentChatController(ChatSessionService chatSessionService, AgentProfileRepository agents) {
         this.chatSessionService = chatSessionService;
+        this.agents = agents;
     }
 
     @GetMapping("/queue")
@@ -39,16 +44,28 @@ public class AgentChatController {
 
     @PostMapping("/{sessionId}/accept")
     public ResponseEntity<ChatSession> accept(@PathVariable Long sessionId,
-                                              @RequestBody Map<String, Long> body) {
-        ChatSession session = chatSessionService.accept(sessionId, body.get("agentId"));
+                                              @RequestBody(required = false) Map<String, Long> body,
+                                              Authentication authentication) {
+        // Accepted by the signed-in agent. A body agentId is used only for a
+        // host user with no agent profile (role-based staff).
+        Long agentId = agents.findByEmail(authentication.getName())
+                .map(AgentProfile::getId)
+                .orElse(body == null ? null : body.get("agentId"));
+        ChatSession session = chatSessionService.accept(sessionId, agentId);
         return ResponseEntity.ok(session);
     }
 
     @PostMapping("/{sessionId}/messages")
     public ResponseEntity<Reply> sendMessage(@PathVariable Long sessionId,
-                                             @RequestBody Map<String, String> body) {
-        Reply reply = chatSessionService.sendMessage(
-                sessionId, body.get("body"), body.get("name"), body.get("email"), "agent");
+                                             @RequestBody Map<String, String> body,
+                                             Authentication authentication) {
+        // Sent as the signed-in agent; a name or email in the body is ignored.
+        String email = authentication.getName();
+        String name = agents.findByEmail(email)
+                .map(AgentProfile::getName)
+                .filter(n -> !n.isBlank())
+                .orElse(email);
+        Reply reply = chatSessionService.sendMessage(sessionId, body.get("body"), name, email, "agent");
         return ResponseEntity.status(201).body(reply);
     }
 

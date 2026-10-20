@@ -412,7 +412,8 @@ dev.escalated/
 |---|---|
 | `/escalated/api/admin/**` | an admin |
 | `/escalated/api/agent/**` | an agent or an admin |
-| `/escalated/api/customer/**`, `/escalated/api/attachments/**` | any authenticated user |
+| `/escalated/api/customer/**` | any authenticated user; only their own tickets (requester email = principal name) |
+| `/escalated/api/attachments/{id}/download` | an agent who can see the ticket, or the ticket's requester (never an internal note's attachment). Always served as a download, `nosniff` |
 | `/escalated/api/widget/**`, `/escalated/api/guest/**`, `/escalated/api/csat/**` | nothing |
 | `/escalated/api/v1/auth/**` | nothing; the endpoints check host-issued tokens through your `EscalatedApiAuthenticator` |
 | `/escalated/webhook/email/inbound` | the `X-Escalated-Inbound-Secret` header |
@@ -440,6 +441,11 @@ curl -H "Authorization: Bearer <token>" /escalated/api/agent/tickets
 ## WebSocket (Real-time)
 
 Enable with `escalated.broadcasting.enabled=true`. Connect to `/escalated/ws` via SockJS/STOMP.
+
+- Origins: same-origin, plus the sites in `escalated.widget.allowed-origins`.
+- Staff authenticate with the host session used for the handshake, or an Escalated API token in the STOMP `CONNECT` frame (`Authorization: Bearer <token>`). Staff may subscribe to `/topic/chat-queue` and any chat topic.
+- A widget visitor may subscribe only to their own chat's `/topic/chat/{id}`, `/topic/chat/{id}/messages` and `/topic/chat/{id}/typing`, sending the chat token from `/widget/chat/start` in a `chat-token` header on `SUBSCRIBE`.
+- Clients cannot `SEND` to `/topic` or `/queue` destinations.
 
 ## Development
 

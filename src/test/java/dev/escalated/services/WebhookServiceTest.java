@@ -3,9 +3,12 @@ package dev.escalated.services;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import dev.escalated.config.EscalatedProperties;
 import dev.escalated.models.Webhook;
+import dev.escalated.models.WebhookDelivery;
 import dev.escalated.repositories.WebhookDeliveryRepository;
 import dev.escalated.repositories.WebhookRepository;
 import jakarta.persistence.EntityNotFoundException;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.util.List;
 import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
@@ -13,11 +16,13 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
@@ -70,6 +75,68 @@ class WebhookServiceTest {
     void create_shouldRejectUnsafeWebhookUrls(String url) {
         assertThrows(IllegalArgumentException.class, () -> webhookService.create(url, null,
                 "ticket.created", "Unsafe webhook"));
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"127.0.0.1", "169.254.169.254", "10.1.2.3", "100.64.0.1", "0.0.0.0",
+        "fd00::1", "fc00::1", "::ffff:192.168.0.1", "::1", "fe80::1"})
+    void create_shouldRejectAHostNameThatResolvesToAPrivateAddress(String address) {
+        webhookService.setResolver(host -> new InetAddress[] {InetAddress.getByName(address)});
+
+        IllegalArgumentException ex = assertThrows(IllegalArgumentException.class, () -> webhookService.create(
+                "https://metadata.attacker.example/hook", null, "ticket.created", "Rebinding"));
+        assertEquals("Webhook URL host is not allowed", ex.getMessage());
+    }
+
+    @Test
+    void create_shouldRejectAHostWithAnyPrivateAddressAmongItsRecords() {
+        webhookService.setResolver(host -> new InetAddress[] {
+            InetAddress.getByName("93.184.216.34"), InetAddress.getByName("127.0.0.1")});
+
+        assertThrows(IllegalArgumentException.class, () -> webhookService.create(
+                "https://mixed.attacker.example/hook", null, "ticket.created", "Mixed"));
+    }
+
+    @Test
+    void dispatchEvent_shouldNotSendToAHostThatNowResolvesToAPrivateAddress() {
+        // Saved while it resolved publicly; DNS now points it at the metadata service.
+        Webhook webhook = new Webhook();
+        webhook.setId(2L);
+        webhook.setUrl("https://hooks.attacker.example/x");
+        webhook.setEvents("ticket.created");
+        webhook.setActive(true);
+        webhookService.setResolver(host -> new InetAddress[] {InetAddress.getByName("169.254.169.254")});
+
+        when(webhookRepository.findActiveByEvent("ticket.created")).thenReturn(List.of(webhook));
+        ArgumentCaptor<WebhookDelivery> delivery = ArgumentCaptor.forClass(WebhookDelivery.class);
+
+        webhookService.dispatchEvent("ticket.created", 1L);
+
+        verify(deliveryRepository).save(delivery.capture());
+        assertEquals("failed", delivery.getValue().getStatus());
+        assertEquals("Webhook URL host is not allowed", delivery.getValue().getErrorMessage());
+        assertNull(delivery.getValue().getResponseStatus());
+    }
+
+    @Test
+    void dispatchEvent_shouldNotSendToAHostThatNoLongerResolves() {
+        Webhook webhook = new Webhook();
+        webhook.setId(3L);
+        webhook.setUrl("https://gone.attacker.example/x");
+        webhook.setEvents("ticket.created");
+        webhook.setActive(true);
+        webhookService.setResolver(host -> {
+            throw new UnknownHostException(host);
+        });
+
+        when(webhookRepository.findActiveByEvent("ticket.created")).thenReturn(List.of(webhook));
+        ArgumentCaptor<WebhookDelivery> delivery = ArgumentCaptor.forClass(WebhookDelivery.class);
+
+        webhookService.dispatchEvent("ticket.created", 1L);
+
+        verify(deliveryRepository).save(delivery.capture());
+        assertEquals("failed", delivery.getValue().getStatus());
+        assertNull(delivery.getValue().getResponseStatus());
     }
 
     @Test

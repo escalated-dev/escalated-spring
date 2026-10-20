@@ -7,6 +7,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Security
+- Staff JSON no longer carries credentials. `AgentProfile.twoFactorSecret` (sent to every agent
+  through `assignedAgent` on the agent ticket routes), the ticket guest access token, API token
+  hashes, CSAT and newsletter tracking tokens are never serialised; a webhook secret is write-only.
+- Attachment downloads follow the Laravel reference's access rules: agents need to see the ticket,
+  anyone else must be the ticket's requester and never gets an internal note's attachment. The
+  response is always `Content-Disposition: attachment` with an RFC 6266 filename, `nosniff`, and
+  `application/octet-stream` for anything but a few inert types. Unknown ids answer 404, not 500.
+- The STOMP endpoint (`escalated.broadcasting.enabled=true`) checks origins (same-origin plus
+  `escalated.widget.allowed-origins`, no longer `*`), authorises every `SUBSCRIBE` (staff, or the
+  chat's own widget token in a `chat-token` header) and refuses client `SEND` to broker topics.
+- `escalated.widget.enabled=false` disables every widget route, not only `/config`; the widget's
+  article routes answer 404 while the knowledge base is disabled.
+- `POST /widget/tickets` answers `{message, reference, guest_access_token, expires_at}` instead of
+  the whole ticket entity, which echoed the stored contact for any email address.
+- Agent replies, chat messages and side conversations are authored by the signed-in agent; admin
+  ticket actions and imports record the signed-in admin. Author and actor fields in the request
+  body are ignored.
+- Webhook URLs are resolved and every address checked (private, loopback, link-local, CGNAT,
+  IPv6 ULA, IPv4-mapped) when saved and again before each delivery. Redirects are never followed.
+
 ## [0.2.1] - 2026-10-19
 
 ### Changed

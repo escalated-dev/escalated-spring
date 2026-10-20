@@ -42,6 +42,8 @@ import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilde
 @TestPropertySource(properties = {
     "spring.mail.host=localhost",
     "escalated.widget.allowed-origins=https://shop.example.com, https://*.brand.test",
+    // The widget's article routes answer 404 while the knowledge base is off.
+    "escalated.knowledge-base.enabled=true",
 })
 class WidgetApiContractTest {
 
@@ -53,6 +55,7 @@ class WidgetApiContractTest {
     @Autowired private DepartmentService departments;
     @Autowired private KnowledgeBaseService knowledgeBase;
     @Autowired private ChatSessionService chats;
+    @Autowired private dev.escalated.services.TicketService tickets;
     @Autowired private dev.escalated.repositories.KnowledgeBaseCategoryRepository categories;
 
     private final ObjectMapper json = new ObjectMapper();
@@ -139,14 +142,32 @@ class WidgetApiContractTest {
         String token = answer.get("guest_access_token").asText();
         assertThat(reference).isNotBlank();
         assertThat(token).isNotBlank();
-        // Existing clients read the entity fields; they stay.
-        assertThat(answer.get("guestAccessToken").asText()).isEqualTo(token);
-        assertThat(answer.get("ticketNumber").asText()).isEqualTo(reference);
+        // Laravel's shape and nothing more: no ticket entity, no stored contact.
+        java.util.List<String> fields = new java.util.ArrayList<>();
+        answer.fieldNames().forEachRemaining(fields::add);
+        assertThat(fields).containsExactlyInAnyOrder("message", "reference", "guest_access_token", "expires_at");
 
         var row = jdbc.queryForMap(
                 "SELECT body, department_id FROM escalated_tickets WHERE ticket_number = ?", reference);
         assertThat(row.get("body")).isEqualTo("It never arrived.");
         assertThat(((Number) row.get("department_id")).longValue()).isEqualTo(support.getId());
+    }
+
+    @Test
+    void aWidgetTicketForSomeoneElsesEmailDoesNotEchoTheirStoredContact() throws Exception {
+        String victim = "victim-" + unique() + "@example.com";
+        String realName = "Victoria Realname " + unique();
+        tickets.create("Earlier", "Earlier ticket", realName, victim,
+                dev.escalated.models.TicketPriority.MEDIUM, null);
+
+        String raw = mockMvc.perform(guest(post(WIDGET + "/tickets"))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"name\":\"Attacker\",\"email\":\"" + victim + "\","
+                                + "\"subject\":\"Hi\",\"description\":\"Who are you?\"}"))
+                .andExpect(status().isCreated())
+                .andReturn().getResponse().getContentAsString();
+
+        assertThat(raw).doesNotContain(realName).doesNotContain("contact").doesNotContain("userId");
     }
 
     @Test

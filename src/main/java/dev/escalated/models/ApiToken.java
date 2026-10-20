@@ -17,6 +17,7 @@ public class ApiToken extends BaseEntity {
     @Column(nullable = false)
     private String name;
 
+    @com.fasterxml.jackson.annotation.JsonIgnore
     @Column(name = "token_hash", nullable = false, unique = true)
     private String tokenHash;
 
@@ -41,6 +42,7 @@ public class ApiToken extends BaseEntity {
         this.name = name;
     }
 
+    @com.fasterxml.jackson.annotation.JsonIgnore
     public String getTokenHash() {
         return tokenHash;
     }

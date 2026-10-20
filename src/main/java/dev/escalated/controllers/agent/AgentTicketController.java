@@ -3,9 +3,11 @@ package dev.escalated.controllers.agent;
 import dev.escalated.config.EscalatedProperties;
 import dev.escalated.dto.TicketDetailDto;
 import dev.escalated.events.CustomActionTriggeredEvent;
+import dev.escalated.models.AgentProfile;
 import dev.escalated.models.Reply;
 import dev.escalated.models.Ticket;
 import dev.escalated.models.TicketStatus;
+import dev.escalated.repositories.AgentProfileRepository;
 import dev.escalated.services.MacroService;
 import dev.escalated.services.SideConversationService;
 import dev.escalated.services.TicketActionRegistry;
@@ -17,6 +19,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -39,13 +42,16 @@ public class AgentTicketController {
     private final TicketLinkService ticketLinkService;
     private final TicketActionRegistry ticketActionRegistry;
     private final ApplicationEventPublisher eventPublisher;
+    private final AgentProfileRepository agents;
 
     public AgentTicketController(TicketService ticketService,
                                  MacroService macroService,
                                  SideConversationService sideConversationService,
                                  TicketLinkService ticketLinkService,
                                  TicketActionRegistry ticketActionRegistry,
-                                 ApplicationEventPublisher eventPublisher) {
+                                 ApplicationEventPublisher eventPublisher,
+                                 AgentProfileRepository agents) {
+        this.agents = agents;
         this.ticketService = ticketService;
         this.macroService = macroService;
         this.sideConversationService = sideConversationService;
@@ -109,7 +115,8 @@ public class AgentTicketController {
 
     @PostMapping("/{id}/actions/{action}")
     public ResponseEntity<Object> customAction(@PathVariable Long id, @PathVariable String action,
-                                               @RequestBody(required = false) Map<String, Object> body) {
+                                               @RequestBody(required = false) Map<String, Object> body,
+                                               Authentication authentication) {
         EscalatedProperties.TicketActionProperties config = ticketActionRegistry.find(action);
         if (config == null || !config.isVisible()) {
             return ResponseEntity.status(404).body(Map.of("error", "Custom action not found"));
@@ -119,7 +126,7 @@ public class AgentTicketController {
         }
 
         Ticket ticket = ticketService.findById(id);
-        String actorEmail = body == null ? null : (String) body.get("actor_email");
+        String actorEmail = authentication.getName();
 
         Map<String, Object> payload = new LinkedHashMap<>();
         Object rawPayload = body == null ? null : body.get("payload");
@@ -143,33 +150,46 @@ public class AgentTicketController {
     }
 
     @PostMapping("/{id}/replies")
-    public ResponseEntity<Reply> addReply(@PathVariable Long id, @RequestBody Map<String, Object> body) {
+    public ResponseEntity<Reply> addReply(@PathVariable Long id, @RequestBody Map<String, Object> body,
+                                          Authentication authentication) {
+        // The author is the signed-in agent. author_name, author_email and
+        // author_type in the body are ignored: an agent cannot post as the
+        // requester or as a colleague.
+        AgentProfile agent = agents.findByEmail(authentication.getName()).orElse(null);
         return ResponseEntity.status(201).body(ticketService.addReply(id,
                 (String) body.get("body"),
-                (String) body.get("author_name"),
-                (String) body.get("author_email"),
-                (String) body.getOrDefault("author_type", "agent"),
+                authorName(agent, authentication),
+                authentication.getName(),
+                "agent",
                 Boolean.parseBoolean(body.getOrDefault("internal", "false").toString())));
+    }
+
+    private static String authorName(AgentProfile agent, Authentication authentication) {
+        return agent != null && agent.getName() != null && !agent.getName().isBlank()
+                ? agent.getName()
+                : authentication.getName();
     }
 
     @PostMapping("/{id}/macro/{macroId}")
     public ResponseEntity<Void> applyMacro(
             @PathVariable Long id,
             @PathVariable Long macroId,
-            @RequestParam(defaultValue = "agent") String actorEmail) {
-        macroService.applyMacro(macroId, id, actorEmail);
+            Authentication authentication) {
+        macroService.applyMacro(macroId, id, authentication.getName());
         return ResponseEntity.ok().build();
     }
 
     @PostMapping("/{id}/side-conversations")
     public ResponseEntity<Object> createSideConversation(@PathVariable Long id,
-                                                         @RequestBody Map<String, String> body) {
+                                                         @RequestBody Map<String, String> body,
+                                                         Authentication authentication) {
+        AgentProfile agent = agents.findByEmail(authentication.getName()).orElse(null);
         return ResponseEntity.status(201).body(sideConversationService.create(id,
                 body.get("subject"),
                 body.get("participant_emails"),
                 body.get("message"),
-                body.get("author_name"),
-                body.get("author_email")));
+                authorName(agent, authentication),
+                authentication.getName()));
     }
 
     @PostMapping("/{id}/links")

@@ -9,6 +9,7 @@ import dev.escalated.repositories.WebhookDeliveryRepository;
 import dev.escalated.repositories.WebhookRepository;
 import jakarta.persistence.EntityNotFoundException;
 import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.http.HttpClient;
@@ -47,7 +48,22 @@ public class WebhookService {
         this.properties = properties;
         this.httpClient = HttpClient.newBuilder()
                 .connectTimeout(Duration.ofSeconds(10))
+                // A redirect could point anywhere, including the private ranges
+                // checked below. Never follow one.
+                .followRedirects(HttpClient.Redirect.NEVER)
                 .build();
+    }
+
+    /** How a webhook host name is turned into addresses. Replaceable in tests. */
+    @FunctionalInterface
+    interface HostResolver {
+        InetAddress[] resolve(String host) throws UnknownHostException;
+    }
+
+    private HostResolver resolver = InetAddress::getAllByName;
+
+    void setResolver(HostResolver resolver) {
+        this.resolver = resolver;
     }
 
     @Transactional(transactionManager = EscalatedTransactionManagers.ESCALATED, readOnly = true)
@@ -64,6 +80,7 @@ public class WebhookService {
     @Transactional(transactionManager = EscalatedTransactionManagers.ESCALATED)
     public Webhook create(String url, String secret, String events, String description) {
         URI webhookUri = validateWebhookUrl(url);
+        assertPublicHost(webhookUri, false);
         Webhook webhook = new Webhook();
         webhook.setUrl(webhookUri.toString());
         webhook.setSecret(secret);
@@ -76,7 +93,9 @@ public class WebhookService {
     @Transactional(transactionManager = EscalatedTransactionManagers.ESCALATED)
     public Webhook update(Long id, String url, String events, String description, boolean active) {
         Webhook webhook = findById(id);
-        webhook.setUrl(validateWebhookUrl(url).toString());
+        URI webhookUri = validateWebhookUrl(url);
+        assertPublicHost(webhookUri, false);
+        webhook.setUrl(webhookUri.toString());
         webhook.setEvents(events);
         webhook.setDescription(description);
         webhook.setActive(active);
@@ -109,8 +128,12 @@ public class WebhookService {
             ));
             delivery.setPayload(payload);
 
+            URI target = validateWebhookUrl(webhook.getUrl());
+            // Checked at send time, every time: what a name resolves to can
+            // change after the webhook was saved.
+            assertPublicHost(target, true);
             HttpRequest.Builder requestBuilder = HttpRequest.newBuilder()
-                    .uri(validateWebhookUrl(webhook.getUrl()))
+                    .uri(target)
                     .timeout(Duration.ofSeconds(30))
                     .header("Content-Type", "application/json")
                     .header("X-Escalated-Event", eventName)
@@ -177,6 +200,40 @@ public class WebhookService {
         return uri;
     }
 
+    /**
+     * Resolves the host and refuses it when any address it resolves to is
+     * private, loopback, link-local or otherwise not on the public internet,
+     * so a DNS name pointing at {@code 127.0.0.1} or the cloud metadata
+     * address is as blocked as the literal. At save time a name that does not
+     * resolve yet is accepted ({@code strict=false}); at send time it is not.
+     */
+    private void assertPublicHost(URI uri, boolean strict) {
+        String host = uri.getHost();
+        if (host.startsWith("[") && host.endsWith("]")) {
+            host = host.substring(1, host.length() - 1);
+        }
+        InetAddress[] addresses;
+        try {
+            addresses = resolver.resolve(host);
+        } catch (UnknownHostException ex) {
+            if (strict) {
+                throw new IllegalArgumentException("Webhook URL host does not resolve", ex);
+            }
+            return;
+        }
+        if (addresses == null || addresses.length == 0) {
+            if (strict) {
+                throw new IllegalArgumentException("Webhook URL host does not resolve");
+            }
+            return;
+        }
+        for (InetAddress address : addresses) {
+            if (isBlockedAddress(address)) {
+                throw new IllegalArgumentException("Webhook URL host is not allowed");
+            }
+        }
+    }
+
     private static boolean isBlockedHost(String host) {
         String normalizedHost = host.toLowerCase();
         if ("localhost".equals(normalizedHost) || normalizedHost.endsWith(".localhost")) {
@@ -224,12 +281,52 @@ public class WebhookService {
         }
     }
 
-    private static boolean isBlockedAddress(InetAddress address) {
-        return address.isAnyLocalAddress()
+    static boolean isBlockedAddress(InetAddress address) {
+        if (address.isAnyLocalAddress()
                 || address.isLoopbackAddress()
                 || address.isLinkLocalAddress()
                 || address.isSiteLocalAddress()
-                || address.isMulticastAddress();
+                || address.isMulticastAddress()) {
+            return true;
+        }
+        byte[] b = address.getAddress();
+        if (b.length == 4) {
+            int a0 = b[0] & 0xff;
+            int a1 = b[1] & 0xff;
+            return a0 == 0                                  // 0.0.0.0/8 "this network"
+                    || a0 == 10 || a0 == 127                // private, loopback
+                    || (a0 == 100 && (a1 & 0xc0) == 64)     // 100.64.0.0/10 carrier-grade NAT
+                    || (a0 == 169 && a1 == 254)             // link-local, cloud metadata
+                    || (a0 == 172 && (a1 & 0xf0) == 16)     // 172.16.0.0/12
+                    || (a0 == 192 && a1 == 0 && (b[2] & 0xff) == 0) // 192.0.0.0/24 IETF
+                    || (a0 == 192 && a1 == 168)             // 192.168.0.0/16
+                    || (a0 == 198 && (a1 & 0xfe) == 18)     // 198.18.0.0/15 benchmarking
+                    || a0 >= 224;                           // multicast, reserved, broadcast
+        }
+        int first = b[0] & 0xff;
+        if ((first & 0xfe) == 0xfc) {
+            return true;                                    // fc00::/7 unique local
+        }
+        if (first == 0xfe && (b[1] & 0xc0) == 0xc0) {
+            return true;                                    // fec0::/10 old site-local
+        }
+        boolean zeroPrefix = true;
+        for (int i = 0; i < 10; i++) {
+            zeroPrefix &= b[i] == 0;
+        }
+        boolean mapped = zeroPrefix && (b[10] & 0xff) == 0xff && (b[11] & 0xff) == 0xff;
+        boolean compatible = zeroPrefix && b[10] == 0 && b[11] == 0;
+        boolean nat64 = (b[0] & 0xff) == 0x00 && (b[1] & 0xff) == 0x64 && (b[2] & 0xff) == 0xff
+                && (b[3] & 0xff) == 0x9b;
+        if (mapped || compatible || nat64) {
+            // An IPv4 address inside an IPv6 one reaches that IPv4 host.
+            try {
+                return isBlockedAddress(InetAddress.getByAddress(java.util.Arrays.copyOfRange(b, 12, 16)));
+            } catch (UnknownHostException ex) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private String computeHmac(String payload, String secret) {
