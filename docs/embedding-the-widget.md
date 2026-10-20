@@ -110,7 +110,9 @@ renders:
 Colour, position and greeting come from the `widget_color`,
 `widget_position` and `widget_greeting` settings; `departments` lists active
 departments; `kb_enabled` is `escalated.knowledge-base.enabled`. With
-`escalated.widget.enabled=false` it answers 403 with `{"enabled": false}`.
+`escalated.widget.enabled=false` every `/escalated/api/widget/**` route answers
+403 with `{"enabled": false, ...}`. While `escalated.knowledge-base.enabled` is
+`false` (the default) the article routes (`/articles`, `/kb/search`) answer 404.
 `status_lookup_enabled` is `false` because this backend has no mailbox
 verification, so the widget hides its Status tab; there is no lookup of a
 ticket by email address.
