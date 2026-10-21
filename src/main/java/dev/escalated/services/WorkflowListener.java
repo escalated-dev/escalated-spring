@@ -1,5 +1,7 @@
 package dev.escalated.services;
 
+import dev.escalated.events.ChatEvent;
+import dev.escalated.events.EventNames;
 import dev.escalated.events.ReplyEvent;
 import dev.escalated.events.TicketEvent;
 import org.springframework.scheduling.annotation.Async;
@@ -9,9 +11,9 @@ import org.springframework.transaction.event.TransactionalEventListener;
 /**
  * Bridges Spring {@code ApplicationEvent}s into {@link WorkflowRunnerService}.
  *
- * <p>Listens for {@link TicketEvent} and {@link ReplyEvent} and maps each
- * to the canonical workflow trigger name (matching the 12-event set in
- * {@link WorkflowEngine#TRIGGER_EVENTS}).
+ * <p>Listens for {@link TicketEvent}, {@link ReplyEvent} and {@link ChatEvent}
+ * and runs the workflows for each canonical name the event is announced under
+ * ({@link EventNames}, the 2026-10-21 event vocabulary).
  *
  * <p>Runs after the change that raised the event has committed, on another
  * thread, so a slow or failing workflow never blocks the mutation that fired
@@ -36,11 +38,12 @@ public class WorkflowListener {
     @Async
     @TransactionalEventListener(fallbackExecution = true)
     public void onTicketEvent(TicketEvent event) {
-        String trigger = mapTicketTrigger(event.getType());
-        if (trigger == null || event.getTicket() == null || event.getTicket().getId() == null) {
+        if (event.getTicket() == null || event.getTicket().getId() == null) {
             return;
         }
-        runner.runForEvent(trigger, event.getTicket().getId());
+        for (String trigger : EventNames.workflowTriggersFor(event.getType())) {
+            runner.runForEvent(trigger, event.getTicket().getId());
+        }
     }
 
     @Async
@@ -53,21 +56,15 @@ public class WorkflowListener {
                 || event.getReply().getTicket().getId() == null) {
             return;
         }
-        runner.runForEvent("reply.created", event.getReply().getTicket().getId());
+        // An internal note is note.created, never reply.created.
+        runner.runForEvent(EventNames.forReply(event), event.getReply().getTicket().getId());
     }
 
-    static String mapTicketTrigger(TicketEvent.Type type) {
-        return switch (type) {
-            case CREATED -> "ticket.created";
-            case UPDATED -> "ticket.updated";
-            case ASSIGNED -> "ticket.assigned";
-            case STATUS_CHANGED, CLOSED, RESOLVED -> "ticket.status_changed";
-            case PRIORITY_CHANGED -> "ticket.priority_changed";
-            case REOPENED -> "ticket.reopened";
-            // MERGED, SPLIT, SNOOZED, UNSNOOZED, DELETED are not
-            // surfaced as workflow triggers today — see
-            // WorkflowEngine.TRIGGER_EVENTS for the canonical list.
-            default -> null;
-        };
+    @Async
+    @TransactionalEventListener(fallbackExecution = true)
+    public void onChatEvent(ChatEvent event) {
+        if (event.getTicketId() != null) {
+            runner.runForEvent(event.getType().eventName(), event.getTicketId());
+        }
     }
 }

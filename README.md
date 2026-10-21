@@ -319,6 +319,9 @@ See the [inbound email docs](https://docs.escalated.dev/inbound-email) for provi
 | POST | `/tickets/{id}/snooze` | Snooze ticket |
 | POST | `/tickets/{id}/merge` | Merge tickets |
 | POST | `/tickets/{id}/split` | Split ticket |
+| POST | `/tickets/{id}/department` | Change department (`department_id`) |
+| POST | `/tickets/{id}/tags` | Add a tag (`tag`) |
+| DELETE | `/tickets/{id}/tags/{tagId}` | Remove a tag |
 | DELETE | `/tickets/{id}` | Delete ticket |
 | GET/POST | `/departments` | CRUD departments |
 | GET/POST | `/agents` | CRUD agents |

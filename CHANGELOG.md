@@ -7,6 +7,48 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- Events from the shared vocabulary (escalated-developer-context ADR `2026-10-21-event-vocabulary`),
+  sent to webhooks and fired as workflow triggers under their canonical names:
+  `ticket.unassigned`, `ticket.department_changed`, `ticket.tag_added`, `ticket.tag_removed`,
+  `ticket.escalated`, `note.created`, `sla.warning`, `sla.breached`, `chat.started`,
+  `chat.assigned`, `chat.message` and `chat.ended`. `dev.escalated.events.EventNames` holds the
+  canonical names and the legacy aliases.
+- `POST /escalated/api/admin/tickets/{id}/department` (`department_id`, or null) and
+  `DELETE /escalated/api/admin/tickets/{id}/tags/{tagId}`.
+- `escalated.sla.warning-minutes` (default 30, `0` turns warnings off): `sla.warning` is announced
+  once per deadline that falls due within that many minutes.
+- `escalated_rule_executions` (migration `V15`, PostgreSQL and MySQL) records when an escalation
+  rule, SLA breach or SLA warning last acted on a ticket, and `escalated_escalation_rules` gains a
+  nullable `repeat_after_hours`.
+
+### Changed
+- **Escalation rules act once per ticket.** The SLA sweep used to re-apply every matching rule
+  every minute for as long as a ticket breached (an activity row and an `ticket.assigned` webhook
+  each time). A rule now acts once, again only after the ticket stops breaching, or after the
+  rule's `repeat_after_hours`. Each firing is announced as `ticket.escalated`.
+- Unassigning a ticket is announced as `ticket.unassigned`, no longer as `ticket.assigned`.
+- An internal note is announced as `note.created`. Webhooks used to get it as `reply.created`, and
+  it no longer runs `reply.created` workflows.
+- Resolving, closing and reopening are announced both as `ticket.status_changed` and as
+  `ticket.resolved` / `ticket.closed` / `ticket.reopened`, to webhooks and workflows alike.
+  Webhooks used to get only the specific name; workflows only `ticket.status_changed` (and
+  `ticket.reopened` for a reopen).
+- Changing a ticket's department to the one it is already in is a no-op (no activity row).
+- The workflow trigger list (`WorkflowEngine.TRIGGER_EVENTS`) is the canonical list.
+  `ticket.tagged` became `ticket.tag_added`/`ticket.tag_removed`; `reply.agent_reply`, which was
+  offered but never fired and is not in the vocabulary, is gone.
+- Chat-related and SLA webhook payloads add keys beside `event`, `entity_id` and `timestamp`
+  (`chat_session_id`, `ticket_id`, `agent_id`; `sla_type`; `tag`; `reason`; department ids).
+  The visitor's chat token is never included.
+
+### Upgrade notes
+- Run migration `V15` (it runs itself unless `escalated.datasource.migrate=false`).
+- Legacy names keep working when read: a workflow saved as `ticket.tagged`, `ticket.replied`,
+  `internal_note.added` or `chat.session_started`, or a webhook subscribed to them, receives the
+  canonical event. Creating or updating a webhook stores canonical names.
+- A webhook subscription is now matched name by name instead of by substring.
+
 ## [0.2.2] - 2026-10-20
 
 ### Changed

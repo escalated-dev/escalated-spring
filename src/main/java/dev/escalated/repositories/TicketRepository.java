@@ -70,6 +70,18 @@ public interface TicketRepository
                 + " IN ('CLOSED', 'RESOLVED', 'MERGED')")
     List<Ticket> findTicketsBreachingFirstResponse(@Param("now") Instant now);
 
+    @Query(
+            "SELECT t FROM Ticket t WHERE t.slaDueAt IS NOT NULL AND t.slaDueAt > :now AND"
+                    + " t.slaDueAt <= :threshold AND t.status NOT IN ('CLOSED', 'RESOLVED', 'MERGED')")
+    List<Ticket> findTicketsApproachingSla(@Param("now") Instant now, @Param("threshold") Instant threshold);
+
+    @Query(
+            "SELECT t FROM Ticket t WHERE t.slaFirstResponseDueAt IS NOT NULL AND t.firstRespondedAt IS NULL"
+                    + " AND t.slaFirstResponseDueAt > :now AND t.slaFirstResponseDueAt <= :threshold"
+                    + " AND t.status NOT IN ('CLOSED', 'RESOLVED', 'MERGED')")
+    List<Ticket> findTicketsApproachingFirstResponse(
+            @Param("now") Instant now, @Param("threshold") Instant threshold);
+
     @Query("SELECT t FROM Ticket t WHERE t.status NOT IN ('CLOSED', 'RESOLVED', 'MERGED') "
             + "AND t.assignedAgent IS NULL")
     List<Ticket> findUnassignedTickets();

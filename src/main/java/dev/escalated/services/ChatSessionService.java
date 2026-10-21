@@ -1,6 +1,7 @@
 package dev.escalated.services;
 
 import dev.escalated.config.EscalatedTransactionManagers;
+import dev.escalated.events.ChatEvent;
 import dev.escalated.models.ChatSession;
 import dev.escalated.models.Reply;
 import dev.escalated.models.Ticket;
@@ -37,6 +38,10 @@ public class ChatSessionService {
                     dev.escalated.security.AuthorizedTicketBroadcaster>
             broadcasters;
 
+    /** Optional so the service can be built by hand without a context. */
+    @org.springframework.beans.factory.annotation.Autowired(required = false)
+    private org.springframework.context.ApplicationEventPublisher eventPublisher;
+
     private final ChatSessionRepository chatSessionRepository;
     private final TicketService ticketService;
     private final ChatRoutingService chatRoutingService;
@@ -50,6 +55,12 @@ public class ChatSessionService {
         this.ticketService = ticketService;
         this.chatRoutingService = chatRoutingService;
         this.messagingTemplate = messagingTemplate;
+    }
+
+    private void announce(ChatEvent.Type type, ChatSession session) {
+        if (eventPublisher != null && session != null) {
+            eventPublisher.publishEvent(new ChatEvent(this, type, session));
+        }
     }
 
     private void broadcast(String destination, Object payload) {
@@ -169,6 +180,10 @@ public class ChatSessionService {
         session = chatSessionRepository.save(session);
 
         broadcast("/topic/chat-queue", session);
+        announce(ChatEvent.Type.STARTED, session);
+        if (session.getAgentId() != null) {
+            announce(ChatEvent.Type.ASSIGNED, session);
+        }
 
         return session;
     }
@@ -194,6 +209,7 @@ public class ChatSessionService {
         session = chatSessionRepository.save(session);
 
         broadcast("/topic/chat/" + sessionId, session);
+        announce(ChatEvent.Type.ASSIGNED, session);
 
         return session;
     }
@@ -217,6 +233,7 @@ public class ChatSessionService {
         chatSessionRepository.save(session);
 
         broadcast("/topic/chat/" + sessionId + "/messages", reply);
+        announce(ChatEvent.Type.MESSAGE, session);
 
         return reply;
     }
@@ -240,6 +257,7 @@ public class ChatSessionService {
         session = chatSessionRepository.save(session);
 
         broadcast("/topic/chat/" + sessionId, session);
+        announce(ChatEvent.Type.ENDED, session);
 
         return session;
     }
