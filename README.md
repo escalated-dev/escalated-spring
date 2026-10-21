@@ -122,6 +122,13 @@ escalated.guest-rate-limit.replies-per-minute=10
 
 # SLA checking interval
 escalated.sla.check-interval-seconds=60
+# Minutes before an SLA deadline at which sla.warning fires (0 = off)
+escalated.sla.warning-minutes=30
+
+# Automations (admin-defined, time-based) and the built-in auto-close
+escalated.automations.check-interval-seconds=60
+# Days after which resolved tickets are closed (0 = off)
+escalated.automations.auto-close-days=7
 
 # Snooze wake-up interval
 escalated.snooze.check-interval-seconds=60
@@ -332,6 +339,10 @@ See the [inbound email docs](https://docs.escalated.dev/inbound-email) for provi
 | POST | `/workflows/{id}/toggle` | Enable or disable |
 | POST | `/workflows/reorder` | `{"workflow_ids": [3, 1, 2]}` |
 | GET | `/workflows/{id}/logs` | Run log |
+| GET/POST | `/automations` | List / create time-based automations (`name`, `conditions`, `actions`, `active`, `repeat_after_hours`) |
+| GET | `/automations/options` | Condition fields, operators and action types the runner understands |
+| GET/PUT/DELETE | `/automations/{id}` | Show / update / delete an automation |
+| POST | `/automations/{id}/toggle` | Enable or disable |
 | GET/POST | `/roles` | CRUD roles |
 | GET/POST | `/custom-fields` | CRUD custom fields |
 | GET/POST | `/settings` | Manage settings |

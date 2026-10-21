@@ -70,6 +70,13 @@ public interface TicketRepository
                 + " IN ('CLOSED', 'RESOLVED', 'MERGED')")
     List<Ticket> findTicketsBreachingFirstResponse(@Param("now") Instant now);
 
+    @Query("SELECT t FROM Ticket t WHERE t.status NOT IN ('CLOSED', 'RESOLVED', 'MERGED')")
+    List<Ticket> findOpenTickets();
+
+    @Query("SELECT t FROM Ticket t WHERE t.status = 'RESOLVED' AND t.resolvedAt IS NOT NULL"
+            + " AND t.resolvedAt < :threshold ORDER BY t.resolvedAt ASC")
+    List<Ticket> findResolvedBefore(@Param("threshold") Instant threshold, Pageable pageable);
+
     @Query(
             "SELECT t FROM Ticket t WHERE t.slaDueAt IS NOT NULL AND t.slaDueAt > :now AND"
                     + " t.slaDueAt <= :threshold AND t.status NOT IN ('CLOSED', 'RESOLVED', 'MERGED')")

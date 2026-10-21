@@ -8,6 +8,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- Configurable automations, as in Laravel's `AutomationRunner`: a new `Automation` entity
+  (`escalated_automations`, migration `V16`, PostgreSQL and MySQL) and admin JSON CRUD at
+  `/escalated/api/admin/automations` (index, options, store, show, update, toggle, destroy), taking
+  what the shared Automations form posts. Every `escalated.automations.check-interval-seconds`
+  (default 60) each active automation acts on the open tickets matching all its conditions
+  (`hours_since_created`, `hours_since_updated`, `hours_since_assigned` with `>`/`>=`/`<`/`<=`/`=`;
+  `status`, `priority`, `assigned`, `ticket_type`, `department_id`, `account_type`, `account_id`,
+  `subject_contains`) with `change_status`, `change_priority`, `assign`, `add_tag`,
+  `set_ticket_type` and `add_note`. It acts once per ticket, again only after the ticket stops
+  matching or after `repeat_after_hours` (1-8760), recorded in `escalated_rule_executions`.
+- `escalated.automations.auto-close-days` (default 7, `0` = off) for the built-in auto-close of
+  resolved tickets.
 - Workflow admin JSON CRUD per the shared workflow admin contract (escalated-developer-context
   `domain-model/workflow-admin-contract.md`): `POST /escalated/api/admin/workflows`,
   `PUT`/`DELETE /workflows/{id}`, `POST /workflows/{id}/toggle`, `POST /workflows/reorder` and
@@ -32,6 +44,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   nullable `repeat_after_hours`.
 
 ### Changed
+- The built-in auto-close now reaches every resolved ticket past the threshold, oldest first. It
+  used to look at an unordered first 100 resolved tickets only. Its 7-day default is unchanged.
 - `GET /escalated/api/admin/workflows` and `GET /workflows/{id}` answer workflow objects
   (`conditions` as an object, `actions` as an array, snake_case keys) instead of the entity with
   JSON strings and its log collection.
@@ -58,6 +72,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   The visitor's chat token is never included.
 
 ### Upgrade notes
+- Run migration `V16` (automations). No automation exists until an admin creates one, so nothing
+  changes on upgrade; the 7-day auto-close keeps running unless `escalated.automations.auto-close-days=0`.
 - Run migration `V15` (it runs itself unless `escalated.datasource.migrate=false`).
 - Legacy names keep working when read: a workflow saved as `ticket.tagged`, `ticket.replied`,
   `internal_note.added` or `chat.session_started`, or a webhook subscribed to them, receives the

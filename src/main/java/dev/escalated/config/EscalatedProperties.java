@@ -13,6 +13,43 @@ public class EscalatedProperties {
     private AccountsProperties accounts = new AccountsProperties();
     private boolean targetedSlas = false;
     private Map<String, String> automationConditions = new java.util.HashMap<>();
+    private AutomationsProperties automations = new AutomationsProperties();
+
+    public AutomationsProperties getAutomations() {
+        return automations;
+    }
+
+    public void setAutomations(AutomationsProperties automations) {
+        this.automations = automations;
+    }
+
+    /** {@code escalated.automations.*}: the automation sweep and the built-in auto-close. */
+    public static class AutomationsProperties {
+        /** Seconds between automation sweeps. */
+        private int checkIntervalSeconds = 60;
+
+        /**
+         * Days after which a resolved ticket is closed by the built-in
+         * auto-close. 0 turns it off. Defaults to the 7 days it always used.
+         */
+        private int autoCloseDays = 7;
+
+        public int getCheckIntervalSeconds() {
+            return checkIntervalSeconds;
+        }
+
+        public void setCheckIntervalSeconds(int checkIntervalSeconds) {
+            this.checkIntervalSeconds = checkIntervalSeconds;
+        }
+
+        public int getAutoCloseDays() {
+            return autoCloseDays;
+        }
+
+        public void setAutoCloseDays(int autoCloseDays) {
+            this.autoCloseDays = autoCloseDays;
+        }
+    }
 
     public Map<String, String> getAutomationConditions() {
         return automationConditions;
