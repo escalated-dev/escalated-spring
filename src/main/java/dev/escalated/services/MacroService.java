@@ -3,16 +3,22 @@ package dev.escalated.services;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import dev.escalated.config.EscalatedTransactionManagers;
+import dev.escalated.models.AgentProfile;
+import dev.escalated.models.Department;
 import dev.escalated.models.Macro;
 import dev.escalated.models.Ticket;
 import dev.escalated.models.TicketPriority;
 import dev.escalated.models.TicketStatus;
+import dev.escalated.repositories.AgentProfileRepository;
+import dev.escalated.repositories.DepartmentRepository;
 import dev.escalated.repositories.MacroRepository;
 import jakarta.persistence.EntityNotFoundException;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -24,13 +30,26 @@ public class MacroService {
     private final MacroRepository macroRepository;
     private final TicketService ticketService;
     private final ObjectMapper objectMapper;
+    private final AgentProfileRepository agentRepository;
+    private final DepartmentRepository departmentRepository;
 
     public MacroService(MacroRepository macroRepository,
                         TicketService ticketService,
                         ObjectMapper objectMapper) {
+        this(macroRepository, ticketService, objectMapper, null, null);
+    }
+
+    @Autowired
+    public MacroService(MacroRepository macroRepository,
+                        TicketService ticketService,
+                        ObjectMapper objectMapper,
+                        AgentProfileRepository agentRepository,
+                        DepartmentRepository departmentRepository) {
         this.macroRepository = macroRepository;
         this.ticketService = ticketService;
         this.objectMapper = objectMapper;
+        this.agentRepository = agentRepository;
+        this.departmentRepository = departmentRepository;
     }
 
     @Transactional(transactionManager = EscalatedTransactionManagers.ESCALATED, readOnly = true)
@@ -83,8 +102,21 @@ public class MacroService {
                     case "add_internal_note" -> ticketService.addReply(
                             ticketId, value, "System", actorEmail, "agent", true);
                     case "add_tag" -> ticketService.addTag(ticketId, value);
-                    case "assign" -> ticketService.assign(
-                            ticketId, Long.parseLong(value), actorEmail);
+                    case "assign" -> ticketService.assign(ticketId, agentId(value), actorEmail);
+                    // The shared admin page's names, as escalated-laravel's MacroService.
+                    case "status" -> ticketService.changeStatus(ticketId, status(value), actorEmail);
+                    case "priority" -> ticketService.update(
+                            ticketId, null, null, TicketPriority.valueOf(value.trim().toUpperCase(Locale.ROOT)));
+                    case "tags" -> {
+                        for (String tag : value.split(",")) {
+                            if (!tag.isBlank()) {
+                                ticketService.addTag(ticketId, tag.trim());
+                            }
+                        }
+                    }
+                    case "department" -> ticketService.changeDepartment(ticketId, departmentId(value), actorEmail);
+                    case "reply" -> ticketService.addReply(ticketId, value, "System", actorEmail, "agent", false);
+                    case "note" -> ticketService.addReply(ticketId, value, "System", actorEmail, "agent", true);
                     default -> log.warn("Unknown macro action type: {}", type);
                 }
             }
@@ -92,6 +124,45 @@ public class MacroService {
             log.error("Failed to apply macro {} to ticket {}: {}", macroId, ticketId, ex.getMessage());
             throw new RuntimeException("Failed to apply macro", ex);
         }
+    }
+
+    /** The macro action types the shared admin page offers, as escalated-laravel's. */
+    public static final List<String> PAGE_ACTION_TYPES =
+            List.of("status", "priority", "assign", "tags", "department", "reply", "note");
+
+    /** A status as the pages name it; the frontend's waiting states are stored as pending. */
+    private static TicketStatus status(String value) {
+        String name = value.trim().toLowerCase(Locale.ROOT);
+        if ("waiting_on_customer".equals(name) || "waiting_on_agent".equals(name)) {
+            return TicketStatus.PENDING;
+        }
+        return TicketStatus.valueOf(name.toUpperCase(Locale.ROOT));
+    }
+
+    /** An agent by id or, as the admin page allows, by email. */
+    private Long agentId(String value) {
+        String given = value.trim();
+        if (given.matches("[0-9]+")) {
+            return Long.parseLong(given);
+        }
+        if (agentRepository == null) {
+            throw new IllegalArgumentException("Unknown agent: " + given);
+        }
+        return agentRepository.findByEmail(given).map(AgentProfile::getId)
+                .orElseThrow(() -> new IllegalArgumentException("Unknown agent: " + given));
+    }
+
+    /** A department by id or, as the admin page allows, by name. */
+    private Long departmentId(String value) {
+        String given = value.trim();
+        if (given.matches("[0-9]+")) {
+            return Long.parseLong(given);
+        }
+        if (departmentRepository == null) {
+            throw new IllegalArgumentException("Unknown department: " + given);
+        }
+        return departmentRepository.findByName(given).map(Department::getId)
+                .orElseThrow(() -> new IllegalArgumentException("Unknown department: " + given));
     }
 
     @Transactional(transactionManager = EscalatedTransactionManagers.ESCALATED)

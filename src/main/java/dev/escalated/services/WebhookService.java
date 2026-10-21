@@ -104,6 +104,20 @@ public class WebhookService {
         return webhookRepository.save(webhook);
     }
 
+    /**
+     * As {@link #update(Long, String, String, String, boolean)}, and replaces the signing secret
+     * when {@code secret} is given; null or blank keeps the current one.
+     */
+    @Transactional(transactionManager = EscalatedTransactionManagers.ESCALATED)
+    public Webhook update(Long id, String url, String events, String description, boolean active, String secret) {
+        Webhook webhook = update(id, url, events, description, active);
+        if (secret != null && !secret.isBlank()) {
+            webhook.setSecret(secret);
+            webhook = webhookRepository.save(webhook);
+        }
+        return webhook;
+    }
+
     @Transactional(transactionManager = EscalatedTransactionManagers.ESCALATED)
     public void delete(Long id) {
         webhookRepository.deleteById(id);
@@ -145,15 +159,50 @@ public class WebhookService {
         delivery.setWebhook(webhook);
         delivery.setEventType(eventName);
 
+        String payload;
         try {
             Map<String, Object> body = new LinkedHashMap<>();
             body.put("event", eventName);
             body.put("entity_id", entityId);
             body.put("timestamp", System.currentTimeMillis());
             data.forEach(body::putIfAbsent);
-            String payload = objectMapper.writeValueAsString(body);
-            delivery.setPayload(payload);
+            payload = objectMapper.writeValueAsString(body);
+        } catch (Exception ex) {
+            log.error("Webhook delivery failed for webhook {}: {}", webhook.getId(), ex.getMessage());
+            delivery.setStatus("failed");
+            delivery.setErrorMessage(ex.getMessage());
+            delivery.setAttemptCount(1);
+            webhook.setFailureCount(webhook.getFailureCount() + 1);
+            webhookRepository.save(webhook);
+            deliveryRepository.save(delivery);
+            return;
+        }
+        delivery.setPayload(payload);
+        send(webhook, delivery);
+    }
 
+    /**
+     * Sends a recorded delivery's payload again, to its webhook's current URL and secret, as
+     * Laravel's {@code WebhookDispatcher::retryDelivery}. The delivery records the new outcome and
+     * one more attempt.
+     */
+    @Transactional(transactionManager = EscalatedTransactionManagers.ESCALATED)
+    public WebhookDelivery retryDelivery(Long deliveryId) {
+        WebhookDelivery delivery = deliveryRepository.findById(deliveryId)
+                .orElseThrow(() -> new EntityNotFoundException("Webhook delivery not found: " + deliveryId));
+        delivery.setErrorMessage(null);
+        delivery.setResponseStatus(null);
+        delivery.setResponseBody(null);
+        send(delivery.getWebhook(), delivery);
+        return delivery;
+    }
+
+    /** Posts the delivery's payload and records the outcome on it and on the webhook. */
+    private void send(Webhook webhook, WebhookDelivery delivery) {
+        String eventName = delivery.getEventType();
+        String payload = delivery.getPayload() == null ? "{}" : delivery.getPayload();
+        delivery.setAttemptCount(delivery.getAttemptCount() + 1);
+        try {
             URI target = validateWebhookUrl(webhook.getUrl());
             // Checked at send time, every time: what a name resolves to can
             // change after the webhook was saved.
@@ -176,7 +225,6 @@ public class WebhookService {
 
             delivery.setResponseStatus(response.statusCode());
             delivery.setResponseBody(response.body());
-            delivery.setAttemptCount(1);
 
             if (response.statusCode() >= 200 && response.statusCode() < 300) {
                 delivery.setStatus("success");
@@ -189,7 +237,6 @@ public class WebhookService {
             log.error("Webhook delivery failed for webhook {}: {}", webhook.getId(), ex.getMessage());
             delivery.setStatus("failed");
             delivery.setErrorMessage(ex.getMessage());
-            delivery.setAttemptCount(1);
             webhook.setFailureCount(webhook.getFailureCount() + 1);
         }
 

@@ -121,6 +121,11 @@ JSON `pageJson`, `routesScript` (the `route()` definition) and `csrfToken` (for 
 | `Escalated/Admin/Tags/Index` | `GET /escalated/admin/tags` |
 | `Escalated/Admin/Tickets/Index` | `GET /escalated/admin/tickets` (the agent queue's filters) |
 | `Escalated/Admin/Tickets/Show` | `GET /escalated/admin/tickets/{reference}` |
+| `Escalated/Admin/Macros/Index` | `GET /escalated/admin/macros` |
+| `Escalated/Admin/CannedResponses/Index` | `GET /escalated/admin/canned-responses` |
+| `Escalated/Admin/Webhooks/Index` | `GET /escalated/admin/webhooks` |
+| `Escalated/Admin/Webhooks/Form` | `GET /escalated/admin/webhooks/create`, `.../{id}/edit` |
+| `Escalated/Admin/Webhooks/DeliveryLog` | `GET /escalated/admin/webhooks/{id}/deliveries` |
 
 Customer writes: `POST /escalated` (`subject`, `description`, `priority`, `department_id`,
 `ticket_type`), and `POST /escalated/{reference}/` `reply`, `close` (unless the `allow_customer_close`
@@ -136,6 +141,16 @@ page's `supported_settings` lists only what this port stores and honours: `allow
 `show_powered_by`, `widget_color`, `widget_position`, `widget_greeting` and
 `widget_allowed_origins`; the page hides the rest, and the save ignores any other key. Deleting a
 department leaves its tickets and agents without one; deleting a tag takes it off its tickets.
+
+Macros and canned responses take `POST` to the collection and `PUT`/`DELETE` on a member, and go
+back to their page. A macro saved from the page uses the page's action types (`status`,
+`priority`, `assign` by agent id or email, `tags` as comma-separated names, `department` by id or
+name, `reply`, `note`), which `MacroService` applies alongside the API's `set_status`-style names.
+Webhooks are a resource as on Laravel, plus `GET /webhooks/{id}/deliveries` (25 a page) and
+`POST /webhooks/deliveries/{delivery}/retry` (sends the stored payload again, one more attempt). A
+URL that is not http(s) or resolves to a private address is a `url` error. A webhook's signing
+secret is never sent to a page: the form's secret field starts blank, and leaving it blank keeps
+the stored secret.
 
 Agent writes: `POST /escalated/agent/tickets/{reference}/` `reply`, `note`, `assign` (`agent_id`),
 `status`, `priority`, `tags` (`tag_ids`), `department` (`department_id`), `macro` (`macro_id`),

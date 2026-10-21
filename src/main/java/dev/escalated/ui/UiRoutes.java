@@ -74,6 +74,15 @@ public class UiRoutes {
         register("escalated.admin.saved-views.store", "/admin/saved-views");
         register("escalated.admin.saved-views.update", "/admin/saved-views/{savedView}");
         register("escalated.admin.saved-views.destroy", "/admin/saved-views/{savedView}");
+        for (String plural : new String[] {"macros", "canned-responses"}) {
+            register("escalated.admin." + plural + ".index", "/admin/" + plural);
+            register("escalated.admin." + plural + ".store", "/admin/" + plural);
+            register("escalated.admin." + plural + ".update", "/admin/" + plural + "/{id}");
+            register("escalated.admin." + plural + ".destroy", "/admin/" + plural + "/{id}");
+        }
+        resource("webhooks", "webhook", "/admin/webhooks/{webhook}/edit");
+        register("escalated.admin.webhooks.deliveries", "/admin/webhooks/{webhook}/deliveries");
+        register("escalated.admin.webhooks.retry", "/admin/webhooks/deliveries/{delivery}/retry");
         register("escalated.attachments.download", "/attachments/{attachment}/download");
     }
 

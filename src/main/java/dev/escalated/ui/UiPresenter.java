@@ -195,6 +195,17 @@ public final class UiPresenter {
         return map;
     }
 
+    /** An agent by id and display name only, as a record's author or creator. */
+    public static Map<String, Object> agentName(AgentProfile agent) {
+        if (agent == null) {
+            return null;
+        }
+        Map<String, Object> map = new LinkedHashMap<>();
+        map.put("id", agent.getId());
+        map.put("name", agent.getName());
+        return map;
+    }
+
     public static Map<String, Object> department(Department department) {
         if (department == null) {
             return null;
