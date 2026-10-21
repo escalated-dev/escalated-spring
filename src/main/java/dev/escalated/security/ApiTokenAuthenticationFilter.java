@@ -54,9 +54,11 @@ public class ApiTokenAuthenticationFilter extends OncePerRequestFilter {
                 // A guest grant (widget and guest routes) is not an API token.
                 && !authHeader.startsWith("Bearer " + dev.escalated.services.GuestAccessGrants.PREFIX)) {
             AgentProfile agent;
+            String abilities = null;
             try {
                 ApiToken apiToken = apiTokenService.validateToken(authHeader.substring(7));
                 agent = apiToken.getAgent();
+                abilities = apiToken.getAbilities();
             } catch (RuntimeException ex) {
                 agent = null;
             }
@@ -71,7 +73,7 @@ public class ApiTokenAuthenticationFilter extends OncePerRequestFilter {
             UsernamePasswordAuthenticationToken auth = UsernamePasswordAuthenticationToken.authenticated(
                     agent.getEmail(),
                     null,
-                    EscalatedAuthorization.authoritiesOf(agent));
+                    EscalatedAuthorization.authoritiesOf(agent, abilities));
             SecurityContextHolder.getContext().setAuthentication(auth);
         }
 

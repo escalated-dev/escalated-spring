@@ -8,6 +8,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- `GET`/`POST /escalated/api/admin/tokens`, `PUT`/`DELETE /tokens/{id}`, which the README already
+  documented and nothing mapped. They issue API tokens from `name`, `agent_id` (or `user_id`),
+  `abilities` (`agent`, `admin`, `*`; default `*`) and `expires_in_days` (1-365). The plain-text
+  token is answered once.
 - Verified guest access, as in escalated-laravel (`docs/guest-access.md`):
   - `POST /verification` (on `/escalated/api/widget` and `/escalated/api/guest`) emails an 8-digit
     code for `ticket`, `chat` or `lookup`. Codes are bound to the address and purpose, last ten
@@ -58,6 +62,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   nullable `repeat_after_hours`.
 
 ### Changed
+- **API token abilities are enforced**, as in Laravel's `AuthenticateApiToken`. The agent API needs
+  a token with `agent` or `*`, the admin API one with `admin` or `*`, and the owner must still pass
+  the gate. A token request is no longer let through by its owner's profile alone. Tokens issued
+  until now hold `*`, so they keep working; an `admin`-only token no longer reaches the agent API.
 - The built-in auto-close now reaches every resolved ticket past the threshold, oldest first. It
   used to look at an unordered first 100 resolved tickets only. Its 7-day default is unchanged.
 - `GET /escalated/api/admin/workflows` and `GET /workflows/{id}` answer workflow objects
