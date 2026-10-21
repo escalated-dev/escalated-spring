@@ -124,7 +124,12 @@ class PageNameParityTest {
           "Escalated/Admin/Departments/Form",
           "Escalated/Admin/Tags/Index",
           "Escalated/Admin/Tickets/Index",
-          "Escalated/Admin/Tickets/Show");
+          "Escalated/Admin/Tickets/Show",
+          "Escalated/Admin/Macros/Index",
+          "Escalated/Admin/CannedResponses/Index",
+          "Escalated/Admin/Webhooks/Index",
+          "Escalated/Admin/Webhooks/Form",
+          "Escalated/Admin/Webhooks/DeliveryLog");
 
   @Test
   void theUiLayerRendersEveryPageItServes() throws IOException {

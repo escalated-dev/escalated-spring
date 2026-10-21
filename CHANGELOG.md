@@ -20,12 +20,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `GET`/`POST /escalated/admin/saved-views` and `PUT`/`DELETE /escalated/admin/saved-views/{id}`:
   the saved queue views the admin queue's sidebar and save dialog call (JSON). Only the owner may
   change or delete a view; shared views are listed to everyone.
+- The admin configuration pages, behind `escalated.ui.enabled`, as escalated-laravel's:
+  `Escalated/Admin/Macros/Index` and `CannedResponses/Index` (create, update, delete on the page),
+  and `Webhooks/Index`, `Form` and `DeliveryLog` (create, update, delete, the delivery log and
+  delivery retry). Webhook secrets are never sent to a page; a blank secret on update keeps the
+  stored one.
+- `MacroService` also applies the action types the shared Macros page saves (`status`, `priority`,
+  `assign`, `tags`, `department`, `reply`, `note`), alongside the existing `set_status`,
+  `set_priority`, `add_tag`, `add_reply`, `add_internal_note` and `assign`.
+- `WebhookService.retryDelivery(deliveryId)` sends a recorded delivery again, and
+  `WebhookService.update(..., secret)` replaces the signing secret when one is given.
 - `TicketService.unsnooze(ticketId, actor)`: wakes a snoozed ticket now (status `open`).
 - The built-in root page writes `<meta name="csrf-token">`, and the web chain accepts the token
   in `X-CSRF-TOKEN` as well as `X-XSRF-TOKEN`, so the pages' `fetch` calls (saved views, presence,
   mentions) pass CSRF as on Laravel. A custom `escalated.ui.root-view` receives it as `csrfToken`.
 
 ### Not rendered yet
+- `Escalated/Admin/SlaPolicies/*` and `Escalated/Admin/EscalationRules/*`: this port's SLA policy
+  is one priority per policy, and its escalation rules hang off an SLA policy; the shared pages edit
+  escalated-laravel's per-priority hour maps and standalone condition/action rules. Serving them
+  needs a schema change first.
+- `Escalated/Admin/Statuses/*`: this port has fixed statuses, no custom ones.
 - Admin ticket presence, pinned notes, split, merge, links and side conversations from the ticket
   page: the routes are not served here yet, so those controls do nothing.
 
