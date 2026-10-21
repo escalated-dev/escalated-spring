@@ -130,6 +130,11 @@ JSON `pageJson`, `routesScript` (the `route()` definition) and `csrfToken` (for 
 | `Escalated/Admin/Roles/Index` | `GET /escalated/admin/roles` |
 | `Escalated/Admin/Roles/Form` | `GET /escalated/admin/roles/create`, `.../{id}/edit` |
 | `Escalated/Admin/ApiTokens/Index` | `GET /escalated/admin/api-tokens` |
+| `Escalated/Admin/KnowledgeBase/Articles/Index` | `GET /escalated/admin/kb-articles` (`search`, `status`, `category_id`) |
+| `Escalated/Admin/KnowledgeBase/Articles/Form` | `GET /escalated/admin/kb-articles/create`, `.../{id}/edit` |
+| `Escalated/Admin/KnowledgeBase/Categories/Index` | `GET /escalated/admin/kb-categories` |
+| `Escalated/Customer/KnowledgeBase/Index` | `GET /escalated/kb` (`search`, `category`) |
+| `Escalated/Customer/KnowledgeBase/Article` | `GET /escalated/kb/{slug}` |
 
 Customer writes: `POST /escalated` (`subject`, `description`, `priority`, `department_id`,
 `ticket_type`), and `POST /escalated/{reference}/` `reply`, `close` (unless the `allow_customer_close`
@@ -164,6 +169,16 @@ Roles are a resource; `permissions` on the form is grouped by category, each wit
 deleted; deleting a role leaves its agents without one. API tokens: `POST /escalated/admin/api-tokens`
 (`name`, `user_id`, `abilities`, `expires_in_days`), `PUT` and `DELETE /api-tokens/{id}`; the new
 token's plain text is flashed once as `flash.plain_text_token`, and no page carries a token hash.
+
+The knowledge base: articles are a resource at `/escalated/admin/kb-articles` (`title`, `slug`,
+`body`, `status` `draft` or `published`, `category_id`; a blank slug is made from the title, and
+publishing stamps `published_at` once), categories at `/escalated/admin/kb-categories` (`name`,
+`slug`, `parent_id`, `position`, `description`). Deleting a category leaves its articles
+uncategorised and its sub-categories top level. Readers use `/escalated/kb`: published articles
+only, each read counts a view, and `POST /escalated/kb/{slug}/feedback` (`helpful`) counts a vote
+while the `knowledge_base_feedback_enabled` setting is on. The reader pages answer 404 while
+`escalated.knowledge-base.enabled` is off, and 403 to someone not signed in once the
+`knowledge_base_public` setting is turned off.
 
 Agent writes: `POST /escalated/agent/tickets/{reference}/` `reply`, `note`, `assign` (`agent_id`),
 `status`, `priority`, `tags` (`tag_ids`), `department` (`department_id`), `macro` (`macro_id`),
