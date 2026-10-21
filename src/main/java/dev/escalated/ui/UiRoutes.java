@@ -57,6 +57,8 @@ public class UiRoutes {
         resource("workflows", "workflow", "/admin/workflows/{workflow}");
         register("escalated.admin.workflows.toggle", "/admin/workflows/{workflow}/toggle");
         register("escalated.admin.workflows.reorder", "/admin/workflows/reorder");
+        register("escalated.admin.workflows.logs", "/admin/workflows/logs");
+        register("escalated.admin.workflows.workflow-logs", "/admin/workflows/{workflow}/logs");
         resource("automations", "automation", "/admin/automations/{automation}/edit");
         resource("departments", "department", "/admin/departments/{department}/edit");
         register("escalated.admin.tags.index", "/admin/tags");

@@ -41,6 +41,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   email code) and `Escalated/Guest/Show` (`GET /escalated/guest/{token}` by expiring grant, with
   `reply` and `rate`). `/escalated/guest/**` is open in the web chain when the UI is on. The form
   uses the existing `/escalated/api/guest/verification` and `/lookup`.
+- `Escalated/Admin/Workflows/Logs` (`GET /escalated/admin/workflows/logs`, `?workflow=` to filter):
+  the newest 100 workflow executions with `event`, `workflow_name`, `ticket_reference`, `matched`,
+  `actions_executed` (a count), `action_details`, `status` and `duration_ms`, as escalated-laravel's
+  `WorkflowController::logs`. `GET /escalated/admin/workflows/{id}/logs` redirects to it.
+  (`Workflows/Builder` is not rendered by escalated-laravel either; the Form page is the builder.)
 - `MacroService` also applies the action types the shared Macros page saves (`status`, `priority`,
   `assign`, `tags`, `department`, `reply`, `note`), alongside the existing `set_status`,
   `set_priority`, `add_tag`, `add_reply`, `add_internal_note` and `assign`.

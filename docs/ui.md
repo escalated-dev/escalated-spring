@@ -114,6 +114,7 @@ JSON `pageJson`, `routesScript` (the `route()` definition) and `csrfToken` (for 
 | `Escalated/Admin/Settings` | `GET`/`POST /escalated/admin/settings` |
 | `Escalated/Admin/Workflows/Index` | `GET /escalated/admin/workflows` |
 | `Escalated/Admin/Workflows/Form` | `GET /escalated/admin/workflows/create`, `GET /escalated/admin/workflows/{id}` |
+| `Escalated/Admin/Workflows/Logs` | `GET /escalated/admin/workflows/logs` (`workflow` to filter; `/workflows/{id}/logs` redirects there) |
 | `Escalated/Admin/Automations/Index` | `GET /escalated/admin/automations` |
 | `Escalated/Admin/Automations/Form` | `GET /escalated/admin/automations/create`, `.../{id}/edit` |
 | `Escalated/Admin/Departments/Index` | `GET /escalated/admin/departments` |

@@ -4,9 +4,13 @@ import dev.escalated.config.EscalatedTransactionManagers;
 import dev.escalated.models.Department;
 import dev.escalated.models.Tag;
 import dev.escalated.models.Ticket;
+import dev.escalated.models.Workflow;
+import dev.escalated.models.WorkflowLog;
 import dev.escalated.repositories.DepartmentRepository;
 import dev.escalated.repositories.TagRepository;
 import dev.escalated.repositories.TicketRepository;
+import dev.escalated.repositories.WorkflowLogRepository;
+import dev.escalated.repositories.WorkflowRepository;
 import dev.escalated.services.SettingsService;
 import dev.escalated.services.ValidationFailedException;
 import dev.escalated.widget.WidgetOrigins;
@@ -19,6 +23,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.regex.Pattern;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -47,13 +52,21 @@ public class AdminUiPages {
     private final DepartmentRepository departments;
     private final TagRepository tags;
     private final TicketRepository tickets;
+    private final WorkflowLogRepository workflowLogs;
+    private final WorkflowRepository workflowRepository;
+
+    /** How many executions the Logs page shows, newest first (Laravel's {@code LOGS_LIMIT}). */
+    public static final int LOGS_LIMIT = 100;
 
     public AdminUiPages(SettingsService settings, DepartmentRepository departments, TagRepository tags,
-                        TicketRepository tickets) {
+                        TicketRepository tickets, WorkflowLogRepository workflowLogs,
+                        WorkflowRepository workflowRepository) {
         this.settings = settings;
         this.departments = departments;
         this.tags = tags;
         this.tickets = tickets;
+        this.workflowLogs = workflowLogs;
+        this.workflowRepository = workflowRepository;
     }
 
     /** Tickets carrying the tag, by query: Hibernate cannot load a filtered tag's ticket collection. */
@@ -116,6 +129,53 @@ public class AdminUiPages {
             throw new ValidationFailedException(errors);
         }
         save.forEach((key, value) -> settings.set(key, value, "general"));
+    }
+
+    // ── Workflow logs ───────────────────────────────────────────────────
+
+    /**
+     * The newest {@value #LOGS_LIMIT} workflow executions, all workflows or {@code workflowId}'s,
+     * as Laravel's {@code WorkflowController::logs}: {@code actions_executed} is a count, the actions
+     * go out as {@code action_details}; {@code workflows} feeds the page's filter.
+     */
+    @Transactional(transactionManager = EscalatedTransactionManagers.ESCALATED, readOnly = true)
+    public Map<String, Object> workflowLogs(Long workflowId) {
+        List<Map<String, Object>> rows = new ArrayList<>();
+        PageRequest newest = PageRequest.of(0, LOGS_LIMIT);
+        List<WorkflowLog> recent = workflowId == null ? workflowLogs.findRecent(newest)
+                : workflowLogs.findRecentForWorkflow(workflowId, newest);
+        for (WorkflowLog log : recent) {
+            Map<String, Object> row = new LinkedHashMap<>();
+            row.put("id", log.getId());
+            row.put("workflow_id", log.getWorkflow() == null ? null : log.getWorkflow().getId());
+            row.put("ticket_id", log.getTicket() == null ? null : log.getTicket().getId());
+            row.put("trigger_event", log.getTriggerEvent());
+            row.put("event", log.getEvent());
+            row.put("workflow_name", log.getWorkflowName());
+            row.put("ticket_reference", log.getTicketReference());
+            row.put("conditions_matched", log.isConditionsMatched());
+            row.put("matched", log.isMatched());
+            row.put("actions_executed", log.getActionsExecutedCount());
+            row.put("action_details", log.getActionDetails());
+            row.put("error_message", log.getErrorMessage());
+            row.put("status", log.getStatus());
+            row.put("duration_ms", log.getDurationMs());
+            row.put("started_at", UiPresenter.iso(log.getStartedAt()));
+            row.put("completed_at", UiPresenter.iso(log.getCompletedAt()));
+            row.put("created_at", UiPresenter.iso(log.getCreatedAt()));
+            rows.add(row);
+        }
+        List<Map<String, Object>> options = new ArrayList<>();
+        for (Workflow workflow : workflowRepository.findAllByOrderByPositionAscNameAsc()) {
+            Map<String, Object> option = new LinkedHashMap<>();
+            option.put("id", workflow.getId());
+            option.put("name", workflow.getName());
+            options.add(option);
+        }
+        Map<String, Object> props = new LinkedHashMap<>();
+        props.put("logs", rows);
+        props.put("workflows", options);
+        return props;
     }
 
     // ── Departments ─────────────────────────────────────────────────────
