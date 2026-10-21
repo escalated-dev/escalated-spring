@@ -43,6 +43,10 @@ class WidgetControllerTest {
     private SatisfactionRatingService ratingService;
     @MockitoBean
     private DepartmentService departmentService;
+    @MockitoBean
+    private dev.escalated.services.GuestVerificationService verification;
+    @MockitoBean
+    private dev.escalated.services.GuestAccessGrants grants;
 
     @Test
     void createTicket_shouldReturnCreatedTicket() throws Exception {
@@ -53,13 +57,17 @@ class WidgetControllerTest {
         ticket.setGuestAccessToken("abc123");
 
         when(ticketService.create(any(), any(), any(), any(), any(), any(), any(), any())).thenReturn(ticket);
+        when(grants.issue(1L)).thenReturn(new dev.escalated.services.GuestAccessGrants.Grant(
+                "eg1.grant", java.time.Instant.parse("2026-10-22T00:00:00Z")));
 
         mockMvc.perform(post("/escalated/api/widget/tickets")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"subject\":\"Widget Ticket\",\"body\":\"Help!\",\"name\":\"Guest\",\"email\":\"guest@test.com\"}"))
+                        .content("{\"subject\":\"Widget Ticket\",\"body\":\"Help!\",\"name\":\"Guest\",\"email\":\"guest@test.com\","
+                                + "\"verification_id\":\"v\",\"verification_code\":\"12345678\"}"))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.reference").value("ESC-000001"))
-                .andExpect(jsonPath("$.guest_access_token").value("abc123"))
+                .andExpect(jsonPath("$.guest_access_token").value("eg1.grant"))
+                .andExpect(jsonPath("$.expires_at").value("2026-10-22T00:00:00Z"))
                 .andExpect(jsonPath("$.subject").doesNotExist())
                 .andExpect(jsonPath("$.guestAccessToken").doesNotExist());
     }
@@ -71,7 +79,9 @@ class WidgetControllerTest {
         ticket.setSubject("Guest Ticket");
         ticket.setGuestAccessToken("token123");
 
-        when(ticketService.findGuestView("token123")).thenReturn(GuestTicketDto.from(ticket));
+        when(grants.resolve(org.mockito.ArgumentMatchers.eq("token123"), any()))
+                .thenReturn(java.util.Optional.of(ticket));
+        when(ticketService.guestView(1L)).thenReturn(GuestTicketDto.from(ticket));
 
         mockMvc.perform(get("/escalated/api/widget/tickets/token123"))
                 .andExpect(status().isOk())

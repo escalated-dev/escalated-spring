@@ -40,7 +40,7 @@ class GuestThrottleInterceptorTest {
         request.setRemoteAddr("203.0.113.9");
         MockHttpServletResponse response = new MockHttpServletResponse();
         HandlerMethod handler = new HandlerMethod(new Object(), WidgetController.class.getMethod(
-                "addReply", String.class, Map.class));
+                "addReply", String.class, Map.class, jakarta.servlet.http.HttpServletRequest.class));
 
         boolean proceed = interceptor.preHandle(request, response, handler);
 

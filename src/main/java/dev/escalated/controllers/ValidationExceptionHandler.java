@@ -18,4 +18,12 @@ public class ValidationExceptionHandler {
         body.put("errors", exception.getErrors());
         return ResponseEntity.status(422).body(body);
     }
+
+    @ExceptionHandler(dev.escalated.services.GuestBudgetExceededException.class)
+    public ResponseEntity<Map<String, Object>> tooMany(dev.escalated.services.GuestBudgetExceededException exception) {
+        return ResponseEntity.status(429)
+                .header("Retry-After", String.valueOf(exception.getRetryAfterSeconds()))
+                .header("Cache-Control", "no-store, private")
+                .body(Map.of("message", exception.getMessage()));
+    }
 }

@@ -31,12 +31,10 @@ import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.context.annotation.Import;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
-import org.springframework.web.server.ResponseStatusException;
 
 /**
  * The guest endpoints are unauthenticated and every accepted request writes
@@ -67,6 +65,8 @@ class GuestThrottleTest {
     @MockitoBean private KnowledgeBaseService knowledgeBaseService;
     @MockitoBean private SatisfactionRatingService ratingService;
     @MockitoBean private DepartmentService departmentService;
+    @MockitoBean private dev.escalated.services.GuestVerificationService verification;
+    @MockitoBean private dev.escalated.services.GuestAccessGrants grants;
 
     private String ip;
 
@@ -78,8 +78,10 @@ class GuestThrottleTest {
         ticket.setId(1L);
         ticket.setGuestAccessToken("guest-token");
         when(ticketService.create(any(), any(), any(), any(), any(), any(), any(), any())).thenReturn(ticket);
-        when(ticketService.findByGuestToken("guest-token")).thenReturn(ticket);
-        when(ticketService.findByGuestToken("wrong")).thenThrow(new ResponseStatusException(HttpStatus.NOT_FOUND));
+        when(grants.issue(any())).thenReturn(
+                new dev.escalated.services.GuestAccessGrants.Grant("eg1.grant", java.time.Instant.now()));
+        when(grants.resolve(org.mockito.ArgumentMatchers.eq("guest-token"), any())).thenReturn(java.util.Optional.of(ticket));
+        when(grants.resolve(org.mockito.ArgumentMatchers.eq("wrong"), any())).thenReturn(java.util.Optional.empty());
         when(ticketService.addReply(anyLong(), any(), any(), any(), any(), anyBoolean())).thenReturn(new Reply());
     }
 
@@ -117,7 +119,7 @@ class GuestThrottleTest {
     void repliesWithAWrongGuestToken_areCounted() throws Exception {
         properties.getGuestRateLimit().setRepliesPerMinute(2);
 
-        assertThat(replies("/escalated/api/widget", "wrong", 3)).containsExactly(404, 404, 429);
+        assertThat(replies("/escalated/api/widget", "wrong", 3)).containsExactly(403, 403, 429);
     }
 
     @Test

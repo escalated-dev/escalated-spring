@@ -447,6 +447,77 @@ public class EscalatedProperties {
     public static class GuestAccessProperties {
         private boolean enabled = false;
 
+        /** Lifetime of a guest grant, clamped to 5 minutes through 7 days. */
+        private int ttlMinutes = 1440;
+
+        /**
+         * Whether a ticket's permanent guest token (issued before verified
+         * access) still opens it, until a grant is issued for that ticket.
+         * A transition setting: turn it off once old links have aged out.
+         */
+        private boolean legacyTokens = true;
+
+        /**
+         * Key for code digests and grants. Falls back to
+         * {@code escalated.email.inbound-secret}; without either, a random key
+         * per process is used and grants do not survive a restart.
+         */
+        private String secret;
+
+        /** From address of the code email; the mail sender's default when unset. */
+        private String fromAddress;
+
+        private int codesPerClientPerHour = 3;
+        private int codesPerMailboxPerHour = 10;
+
+        public int getTtlMinutes() {
+            return ttlMinutes;
+        }
+
+        public void setTtlMinutes(int ttlMinutes) {
+            this.ttlMinutes = ttlMinutes;
+        }
+
+        public boolean isLegacyTokens() {
+            return legacyTokens;
+        }
+
+        public void setLegacyTokens(boolean legacyTokens) {
+            this.legacyTokens = legacyTokens;
+        }
+
+        public String getSecret() {
+            return secret;
+        }
+
+        public void setSecret(String secret) {
+            this.secret = secret;
+        }
+
+        public String getFromAddress() {
+            return fromAddress;
+        }
+
+        public void setFromAddress(String fromAddress) {
+            this.fromAddress = fromAddress;
+        }
+
+        public int getCodesPerClientPerHour() {
+            return codesPerClientPerHour;
+        }
+
+        public void setCodesPerClientPerHour(int codesPerClientPerHour) {
+            this.codesPerClientPerHour = codesPerClientPerHour;
+        }
+
+        public int getCodesPerMailboxPerHour() {
+            return codesPerMailboxPerHour;
+        }
+
+        public void setCodesPerMailboxPerHour(int codesPerMailboxPerHour) {
+            this.codesPerMailboxPerHour = codesPerMailboxPerHour;
+        }
+
         public boolean isEnabled() {
             return enabled;
         }

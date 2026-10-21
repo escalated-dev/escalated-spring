@@ -194,6 +194,34 @@ public class Ticket extends BaseEntity {
     @Column(name = "guest_access_token")
     private String guestAccessToken;
 
+    /** SHA-256 (hex) of the current guest grant's nonce; a new grant replaces it. */
+    @com.fasterxml.jackson.annotation.JsonIgnore
+    @Column(name = "guest_access_hash", length = 64)
+    private String guestAccessHash;
+
+    /** When the current guest grant expires. */
+    @com.fasterxml.jackson.annotation.JsonIgnore
+    @Column(name = "guest_access_expires_at")
+    private Instant guestAccessExpiresAt;
+
+    @com.fasterxml.jackson.annotation.JsonIgnore
+    public String getGuestAccessHash() {
+        return guestAccessHash;
+    }
+
+    public void setGuestAccessHash(String guestAccessHash) {
+        this.guestAccessHash = guestAccessHash;
+    }
+
+    @com.fasterxml.jackson.annotation.JsonIgnore
+    public Instant getGuestAccessExpiresAt() {
+        return guestAccessExpiresAt;
+    }
+
+    public void setGuestAccessExpiresAt(Instant guestAccessExpiresAt) {
+        this.guestAccessExpiresAt = guestAccessExpiresAt;
+    }
+
     @Column(name = "channel", nullable = false, length = 30)
     private String channel = "email";
 

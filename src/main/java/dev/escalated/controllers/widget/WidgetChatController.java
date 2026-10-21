@@ -7,6 +7,8 @@ import dev.escalated.repositories.AgentProfileRepository;
 import dev.escalated.services.ChatAvailabilityService;
 import dev.escalated.services.ChatSessionService;
 import dev.escalated.services.DepartmentService;
+import dev.escalated.services.GuestVerificationService;
+import dev.escalated.services.ValidationFailedException;
 import dev.escalated.services.SatisfactionRatingService;
 import dev.escalated.services.TicketService;
 import dev.escalated.widget.WidgetMetadata;
@@ -47,14 +49,18 @@ public class WidgetChatController {
                                 TicketService ticketService,
                                 DepartmentService departmentService,
                                 SatisfactionRatingService ratingService,
-                                AgentProfileRepository agents) {
+                                AgentProfileRepository agents,
+                                GuestVerificationService verification) {
         this.chatSessionService = chatSessionService;
         this.availabilityService = availabilityService;
         this.ticketService = ticketService;
         this.departmentService = departmentService;
         this.ratingService = ratingService;
         this.agents = agents;
+        this.verification = verification;
     }
+
+    private final GuestVerificationService verification;
 
     @GetMapping("/availability")
     public ResponseEntity<Map<String, Object>> availability(
@@ -76,12 +82,24 @@ public class WidgetChatController {
         Map<String, Object> metadata = WidgetMetadata.fromRequest(body.get("metadata"), request);
         String name = WidgetRequestBodies.text(body, "name");
         String message = WidgetRequestBodies.text(body, "message");
-        ChatSessionService.WidgetChat chat = chatSessionService.startForWidget(
-                name == null || name.isBlank() ? "Visitor" : name,
-                WidgetRequestBodies.text(body, "email"),
-                message,
-                deptId,
-                metadata);
+        String email = WidgetRequestBodies.text(body, "email");
+        if (email == null || email.isBlank()) {
+            throw new ValidationFailedException(Map.of("email", List.of("The email field is required.")));
+        }
+        // Mailbox proof, spent with the chat and handed back if it cannot start.
+        verification.claim(body.get("verification_id"), body.get("verification_code"), email, "chat");
+        ChatSessionService.WidgetChat chat;
+        try {
+            chat = chatSessionService.startForWidget(
+                    name == null || name.isBlank() ? "Visitor" : name,
+                    email,
+                    message,
+                    deptId,
+                    metadata);
+        } catch (RuntimeException ex) {
+            verification.release(body.get("verification_id"));
+            throw ex;
+        }
         ChatSession session = chat.session();
 
         Map<String, Object> answer = new LinkedHashMap<>();
