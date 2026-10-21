@@ -20,6 +20,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 
 /**
  * The admin pages this port serves, as escalated-laravel's {@code routes/admin.php}: Settings,
@@ -73,6 +74,21 @@ public class AdminUiController {
     @GetMapping("/workflows")
     public Object workflows() {
         return renderer.render("Escalated/Admin/Workflows/Index", Map.of("workflows", workflows.list()));
+    }
+
+    @GetMapping("/workflows/logs")
+    public Object workflowLogs(@RequestParam(name = "workflow", required = false) String workflow) {
+        Long workflowId = null;
+        if (workflow != null && workflow.matches("[0-9]+")) {
+            workflowId = Long.valueOf(workflow);
+        }
+        return renderer.render("Escalated/Admin/Workflows/Logs", pages.workflowLogs(workflowId));
+    }
+
+    /** The per-workflow URL: the Logs page filtered to that workflow, as Laravel's {@code workflowLogs}. */
+    @GetMapping("/workflows/{workflow:[0-9]+}/logs")
+    public ResponseEntity<Void> logsOfWorkflow(@PathVariable("workflow") Long id) {
+        return inertia.redirect(routes.url("escalated.admin.workflows.logs") + "?workflow=" + id);
     }
 
     @GetMapping("/workflows/create")
