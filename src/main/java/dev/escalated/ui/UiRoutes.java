@@ -83,6 +83,13 @@ public class UiRoutes {
         resource("webhooks", "webhook", "/admin/webhooks/{webhook}/edit");
         register("escalated.admin.webhooks.deliveries", "/admin/webhooks/{webhook}/deliveries");
         register("escalated.admin.webhooks.retry", "/admin/webhooks/deliveries/{delivery}/retry");
+        register("escalated.admin.users.index", "/admin/users");
+        register("escalated.admin.users.role", "/admin/users/{user}/role");
+        resource("roles", "role", "/admin/roles/{role}/edit");
+        register("escalated.admin.api-tokens.index", "/admin/api-tokens");
+        register("escalated.admin.api-tokens.store", "/admin/api-tokens");
+        register("escalated.admin.api-tokens.update", "/admin/api-tokens/{id}");
+        register("escalated.admin.api-tokens.destroy", "/admin/api-tokens/{id}");
         register("escalated.attachments.download", "/attachments/{attachment}/download");
     }
 

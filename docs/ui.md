@@ -126,6 +126,10 @@ JSON `pageJson`, `routesScript` (the `route()` definition) and `csrfToken` (for 
 | `Escalated/Admin/Webhooks/Index` | `GET /escalated/admin/webhooks` |
 | `Escalated/Admin/Webhooks/Form` | `GET /escalated/admin/webhooks/create`, `.../{id}/edit` |
 | `Escalated/Admin/Webhooks/DeliveryLog` | `GET /escalated/admin/webhooks/{id}/deliveries` |
+| `Escalated/Admin/Users/Index` | `GET /escalated/admin/users` (`search`, 20 a page) |
+| `Escalated/Admin/Roles/Index` | `GET /escalated/admin/roles` |
+| `Escalated/Admin/Roles/Form` | `GET /escalated/admin/roles/create`, `.../{id}/edit` |
+| `Escalated/Admin/ApiTokens/Index` | `GET /escalated/admin/api-tokens` |
 
 Customer writes: `POST /escalated` (`subject`, `description`, `priority`, `department_id`,
 `ticket_type`), and `POST /escalated/{reference}/` `reply`, `close` (unless the `allow_customer_close`
@@ -151,6 +155,15 @@ Webhooks are a resource as on Laravel, plus `GET /webhooks/{id}/deliveries` (25 
 URL that is not http(s) or resolves to a private address is a `url` error. A webhook's signing
 secret is never sent to a page: the form's secret field starts blank, and leaving it blank keeps
 the stored secret.
+
+Users are the agent profiles: `PATCH /escalated/admin/users/{id}/role` (`role` `admin` or `agent`,
+`value`) grants or revokes the flag, as `UserService` does for the JSON API (granting admin also
+grants agent, revoking agent also revokes admin, and an admin cannot remove their own admin role).
+Roles are a resource; `permissions` on the form is grouped by category, each with `id`, `name`,
+`slug` (the permission's name), `group` and `description`. System roles cannot be changed or
+deleted; deleting a role leaves its agents without one. API tokens: `POST /escalated/admin/api-tokens`
+(`name`, `user_id`, `abilities`, `expires_in_days`), `PUT` and `DELETE /api-tokens/{id}`; the new
+token's plain text is flashed once as `flash.plain_text_token`, and no page carries a token hash.
 
 Agent writes: `POST /escalated/agent/tickets/{reference}/` `reply`, `note`, `assign` (`agent_id`),
 `status`, `priority`, `tags` (`tag_ids`), `department` (`department_id`), `macro` (`macro_id`),
