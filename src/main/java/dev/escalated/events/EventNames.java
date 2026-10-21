@@ -74,6 +74,35 @@ public final class EventNames {
         LEGACY = Map.copyOf(legacy);
     }
 
+    private static final Map<String, String> LABELS = Map.ofEntries(
+            Map.entry(TICKET_CREATED, "Ticket created"),
+            Map.entry(TICKET_UPDATED, "Ticket updated"),
+            Map.entry(TICKET_STATUS_CHANGED, "Status changed"),
+            Map.entry(TICKET_RESOLVED, "Ticket resolved"),
+            Map.entry(TICKET_CLOSED, "Ticket closed"),
+            Map.entry(TICKET_REOPENED, "Ticket reopened"),
+            Map.entry(TICKET_ASSIGNED, "Ticket assigned"),
+            Map.entry(TICKET_UNASSIGNED, "Ticket unassigned"),
+            Map.entry(TICKET_ESCALATED, "Ticket escalated"),
+            Map.entry(TICKET_PRIORITY_CHANGED, "Priority changed"),
+            Map.entry(TICKET_DEPARTMENT_CHANGED, "Department changed"),
+            Map.entry(TICKET_TAG_ADDED, "Tag added"),
+            Map.entry(TICKET_TAG_REMOVED, "Tag removed"),
+            Map.entry(REPLY_CREATED, "Reply created"),
+            Map.entry(NOTE_CREATED, "Internal note added"),
+            Map.entry(SLA_WARNING, "SLA warning"),
+            Map.entry(SLA_BREACHED, "SLA breached"),
+            Map.entry(CHAT_STARTED, "Chat started"),
+            Map.entry(CHAT_ASSIGNED, "Chat assigned"),
+            Map.entry(CHAT_TRANSFERRED, "Chat transferred"),
+            Map.entry(CHAT_MESSAGE, "Chat message"),
+            Map.entry(CHAT_ENDED, "Chat ended"));
+
+    /** A human label for a canonical name, for option lists. */
+    public static String label(String name) {
+        return LABELS.getOrDefault(canonical(name), name);
+    }
+
     private static final Pattern NAME = Pattern.compile("[A-Za-z0-9_.:*-]+");
 
     private EventNames() {

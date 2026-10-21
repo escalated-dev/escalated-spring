@@ -326,6 +326,12 @@ See the [inbound email docs](https://docs.escalated.dev/inbound-email) for provi
 | GET/POST | `/departments` | CRUD departments |
 | GET/POST | `/agents` | CRUD agents |
 | GET/POST | `/webhooks` | CRUD webhooks |
+| GET/POST | `/workflows` | List / create workflows (the shared builder's body, see the [workflow admin contract](https://github.com/escalated-dev/escalated-developer-context/blob/main/domain-model/workflow-admin-contract.md)) |
+| GET | `/workflows/options` | Builder options: `trigger_events`, `action_types`, `operators`, `condition_fields` |
+| GET/PUT/DELETE | `/workflows/{id}` | Show / update / delete a workflow |
+| POST | `/workflows/{id}/toggle` | Enable or disable |
+| POST | `/workflows/reorder` | `{"workflow_ids": [3, 1, 2]}` |
+| GET | `/workflows/{id}/logs` | Run log |
 | GET/POST | `/roles` | CRUD roles |
 | GET/POST | `/custom-fields` | CRUD custom fields |
 | GET/POST | `/settings` | Manage settings |

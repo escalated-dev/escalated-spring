@@ -8,6 +8,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- Workflow admin JSON CRUD per the shared workflow admin contract (escalated-developer-context
+  `domain-model/workflow-admin-contract.md`): `POST /escalated/api/admin/workflows`,
+  `PUT`/`DELETE /workflows/{id}`, `POST /workflows/{id}/toggle`, `POST /workflows/reorder` and
+  `GET /workflows/options`. They take the builder's body (`name`, `description`, `trigger_event`,
+  `conditions` as `{all}`/`{any}`, `actions` as `{type, value}`, `is_active`). Invalid bodies
+  answer 422 `{message, errors}`. A legacy trigger name is stored as its canonical name.
+- Workflow conditions evaluate the contract's fields `channel`, `description`, `tags`,
+  `assigned_to`, `hours_since_created` and `hours_since_updated`. Conditions stored as a flat list
+  (read as `all`) or as `{match, rules}` keep working.
 - Events from the shared vocabulary (escalated-developer-context ADR `2026-10-21-event-vocabulary`),
   sent to webhooks and fired as workflow triggers under their canonical names:
   `ticket.unassigned`, `ticket.department_changed`, `ticket.tag_added`, `ticket.tag_removed`,
@@ -23,6 +32,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   nullable `repeat_after_hours`.
 
 ### Changed
+- `GET /escalated/api/admin/workflows` and `GET /workflows/{id}` answer workflow objects
+  (`conditions` as an object, `actions` as an array, snake_case keys) instead of the entity with
+  JSON strings and its log collection.
+- `WorkflowEngine.ACTION_TYPES` lists only what the executor performs. `send_webhook` and
+  `send_notification` were listed but never executed; `insert_canned_reply` was executed but not
+  listed.
 - **Escalation rules act once per ticket.** The SLA sweep used to re-apply every matching rule
   every minute for as long as a ticket breached (an activity row and an `ticket.assigned` webhook
   each time). A rule now acts once, again only after the ticket stops breaching, or after the
