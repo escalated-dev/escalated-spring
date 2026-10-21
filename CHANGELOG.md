@@ -7,6 +7,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.3] - 2026-10-21
+
+### Upgrading
+- **Widget tickets and chats now need an emailed code.** `POST /widget/tickets` and
+  `POST /widget/chat/start` answer 422 without `verification_id` and `verification_code`. The
+  bundled widget (0.12.3) sends them once `/config` asks. Configure outbound mail
+  (`JavaMailSender`, optionally `escalated.guest-access.from-address`). Set
+  `escalated.guest-access.secret` (or `escalated.email.inbound-secret`) to the same value on
+  every node, or grants will not survive a restart. Run migration `V17`.
+- Permanent guest tokens keep working on the token routes while
+  `escalated.guest-access.legacy-tokens` is `true` (the default), until a grant is issued for the
+  ticket. Turn it off once old links have aged out. See `docs/guest-access.md`.
+- Run migration `V16` (automations). No automation exists until an admin creates one, so nothing
+  changes on upgrade; the 7-day auto-close keeps running unless `escalated.automations.auto-close-days=0`.
+- Run migration `V15` (it runs itself unless `escalated.datasource.migrate=false`).
+- Legacy names keep working when read: a workflow saved as `ticket.tagged`, `ticket.replied`,
+  `internal_note.added` or `chat.session_started`, or a webhook subscribed to them, receives the
+  canonical event. Creating or updating a webhook stores canonical names.
+- A webhook subscription is now matched name by name instead of by substring.
+
 ### Added
 - `GET`/`POST /escalated/api/admin/tokens`, `PUT`/`DELETE /tokens/{id}`, which the README already
   documented and nothing mapped. They issue API tokens from `name`, `agent_id` (or `user_id`),
@@ -92,24 +112,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Chat-related and SLA webhook payloads add keys beside `event`, `entity_id` and `timestamp`
   (`chat_session_id`, `ticket_id`, `agent_id`; `sla_type`; `tag`; `reason`; department ids).
   The visitor's chat token is never included.
-
-### Upgrade notes
-- **Widget tickets and chats now need an emailed code.** `POST /widget/tickets` and
-  `POST /widget/chat/start` answer 422 without `verification_id` and `verification_code`. The
-  bundled widget (0.12.3) sends them once `/config` asks. Configure outbound mail
-  (`JavaMailSender`, optionally `escalated.guest-access.from-address`). Set
-  `escalated.guest-access.secret` (or `escalated.email.inbound-secret`) to the same value on
-  every node, or grants will not survive a restart. Run migration `V17`.
-- Permanent guest tokens keep working on the token routes while
-  `escalated.guest-access.legacy-tokens` is `true` (the default), until a grant is issued for the
-  ticket. Turn it off once old links have aged out. See `docs/guest-access.md`.
-- Run migration `V16` (automations). No automation exists until an admin creates one, so nothing
-  changes on upgrade; the 7-day auto-close keeps running unless `escalated.automations.auto-close-days=0`.
-- Run migration `V15` (it runs itself unless `escalated.datasource.migrate=false`).
-- Legacy names keep working when read: a workflow saved as `ticket.tagged`, `ticket.replied`,
-  `internal_note.added` or `chat.session_started`, or a webhook subscribed to them, receives the
-  canonical event. Creating or updating a webhook stores canonical names.
-- A webhook subscription is now matched name by name instead of by substring.
 
 ## [0.2.2] - 2026-10-20
 
