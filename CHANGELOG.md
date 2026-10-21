@@ -45,6 +45,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     (`GET /escalated/agent/tickets`, with Laravel's queue filters) and `TicketShow`
     (`GET /escalated/agent/tickets/{reference}`), with the writes TicketShow posts: `reply`, `note`,
     `assign`, `status`, `priority`, `tags`, `department`, `macro`, `follow` and `actions/{action}`.
+  - The customer pages: `Escalated/Customer/Index` (`GET /escalated`), `Create`
+    (`GET /escalated/create`, `POST /escalated`) and `Show` (`GET /escalated/{reference}`), with
+    `reply`, `close`, `reopen` and `rate`. A customer sees only tickets they requested (by email);
+    another's is a 404. Public replies only, staff by display name.
   - `GET /escalated/attachments/{id}/download`: the attachment download for a browser session, with
     the API download's access rules.
   - Page props are built field by field (`UiPresenter`), never by serialising entities.
@@ -52,7 +56,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   BusinessHours, CannedResponses, Capacity, CustomFields, CustomObjects, Departments,
   EscalationRules, Import, KnowledgeBase, Macros, Plugins, Reports (all), Roles, Settings (and its
   sub-pages), Skills, SlaPolicies, Statuses, Tags, Tickets, Users, Webhooks, Workflows;
-  Auth/TwoFactorChallenge; Customer Index, Show, Create and KnowledgeBase; Error; Guest Create and
+  Auth/TwoFactorChallenge; Customer KnowledgeBase; Error; Guest Create and
   Show; Plugin/Page. The newsletter screens still answer `{component, props}` JSON under
   `/escalated/api/admin/newsletters`. Attachments cannot be uploaded from the pages' writes yet
   (refused with an `attachments` error rather than dropped).

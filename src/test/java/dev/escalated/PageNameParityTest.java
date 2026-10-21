@@ -108,7 +108,13 @@ class PageNameParityTest {
    * {@code dev.escalated.ui}, and each must ship: a page dropped from here, or renamed there, fails.
    */
   static final List<String> SERVED_BY_UI =
-      List.of("Escalated/Agent/Dashboard", "Escalated/Agent/TicketIndex", "Escalated/Agent/TicketShow");
+      List.of(
+          "Escalated/Agent/Dashboard",
+          "Escalated/Agent/TicketIndex",
+          "Escalated/Agent/TicketShow",
+          "Escalated/Customer/Index",
+          "Escalated/Customer/Create",
+          "Escalated/Customer/Show");
 
   @Test
   void theUiLayerRendersEveryPageItServes() throws IOException {
