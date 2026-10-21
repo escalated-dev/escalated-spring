@@ -90,6 +90,14 @@ public class UiRoutes {
         register("escalated.admin.api-tokens.store", "/admin/api-tokens");
         register("escalated.admin.api-tokens.update", "/admin/api-tokens/{id}");
         register("escalated.admin.api-tokens.destroy", "/admin/api-tokens/{id}");
+        resource("kb-articles", "kb_article", "/admin/kb-articles/{kb_article}/edit");
+        register("escalated.admin.kb-categories.index", "/admin/kb-categories");
+        register("escalated.admin.kb-categories.store", "/admin/kb-categories");
+        register("escalated.admin.kb-categories.update", "/admin/kb-categories/{kb_category}");
+        register("escalated.admin.kb-categories.destroy", "/admin/kb-categories/{kb_category}");
+        register("escalated.customer.kb.index", "/kb");
+        register("escalated.customer.kb.show", "/kb/{slug}");
+        register("escalated.customer.kb.feedback", "/kb/{slug}/feedback");
         register("escalated.attachments.download", "/attachments/{attachment}/download");
     }
 

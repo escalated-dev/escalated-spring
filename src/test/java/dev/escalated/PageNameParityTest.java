@@ -133,7 +133,12 @@ class PageNameParityTest {
           "Escalated/Admin/Users/Index",
           "Escalated/Admin/Roles/Index",
           "Escalated/Admin/Roles/Form",
-          "Escalated/Admin/ApiTokens/Index");
+          "Escalated/Admin/ApiTokens/Index",
+          "Escalated/Admin/KnowledgeBase/Articles/Index",
+          "Escalated/Admin/KnowledgeBase/Articles/Form",
+          "Escalated/Admin/KnowledgeBase/Categories/Index",
+          "Escalated/Customer/KnowledgeBase/Index",
+          "Escalated/Customer/KnowledgeBase/Article");
 
   @Test
   void theUiLayerRendersEveryPageItServes() throws IOException {

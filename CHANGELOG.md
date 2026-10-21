@@ -30,6 +30,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `PATCH /escalated/admin/users/{id}/role`), `Roles/Index` and `Form` (create, update, delete, with
   the permissions grouped by category; system roles are refused), and `ApiTokens/Index` (issue,
   rename, revoke; the plain-text token is flashed once as `plain_text_token`).
+- The knowledge base pages, behind `escalated.ui.enabled`, as escalated-laravel's:
+  `Escalated/Admin/KnowledgeBase/Articles/Index` and `Form` and `Categories/Index` (create, update,
+  delete), and the reader pages `Escalated/Customer/KnowledgeBase/Index` and `Article` at
+  `/escalated/kb` and `/escalated/kb/{slug}`, with `POST /escalated/kb/{slug}/feedback`. The reader
+  pages follow `escalated.knowledge-base.enabled` (404 when off) and the `knowledge_base_public`
+  and `knowledge_base_feedback_enabled` settings.
 - `MacroService` also applies the action types the shared Macros page saves (`status`, `priority`,
   `assign`, `tags`, `department`, `reply`, `note`), alongside the existing `set_status`,
   `set_priority`, `add_tag`, `add_reply`, `add_internal_note` and `assign`.
