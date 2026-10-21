@@ -1,6 +1,5 @@
 package dev.escalated.services;
 
-import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import dev.escalated.config.EscalatedTransactionManagers;
@@ -172,7 +171,11 @@ public class WorkflowRunnerService {
         }
         try {
             Map<String, Object> conditions =
-                    MAPPER.readValue(conditionsJson, new TypeReference<Map<String, Object>>() {});
+                    WorkflowEngine.normalizeConditions(MAPPER.readValue(conditionsJson, Object.class));
+            if (conditions == null) {
+                log.warn("[WorkflowRunner] unreadable conditions on workflow #{}", wf.getId());
+                return false;
+            }
             return engine.evaluateConditions(conditions, conditionMap);
         } catch (Exception ex) {
             log.warn("[WorkflowRunner] bad conditions JSON on workflow #{}: {}",
@@ -215,8 +218,34 @@ public class WorkflowRunnerService {
         }
         if (ticket.getAssignedAgent() != null && ticket.getAssignedAgent().getId() != null) {
             map.put("assigned_agent_id", String.valueOf(ticket.getAssignedAgent().getId()));
+            map.put("assigned_to", String.valueOf(ticket.getAssignedAgent().getId()));
+        }
+        put(map, "channel", ticket.getChannel());
+        put(map, "description", ticket.getBody());
+        Instant now = Instant.now();
+        if (ticket.getCreatedAt() != null) {
+            map.put("hours_since_created", hoursBetween(ticket.getCreatedAt(), now));
+        }
+        if (ticket.getUpdatedAt() != null) {
+            map.put("hours_since_updated", hoursBetween(ticket.getUpdatedAt(), now));
+        }
+        try {
+            if (ticket.getTags() != null) {
+                map.put("tags", ticket.getTags().stream()
+                        .map(dev.escalated.models.Tag::getName)
+                        .filter(java.util.Objects::nonNull)
+                        .sorted()
+                        .collect(java.util.stream.Collectors.joining(",")));
+            }
+        } catch (RuntimeException detached) {
+            // A ticket handed over outside a persistence context cannot load
+            // its tags; tag conditions then see none.
         }
         return map;
+    }
+
+    private static String hoursBetween(Instant from, Instant to) {
+        return String.valueOf(java.time.Duration.between(from, to).toSeconds() / 3600.0);
     }
 
     private static void put(Map<String, String> map, String key, Object value) {
