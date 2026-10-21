@@ -51,7 +51,31 @@ public class UiRoutes {
         register("escalated.customer.tickets.close", "/{ticket}/close");
         register("escalated.customer.tickets.reopen", "/{ticket}/reopen");
         register("escalated.customer.tickets.rate", "/{ticket}/rate");
+        // Admin
+        register("escalated.admin.settings", "/admin/settings");
+        register("escalated.admin.settings.update", "/admin/settings");
+        resource("workflows", "workflow", "/admin/workflows/{workflow}");
+        register("escalated.admin.workflows.toggle", "/admin/workflows/{workflow}/toggle");
+        register("escalated.admin.workflows.reorder", "/admin/workflows/reorder");
+        resource("automations", "automation", "/admin/automations/{automation}/edit");
+        resource("departments", "department", "/admin/departments/{department}/edit");
+        register("escalated.admin.tags.index", "/admin/tags");
+        register("escalated.admin.tags.store", "/admin/tags");
+        register("escalated.admin.tags.update", "/admin/tags/{tag}");
+        register("escalated.admin.tags.destroy", "/admin/tags/{tag}");
         register("escalated.attachments.download", "/attachments/{attachment}/download");
+    }
+
+    /** Laravel's resource routes (less {@code show}), with the edit page at {@code edit}. */
+    private void resource(String plural, String parameter, String edit) {
+        String base = "/admin/" + plural;
+        String member = base + "/{" + parameter + "}";
+        register("escalated.admin." + plural + ".index", base);
+        register("escalated.admin." + plural + ".create", base + "/create");
+        register("escalated.admin." + plural + ".store", base);
+        register("escalated.admin." + plural + ".edit", edit);
+        register("escalated.admin." + plural + ".update", member);
+        register("escalated.admin." + plural + ".destroy", member);
     }
 
     /** Adds or replaces a route. {@code uri} is relative to {@link #PREFIX} unless it starts with {@code //}. */

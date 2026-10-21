@@ -114,7 +114,15 @@ class PageNameParityTest {
           "Escalated/Agent/TicketShow",
           "Escalated/Customer/Index",
           "Escalated/Customer/Create",
-          "Escalated/Customer/Show");
+          "Escalated/Customer/Show",
+          "Escalated/Admin/Settings",
+          "Escalated/Admin/Workflows/Index",
+          "Escalated/Admin/Workflows/Form",
+          "Escalated/Admin/Automations/Index",
+          "Escalated/Admin/Automations/Form",
+          "Escalated/Admin/Departments/Index",
+          "Escalated/Admin/Departments/Form",
+          "Escalated/Admin/Tags/Index");
 
   @Test
   void theUiLayerRendersEveryPageItServes() throws IOException {

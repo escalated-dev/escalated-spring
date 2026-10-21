@@ -107,12 +107,29 @@ JSON `pageJson`, and `routesScript` (the `route()` definition):
 | `Escalated/Customer/Index` | `GET /escalated` |
 | `Escalated/Customer/Create` | `GET /escalated/create` |
 | `Escalated/Customer/Show` | `GET /escalated/{reference}` |
+| `Escalated/Admin/Settings` | `GET`/`POST /escalated/admin/settings` |
+| `Escalated/Admin/Workflows/Index` | `GET /escalated/admin/workflows` |
+| `Escalated/Admin/Workflows/Form` | `GET /escalated/admin/workflows/create`, `GET /escalated/admin/workflows/{id}` |
+| `Escalated/Admin/Automations/Index` | `GET /escalated/admin/automations` |
+| `Escalated/Admin/Automations/Form` | `GET /escalated/admin/automations/create`, `.../{id}/edit` |
+| `Escalated/Admin/Departments/Index` | `GET /escalated/admin/departments` |
+| `Escalated/Admin/Departments/Form` | `GET /escalated/admin/departments/create`, `.../{id}/edit` |
+| `Escalated/Admin/Tags/Index` | `GET /escalated/admin/tags` |
 
 Customer writes: `POST /escalated` (`subject`, `description`, `priority`, `department_id`,
 `ticket_type`), and `POST /escalated/{reference}/` `reply`, `close` (unless the `allow_customer_close`
 setting is off), `reopen` and `rate` (`rating` 1-5, `comment`; resolved or closed tickets, once). A
 customer sees only the tickets whose requester email is theirs (any case); anyone else's is a 404.
 The customer pages show public replies only, with staff by display name and no email.
+
+Admin writes, as Laravel's resource routes: `POST` to the collection, `PUT` and `DELETE` on a
+member. Workflows also take `POST /{id}/toggle` and `POST /reorder` (`workflow_ids`). Workflows
+and automations go through the same services as their JSON admin APIs
+(`/escalated/api/admin/workflows`, `/automations`), so both validate and store alike. The Settings
+page's `supported_settings` lists only what this port stores and honours: `allow_customer_close`,
+`show_powered_by`, `widget_color`, `widget_position`, `widget_greeting` and
+`widget_allowed_origins`; the page hides the rest, and the save ignores any other key. Deleting a
+department leaves its tickets and agents without one; deleting a tag takes it off its tickets.
 
 Agent writes: `POST /escalated/agent/tickets/{reference}/` `reply`, `note`, `assign` (`agent_id`),
 `status`, `priority`, `tags` (`tag_ids`), `department` (`department_id`), `macro` (`macro_id`),

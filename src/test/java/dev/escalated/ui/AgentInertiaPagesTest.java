@@ -1,7 +1,6 @@
 package dev.escalated.ui;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -254,7 +253,7 @@ class AgentInertiaPagesTest {
         MockHttpSession session = new MockHttpSession();
         String show = "/escalated/agent/tickets/" + ticket.getTicketNumber();
 
-        mvc.perform(post(show + "/reply").session(session).with(user(agent.getEmail())).with(csrf())
+        mvc.perform(post(show + "/reply").session(session).with(user(agent.getEmail())).with(UiTestSupport.xsrf())
                         .header("X-Inertia", "true").header("Referer", "http://localhost" + show)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"body\":\"On my way " + unique + "\",\"is_internal_note\":false,\"attachments\":[]}"))
@@ -286,7 +285,7 @@ class AgentInertiaPagesTest {
         MockHttpSession session = new MockHttpSession();
         String show = "/escalated/agent/tickets/" + ticket.getTicketNumber();
 
-        mvc.perform(post(show + "/status").session(session).with(user(agent.getEmail())).with(csrf())
+        mvc.perform(post(show + "/status").session(session).with(user(agent.getEmail())).with(UiTestSupport.xsrf())
                         .header("X-Inertia", "true").header("Referer", "http://localhost" + show)
                         .contentType(MediaType.APPLICATION_JSON).content("{\"status\":\"on_fire\"}"))
                 .andExpect(status().isSeeOther())
@@ -326,7 +325,7 @@ class AgentInertiaPagesTest {
     @Test
     void formEncodedWritesReadTheSameFields() throws Exception {
         String base = "/escalated/agent/tickets/" + ticket.getTicketNumber();
-        mvc.perform(post(base + "/tags").with(user(agent.getEmail())).with(csrf()).header("X-Inertia", "true")
+        mvc.perform(post(base + "/tags").with(user(agent.getEmail())).with(UiTestSupport.xsrf()).header("X-Inertia", "true")
                         .contentType(MediaType.APPLICATION_FORM_URLENCODED)
                         .param("tag_ids[0]", tag.getId().toString()))
                 .andExpect(status().isSeeOther());
@@ -389,7 +388,7 @@ class AgentInertiaPagesTest {
     }
 
     private org.springframework.test.web.servlet.ResultActions write(String path, String json) throws Exception {
-        return mvc.perform(post(path).with(user(agent.getEmail())).with(csrf()).header("X-Inertia", "true")
+        return mvc.perform(post(path).with(user(agent.getEmail())).with(UiTestSupport.xsrf()).header("X-Inertia", "true")
                 .contentType(MediaType.APPLICATION_JSON).content(json));
     }
 
