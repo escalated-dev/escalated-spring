@@ -42,6 +42,15 @@ public class UiRoutes {
         register("escalated.agent.tickets.macro", "/agent/tickets/{ticket}/macro");
         register("escalated.agent.tickets.follow", "/agent/tickets/{ticket}/follow");
         register("escalated.agent.tickets.custom-action", "/agent/tickets/{ticket}/actions/{action}");
+        // Customer
+        register("escalated.customer.tickets.index", "");
+        register("escalated.customer.tickets.create", "/create");
+        register("escalated.customer.tickets.store", "");
+        register("escalated.customer.tickets.show", "/{ticket}");
+        register("escalated.customer.tickets.reply", "/{ticket}/reply");
+        register("escalated.customer.tickets.close", "/{ticket}/close");
+        register("escalated.customer.tickets.reopen", "/{ticket}/reopen");
+        register("escalated.customer.tickets.rate", "/{ticket}/rate");
         register("escalated.attachments.download", "/attachments/{attachment}/download");
     }
 

@@ -104,6 +104,15 @@ JSON `pageJson`, and `routesScript` (the `route()` definition):
 | `Escalated/Agent/Dashboard` | `GET /escalated/agent` |
 | `Escalated/Agent/TicketIndex` | `GET /escalated/agent/tickets` |
 | `Escalated/Agent/TicketShow` | `GET /escalated/agent/tickets/{reference}` |
+| `Escalated/Customer/Index` | `GET /escalated` |
+| `Escalated/Customer/Create` | `GET /escalated/create` |
+| `Escalated/Customer/Show` | `GET /escalated/{reference}` |
+
+Customer writes: `POST /escalated` (`subject`, `description`, `priority`, `department_id`,
+`ticket_type`), and `POST /escalated/{reference}/` `reply`, `close` (unless the `allow_customer_close`
+setting is off), `reopen` and `rate` (`rating` 1-5, `comment`; resolved or closed tickets, once). A
+customer sees only the tickets whose requester email is theirs (any case); anyone else's is a 404.
+The customer pages show public replies only, with staff by display name and no email.
 
 Agent writes: `POST /escalated/agent/tickets/{reference}/` `reply`, `note`, `assign` (`agent_id`),
 `status`, `priority`, `tags` (`tag_ids`), `department` (`department_id`), `macro` (`macro_id`),
