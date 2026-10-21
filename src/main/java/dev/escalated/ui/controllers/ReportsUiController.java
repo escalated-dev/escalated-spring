@@ -1,0 +1,61 @@
+package dev.escalated.ui.controllers;
+
+import dev.escalated.ui.EscalatedUiRenderer;
+import dev.escalated.ui.ReportsUiPages;
+import dev.escalated.ui.UiRoutes;
+import java.util.Map;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+
+/**
+ * The report screens, as escalated-laravel's {@code Admin\ReportController}:
+ * {@code Escalated/Admin/Reports} and {@code Reports/Dashboard}, {@code AgentMetrics},
+ * {@code SlaReport}, {@code CsatReport} and {@code Comparison}. Each takes {@code days} (or {@code period}), default
+ * 30. Admins only (the web security chain).
+ */
+@Controller
+@ConditionalOnProperty(prefix = "escalated.ui", name = "enabled", havingValue = "true")
+@RequestMapping(UiRoutes.PREFIX + "/admin/reports")
+public class ReportsUiController {
+
+    private final EscalatedUiRenderer renderer;
+    private final ReportsUiPages pages;
+
+    public ReportsUiController(EscalatedUiRenderer renderer, ReportsUiPages pages) {
+        this.renderer = renderer;
+        this.pages = pages;
+    }
+
+    @GetMapping({"", "/"})
+    public Object overview(@RequestParam Map<String, String> query) {
+        return renderer.render("Escalated/Admin/Reports", pages.overview(ReportsUiPages.days(query)));
+    }
+
+    @GetMapping("/dashboard")
+    public Object dashboard(@RequestParam Map<String, String> query) {
+        return renderer.render("Escalated/Admin/Reports/Dashboard", pages.dashboard(ReportsUiPages.days(query)));
+    }
+
+    @GetMapping("/agents")
+    public Object agents(@RequestParam Map<String, String> query) {
+        return renderer.render("Escalated/Admin/Reports/AgentMetrics", pages.agents(ReportsUiPages.days(query)));
+    }
+
+    @GetMapping("/sla")
+    public Object sla(@RequestParam Map<String, String> query) {
+        return renderer.render("Escalated/Admin/Reports/SlaReport", pages.sla(ReportsUiPages.days(query)));
+    }
+
+    @GetMapping("/comparison")
+    public Object comparison(@RequestParam Map<String, String> query) {
+        return renderer.render("Escalated/Admin/Reports/Comparison", pages.comparison(ReportsUiPages.days(query)));
+    }
+
+    @GetMapping("/csat")
+    public Object csat(@RequestParam Map<String, String> query) {
+        return renderer.render("Escalated/Admin/Reports/CsatReport", pages.csat(ReportsUiPages.days(query)));
+    }
+}

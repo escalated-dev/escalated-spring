@@ -46,6 +46,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `actions_executed` (a count), `action_details`, `status` and `duration_ms`, as escalated-laravel's
   `WorkflowController::logs`. `GET /escalated/admin/workflows/{id}/logs` redirects to it.
   (`Workflows/Builder` is not rendered by escalated-laravel either; the Form page is the builder.)
+- The report screens, behind `escalated.ui.enabled`, as escalated-laravel's `Admin\ReportController`:
+  `Escalated/Admin/Reports` (`GET /escalated/admin/reports`) and `Reports/Dashboard`,
+  `AgentMetrics`, `SlaReport`, `CsatReport` and `Comparison` (`/reports/dashboard`, `/agents`,
+  `/sla`, `/csat`, `/comparison`), each for the last `days` (default 30).
 - `MacroService` also applies the action types the shared Macros page saves (`status`, `priority`,
   `assign`, `tags`, `department`, `reply`, `note`), alongside the existing `set_status`,
   `set_priority`, `add_tag`, `add_reply`, `add_internal_note` and `assign`.
@@ -62,6 +66,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   escalated-laravel's per-priority hour maps and standalone condition/action rules. Serving them
   needs a schema change first.
 - `Escalated/Admin/Statuses/*`: this port has fixed statuses, no custom ones.
+- `Escalated/Admin/Reports/` `SlaTrends`, `ResponseTimes`, `ResolutionTimes`, `AgentRanking`,
+  `AgentDetail` and `Cohorts`, and the report export; their links from the dashboard go nowhere yet.
 - Admin ticket presence, pinned notes, split, merge, links and side conversations from the ticket
   page: the routes are not served here yet, so those controls do nothing.
 
