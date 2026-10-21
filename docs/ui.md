@@ -44,6 +44,9 @@ defaults `escalated.ui.enabled` to `true`; here a host opts in.)
 Writes accept JSON, and form or multipart bodies (arrays as `key[0]`, `key[1]`), as Inertia sends
 them. They need the CSRF token: with the UI on, the web chain keeps it in the `XSRF-TOKEN` cookie
 (readable by script) and accepts it back in `X-XSRF-TOKEN`, which is what Inertia's client does.
+The components that call `fetch` instead (saved views, presence, mentions) send the
+`<meta name="csrf-token">` value as `X-CSRF-TOKEN`, as on Laravel; the built-in root page writes
+that tag, and the chain accepts either header.
 
 ## Shared props
 
@@ -82,7 +85,8 @@ Each piece is a bean the host can replace:
 | any `InertiaSharedProps` | none | Adding shared props of the host's own (merged in `@Order`) |
 
 Or name a Thymeleaf view for the first visit with `escalated.ui.root-view`. It receives `page`, the
-JSON `pageJson`, and `routesScript` (the `route()` definition):
+JSON `pageJson`, `routesScript` (the `route()` definition) and `csrfToken` (for a
+`<meta name="csrf-token">` tag):
 
 ```html
 <!DOCTYPE html>
@@ -115,6 +119,8 @@ JSON `pageJson`, and `routesScript` (the `route()` definition):
 | `Escalated/Admin/Departments/Index` | `GET /escalated/admin/departments` |
 | `Escalated/Admin/Departments/Form` | `GET /escalated/admin/departments/create`, `.../{id}/edit` |
 | `Escalated/Admin/Tags/Index` | `GET /escalated/admin/tags` |
+| `Escalated/Admin/Tickets/Index` | `GET /escalated/admin/tickets` (the agent queue's filters) |
+| `Escalated/Admin/Tickets/Show` | `GET /escalated/admin/tickets/{reference}` |
 
 Customer writes: `POST /escalated` (`subject`, `description`, `priority`, `department_id`,
 `ticket_type`), and `POST /escalated/{reference}/` `reply`, `close` (unless the `allow_customer_close`
@@ -133,7 +139,14 @@ department leaves its tickets and agents without one; deleting a tag takes it of
 
 Agent writes: `POST /escalated/agent/tickets/{reference}/` `reply`, `note`, `assign` (`agent_id`),
 `status`, `priority`, `tags` (`tag_ids`), `department` (`department_id`), `macro` (`macro_id`),
-`follow` and `actions/{action}`. Attachments to the pages' writes: `GET
+`follow` and `actions/{action}`. The admin ticket page posts the same writes under
+`/escalated/admin/tickets/{reference}/`, less `actions/{action}`, plus `snooze` (`snoozed_until`, a
+future date-time; the ticket becomes `snoozed`) and `unsnooze` (back to `open`). The admin queue
+posts `POST /escalated/admin/tickets/bulk` (`ticket_ids`, at most 50; `action` one of `status`,
+`priority`, `assign`, `tags`, `department`, `delete`; `value`), which skips a ticket the action
+cannot apply to and flashes how many changed. Its saved views are JSON, called with `fetch`:
+`GET`/`POST /escalated/admin/saved-views`, `PUT`/`DELETE /escalated/admin/saved-views/{id}`
+(`name`, `filters` object, `is_shared`, `is_default`); only a view's owner changes it. Attachments to the pages' writes: `GET
 /escalated/attachments/{id}/download`, with the same access rules as the API's download.
 
 The agent pages need the agent gate, the admin pages the admin gate (the same as the

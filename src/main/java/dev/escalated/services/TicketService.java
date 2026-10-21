@@ -539,6 +539,23 @@ public class TicketService {
         return saved;
     }
 
+    /** Wakes a snoozed ticket now, as the scheduler does when its time comes: back to open. */
+    @Transactional(transactionManager = EscalatedTransactionManagers.ESCALATED)
+    public Ticket unsnooze(Long ticketId, String actorEmail) {
+        Ticket ticket = findById(ticketId);
+        if (ticket.getStatus() != TicketStatus.SNOOZED && ticket.getSnoozedUntil() == null) {
+            return ticket;
+        }
+        if (ticket.getStatus() == TicketStatus.SNOOZED) {
+            ticket.setStatus(TicketStatus.OPEN);
+        }
+        ticket.setSnoozedUntil(null);
+        logActivity(ticket, "unsnoozed", "Ticket unsnoozed", actorEmail, null, null);
+        Ticket saved = ticketRepository.save(ticket);
+        eventPublisher.publishEvent(new TicketEvent(this, saved, TicketEvent.Type.UNSNOOZED, actorEmail));
+        return saved;
+    }
+
     @Transactional(transactionManager = EscalatedTransactionManagers.ESCALATED)
     public void wakeUpSnoozedTickets() {
         List<Ticket> snoozed = ticketRepository.findSnoozedTicketsDue(Instant.now());

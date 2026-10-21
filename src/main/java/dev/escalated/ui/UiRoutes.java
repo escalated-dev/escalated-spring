@@ -63,6 +63,17 @@ public class UiRoutes {
         register("escalated.admin.tags.store", "/admin/tags");
         register("escalated.admin.tags.update", "/admin/tags/{tag}");
         register("escalated.admin.tags.destroy", "/admin/tags/{tag}");
+        register("escalated.admin.tickets.index", "/admin/tickets");
+        register("escalated.admin.tickets.bulk", "/admin/tickets/bulk");
+        register("escalated.admin.tickets.show", "/admin/tickets/{ticket}");
+        for (String action : new String[] {"reply", "note", "assign", "status", "priority", "tags", "department",
+                "macro", "follow", "snooze", "unsnooze"}) {
+            register("escalated.admin.tickets." + action, "/admin/tickets/{ticket}/" + action);
+        }
+        register("escalated.admin.saved-views.index", "/admin/saved-views");
+        register("escalated.admin.saved-views.store", "/admin/saved-views");
+        register("escalated.admin.saved-views.update", "/admin/saved-views/{savedView}");
+        register("escalated.admin.saved-views.destroy", "/admin/saved-views/{savedView}");
         register("escalated.attachments.download", "/attachments/{attachment}/download");
     }
 

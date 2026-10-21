@@ -3,6 +3,7 @@ package dev.escalated.ui;
 import dev.escalated.config.EscalatedProperties;
 import jakarta.servlet.http.HttpServletRequest;
 import java.util.Map;
+import org.springframework.security.web.csrf.CsrfToken;
 import org.springframework.web.util.HtmlUtils;
 
 /**
@@ -33,6 +34,10 @@ public class DefaultInertiaRootTemplate implements InertiaRootTemplate {
                 .append("<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n")
                 .append("<title>").append(HtmlUtils.htmlEscape(ui.getTitle() == null ? "" : ui.getTitle()))
                 .append("</title>\n");
+        String csrf = csrfToken(request);
+        if (csrf != null) {
+            html.append("<meta name=\"csrf-token\" content=\"").append(HtmlUtils.htmlEscape(csrf)).append("\">\n");
+        }
         for (String stylesheet : ui.getStylesheets()) {
             html.append("<link rel=\"stylesheet\" href=\"").append(HtmlUtils.htmlEscape(stylesheet)).append("\">\n");
         }
@@ -47,6 +52,15 @@ public class DefaultInertiaRootTemplate implements InertiaRootTemplate {
                 .append("\"></div>\n")
                 .append("</body>\n</html>\n");
         return html.toString();
+    }
+
+    /**
+     * The request's CSRF token, for the {@code csrf-token} meta tag the pages' {@code fetch} calls
+     * read. Null when CSRF protection is not in play for the request.
+     */
+    static String csrfToken(HttpServletRequest request) {
+        Object token = request.getAttribute(CsrfToken.class.getName());
+        return token instanceof CsrfToken csrf ? csrf.getToken() : null;
     }
 
     /** JSON safe inside a script element: no tag can open or close in it. */
