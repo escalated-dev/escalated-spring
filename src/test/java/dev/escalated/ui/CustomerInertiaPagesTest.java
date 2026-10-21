@@ -2,7 +2,6 @@ package dev.escalated.ui;
 
 import static dev.escalated.ui.AgentInertiaPagesTest.fieldNames;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -119,7 +118,7 @@ class CustomerInertiaPagesTest {
     @Test
     void storingATicketFilesItAsTheCustomerAndGoesToIt() throws Exception {
         MockHttpSession session = new MockHttpSession();
-        MvcResult result = mvc.perform(post("/escalated").session(session).with(user(customer)).with(csrf())
+        MvcResult result = mvc.perform(post("/escalated").session(session).with(user(customer)).with(UiTestSupport.xsrf())
                         .header("X-Inertia", "true").contentType(MediaType.APPLICATION_JSON)
                         .content("{\"subject\":\"New " + unique + "\",\"description\":\"Help\",\"priority\":\"low\","
                                 + "\"department_id\":\"\",\"ticket_type\":\"question\",\"attachments\":[]}"))
@@ -140,7 +139,7 @@ class CustomerInertiaPagesTest {
     @Test
     void aMissingSubjectGoesBackWithErrors() throws Exception {
         MockHttpSession session = new MockHttpSession();
-        mvc.perform(post("/escalated").session(session).with(user(customer)).with(csrf())
+        mvc.perform(post("/escalated").session(session).with(user(customer)).with(UiTestSupport.xsrf())
                         .header("X-Inertia", "true").header("Referer", "http://localhost/escalated/create")
                         .contentType(MediaType.APPLICATION_JSON).content("{\"description\":\"Help\"}"))
                 .andExpect(status().isSeeOther())
@@ -211,7 +210,7 @@ class CustomerInertiaPagesTest {
     void aRatingOutOfRangeIsAnError() throws Exception {
         MockHttpSession session = new MockHttpSession();
         String path = "/escalated/" + ticket.getTicketNumber();
-        mvc.perform(post(path + "/rate").session(session).with(user(customer)).with(csrf())
+        mvc.perform(post(path + "/rate").session(session).with(user(customer)).with(UiTestSupport.xsrf())
                         .header("X-Inertia", "true").contentType(MediaType.APPLICATION_JSON).content("{\"rating\":9}"))
                 .andExpect(status().isSeeOther());
         assertThat(inertia(get(path).session(session)).get("props").get("errors").get("rating").asText())
@@ -229,7 +228,7 @@ class CustomerInertiaPagesTest {
     }
 
     private ResultActions write(String path, String json) throws Exception {
-        return mvc.perform(post(path).with(user(customer)).with(csrf()).header("X-Inertia", "true")
+        return mvc.perform(post(path).with(user(customer)).with(UiTestSupport.xsrf()).header("X-Inertia", "true")
                 .contentType(MediaType.APPLICATION_JSON).content(json));
     }
 

@@ -49,13 +49,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     (`GET /escalated/create`, `POST /escalated`) and `Show` (`GET /escalated/{reference}`), with
     `reply`, `close`, `reopen` and `rate`. A customer sees only tickets they requested (by email);
     another's is a 404. Public replies only, staff by display name.
+  - The admin pages: `Escalated/Admin/Settings` (with `supported_settings`: `allow_customer_close`,
+    `show_powered_by` and the widget settings, the keys this port stores), `Workflows/Index` and
+    `Form` (on the workflow admin service from #117, with toggle and reorder), `Automations/Index`
+    and `Form` (on the automation admin service from #118), `Departments/Index` and `Form`, and
+    `Tags/Index`, with their create, update and delete writes.
   - `GET /escalated/attachments/{id}/download`: the attachment download for a browser session, with
     the API download's access rules.
   - Page props are built field by field (`UiPresenter`), never by serialising entities.
-- Not rendered yet (remaining pages of `pages.json`): Admin ApiTokens, AuditLog, Automations,
-  BusinessHours, CannedResponses, Capacity, CustomFields, CustomObjects, Departments,
-  EscalationRules, Import, KnowledgeBase, Macros, Plugins, Reports (all), Roles, Settings (and its
-  sub-pages), Skills, SlaPolicies, Statuses, Tags, Tickets, Users, Webhooks, Workflows;
+- Not rendered yet (remaining pages of `pages.json`): Admin ApiTokens, AuditLog, BusinessHours,
+  CannedResponses, Capacity, CustomFields, CustomObjects, EscalationRules, Import, KnowledgeBase,
+  Macros, Plugins, Reports (all), Roles, the Settings sub-pages, Skills, SlaPolicies, Statuses,
+  Tickets, Users, Webhooks, Workflows Builder and Logs;
   Auth/TwoFactorChallenge; Customer KnowledgeBase; Error; Guest Create and
   Show; Plugin/Page. The newsletter screens still answer `{component, props}` JSON under
   `/escalated/api/admin/newsletters`. Attachments cannot be uploaded from the pages' writes yet
