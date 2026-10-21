@@ -122,6 +122,96 @@ public class EscalatedProperties {
     private List<TicketActionProperties> ticketActions = new ArrayList<>();
     private TicketSubjectsProperties ticketSubjects = new TicketSubjectsProperties();
     private NewslettersProperties newsletters = new NewslettersProperties();
+    private UiProperties ui = new UiProperties();
+
+    public UiProperties getUi() {
+        return ui;
+    }
+
+    public void setUi(UiProperties ui) {
+        this.ui = ui;
+    }
+
+    /**
+     * {@code escalated.ui.*}: the Inertia pages of {@code @escalated-dev/escalated}.
+     *
+     * <p>Off by default, so a host that uses Escalated as an API only is unchanged. Laravel
+     * defaults its {@code escalated.ui.enabled} to true; here a host opts in.
+     */
+    public static class UiProperties {
+        /** Serve the agent, customer and admin pages. */
+        private boolean enabled = false;
+
+        /**
+         * The asset version Inertia compares on every visit. A client holding another version is
+         * answered 409 and reloads. Blank turns the check off.
+         */
+        private String version = "";
+
+        /**
+         * A Thymeleaf view to render the first visit with, instead of the built-in page. It gets
+         * {@code page} (the page object), {@code pageJson}, and {@code routesScript}.
+         */
+        private String rootView;
+
+        /** The document title of the built-in page. */
+        private String title = "Support";
+
+        /** Script URLs the built-in page loads as modules: the host's built frontend. */
+        private List<String> scripts = new ArrayList<>();
+
+        /** Stylesheet URLs the built-in page links. */
+        private List<String> stylesheets = new ArrayList<>();
+
+        public boolean isEnabled() {
+            return enabled;
+        }
+
+        public void setEnabled(boolean enabled) {
+            this.enabled = enabled;
+        }
+
+        public String getVersion() {
+            return version;
+        }
+
+        public void setVersion(String version) {
+            this.version = version == null ? "" : version;
+        }
+
+        public String getRootView() {
+            return rootView;
+        }
+
+        public void setRootView(String rootView) {
+            this.rootView = rootView;
+        }
+
+        public String getTitle() {
+            return title;
+        }
+
+        public void setTitle(String title) {
+            this.title = title;
+        }
+
+        public List<String> getScripts() {
+            return scripts;
+        }
+
+        public void setScripts(List<String> scripts) {
+            this.scripts = scripts;
+        }
+
+        public List<String> getStylesheets() {
+            return stylesheets;
+        }
+
+        public void setStylesheets(List<String> stylesheets) {
+            this.stylesheets = stylesheets;
+        }
+    }
+
 
     public boolean isEnabled() {
         return enabled;
