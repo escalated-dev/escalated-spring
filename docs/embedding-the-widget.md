@@ -103,7 +103,8 @@ renders:
   "kb_enabled": false,
   "guest_tickets_enabled": true,
   "accepts_metadata": true,
-  "status_lookup_enabled": false
+  "guest_verification_required": true,
+  "status_lookup_enabled": true
 }
 ```
 
@@ -113,9 +114,9 @@ departments; `kb_enabled` is `escalated.knowledge-base.enabled`. With
 `escalated.widget.enabled=false` every `/escalated/api/widget/**` route answers
 403 with `{"enabled": false, ...}`. While `escalated.knowledge-base.enabled` is
 `false` (the default) the article routes (`/articles`, `/kb/search`) answer 404.
-`status_lookup_enabled` is `false` because this backend has no mailbox
-verification, so the widget hides its Status tab; there is no lookup of a
-ticket by email address.
+`guest_verification_required` and `status_lookup_enabled` are `true`: tickets,
+chats and the Check Status tab need an emailed code. See
+[verified guest access](guest-access.md).
 
 ### Widget routes
 
@@ -126,8 +127,11 @@ sends.
 |---|---|---|
 | `GET /articles?q=` | `q`, 2 characters or more | `{"articles": [{title, slug, excerpt}]}`, published articles only |
 | `GET /articles/{slug}` | | `{title, slug, body, excerpt, category}`; drafts and unknown slugs 404 |
-| `POST /tickets` | `name`, `email`, `subject`, `description` (or `body`), `department_id`, `metadata` | 201: the ticket's fields plus `message`, `reference` (the ticket number) and `guest_access_token`. Missing `subject`, `email` or `description` is a 422 `{message, errors}` |
-| `POST /chat/start` | `name`, `email`, `message`, `department_id`, `metadata` | 201 `{id, status, messages, agent, ticketId, ...}` |
+| `POST /verification` | `email`, `purpose` (`ticket`, `chat`, `lookup`) | 202 `{verification_id, expires_in, message}`; the code is emailed |
+| `POST /tickets` | `name`, `email`, `subject`, `description` (or `body`), `department_id`, `metadata`, `verification_id`, `verification_code` | 201 `{message, reference, guest_access_token, expires_at}`; the token is an expiring grant. Missing fields or a bad code are a 422 `{message, errors}` |
+| `POST /lookup` | `email`, `reference`, `verification_id`, `verification_code` | `{data: [{reference, subject, guest_access_token, expires_at}]}` |
+| `GET /tickets/{reference}` | `Authorization: Bearer <grant>` | `{reference, subject, status, status_label, status_color, created_at, department, replies}` |
+| `POST /chat/start` | `name`, `email`, `message`, `department_id`, `metadata`, `verification_id`, `verification_code` | 201 `{id, status, messages, agent, ticketId, ...}` |
 | `GET /chat/{id}/messages` | | `{messages: [{id, body, is_agent, author: {name}, created_at}], typing, agent, ended}` (internal notes left out) |
 | `POST /chat/{id}/messages` | `{body}` | 201; filed as the visitor, whatever name the body carries |
 | `POST /chat/{id}/typing`, `POST /chat/{id}/end` | | 200 |

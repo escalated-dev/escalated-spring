@@ -8,6 +8,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- Verified guest access, as in escalated-laravel (`docs/guest-access.md`):
+  - `POST /verification` (on `/escalated/api/widget` and `/escalated/api/guest`) emails an 8-digit
+    code for `ticket`, `chat` or `lookup`. Codes are bound to the address and purpose, last ten
+    minutes, allow five guesses and are spent once. They are budgeted at 3 an hour per mailbox
+    per client IP and 10 in total, and stored only as HMAC digests (`escalated_guest_verifications`,
+    migration `V17`).
+  - `POST /lookup` finds a ticket by reference and verified email and answers fresh grants.
+  - `guest_access_token` is now an expiring, encrypted grant (`escalated.guest-access.ttl-minutes`,
+    default 24 hours). The ticket stores only a hash of its nonce, so a new grant revokes earlier
+    ones, and a changed requester email revokes them too. Send it as `Authorization: Bearer`
+    with the ticket reference in the path. Guest answers are `no-store` and `no-referrer`.
+  - The widget `/config` answers `guest_verification_required: true` and
+    `status_lookup_enabled: true`. `GET /widget/tickets/{reference}` answers what the Check
+    Status tab reads.
 - Configurable automations, as in Laravel's `AutomationRunner`: a new `Automation` entity
   (`escalated_automations`, migration `V16`, PostgreSQL and MySQL) and admin JSON CRUD at
   `/escalated/api/admin/automations` (index, options, store, show, update, toggle, destroy), taking
@@ -72,6 +86,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   The visitor's chat token is never included.
 
 ### Upgrade notes
+- **Widget tickets and chats now need an emailed code.** `POST /widget/tickets` and
+  `POST /widget/chat/start` answer 422 without `verification_id` and `verification_code`. The
+  bundled widget (0.12.3) sends them once `/config` asks. Configure outbound mail
+  (`JavaMailSender`, optionally `escalated.guest-access.from-address`). Set
+  `escalated.guest-access.secret` (or `escalated.email.inbound-secret`) to the same value on
+  every node, or grants will not survive a restart. Run migration `V17`.
+- Permanent guest tokens keep working on the token routes while
+  `escalated.guest-access.legacy-tokens` is `true` (the default), until a grant is issued for the
+  ticket. Turn it off once old links have aged out. See `docs/guest-access.md`.
 - Run migration `V16` (automations). No automation exists until an admin creates one, so nothing
   changes on upgrade; the 7-day auto-close keeps running unless `escalated.automations.auto-close-days=0`.
 - Run migration `V15` (it runs itself unless `escalated.datasource.migrate=false`).

@@ -50,7 +50,9 @@ public class ApiTokenAuthenticationFilter extends OncePerRequestFilter {
                                     FilterChain filterChain) throws ServletException, IOException {
         String authHeader = request.getHeader("Authorization");
 
-        if (authHeader != null && authHeader.startsWith("Bearer ")) {
+        if (authHeader != null && authHeader.startsWith("Bearer ")
+                // A guest grant (widget and guest routes) is not an API token.
+                && !authHeader.startsWith("Bearer " + dev.escalated.services.GuestAccessGrants.PREFIX)) {
             AgentProfile agent;
             try {
                 ApiToken apiToken = apiTokenService.validateToken(authHeader.substring(7));

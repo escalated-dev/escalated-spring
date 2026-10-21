@@ -56,6 +56,7 @@ class WidgetEmbeddingTest {
     @Autowired private MockMvc mockMvc;
     @Autowired private SettingsService settingsService;
     @Autowired private JdbcTemplate jdbc;
+    @Autowired private dev.escalated.services.GuestVerificationService verification;
 
     private final ObjectMapper json = new ObjectMapper();
 
@@ -256,10 +257,10 @@ class WidgetEmbeddingTest {
         MockHttpServletResponse response = mockMvc.perform(guest(post(WIDGET + "/chat/start"))
                         .header("Origin", SHOP)
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("""
+                        .content(chatBody("""
                                 {"name":"Visitor","email":"visitor@example.com","message":"Hi",
                                  "metadata":{"cart_total":59.9,"embedded_on":"https://x.test"}}
-                                """))
+                                """, "visitor@example.com")))
                 .andExpect(status().isCreated())
                 .andExpect(header().string("Access-Control-Allow-Origin", SHOP))
                 .andReturn().getResponse();
@@ -324,7 +325,8 @@ class WidgetEmbeddingTest {
                             })
                             .header("Origin", SHOP)
                             .contentType(MediaType.APPLICATION_JSON)
-                            .content("{\"name\":\"Visitor\",\"email\":\"chat" + i + "@example.com\",\"message\":\"Hi\"}"))
+                            .content(chatBody("{\"name\":\"Visitor\",\"email\":\"chat" + i
+                                    + "@example.com\",\"message\":\"Hi\"}", "chat" + i + "@example.com")))
                     .andReturn().getResponse();
             statuses.add(response.getStatus());
         }
@@ -355,7 +357,8 @@ class WidgetEmbeddingTest {
                             return request;
                         })
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"name\":\"Visitor\",\"email\":\"visitor@example.com\"}"))
+                        .content(chatBody("{\"name\":\"Visitor\",\"email\":\"visitor@example.com\"}",
+                                "visitor@example.com")))
                 .andExpect(status().isTooManyRequests())
                 .andExpect(header().exists("Retry-After"));
     }
@@ -375,7 +378,7 @@ class WidgetEmbeddingTest {
                 .andExpect(jsonPath("$.kb_enabled").isBoolean())
                 .andExpect(jsonPath("$.guest_tickets_enabled").value(true))
                 .andExpect(jsonPath("$.accepts_metadata").value(true))
-                .andExpect(jsonPath("$.guest_verification_required").doesNotExist());
+                .andExpect(jsonPath("$.guest_verification_required").value(true));
     }
 
     // --- embed.js ---
@@ -424,16 +427,23 @@ class WidgetEmbeddingTest {
         return "198.51." + (n / 250) + "." + (n % 250 + 1);
     }
 
-    private static String ticketBody(String metadata) {
-        return "{\"subject\":\"Order help\",\"body\":\"Where is it?\",\"name\":\"Guest\","
-                + "\"email\":\"guest@example.com\""
-                + (metadata == null ? "" : ",\"metadata\":" + metadata) + "}";
+    /** A widget ticket, with a mailbox proof as the widget sends it. */
+    private String ticketBody(String metadata) {
+        return dev.escalated.GuestProofs.with(verification,
+                "{\"subject\":\"Order help\",\"body\":\"Where is it?\",\"name\":\"Guest\","
+                        + "\"email\":\"guest@example.com\""
+                        + (metadata == null ? "" : ",\"metadata\":" + metadata) + "}",
+                "guest@example.com", "ticket");
+    }
+
+    private String chatBody(String json, String email) {
+        return dev.escalated.GuestProofs.with(verification, json, email, "chat");
     }
 
     /** The metadata stored for the ticket a response created, read back from the table. */
     private Map<String, Object> savedMetadata(MockHttpServletResponse response) throws Exception {
         JsonNode body = json.readTree(response.getContentAsString());
-        return storedMetadata("guest_access_token = ?", body.get("guest_access_token").asText());
+        return storedMetadata("ticket_number = ?", body.get("reference").asText());
     }
 
     @SuppressWarnings("unchecked")

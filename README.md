@@ -114,6 +114,11 @@ escalated.widget.enabled=true
 # Other sites allowed to embed the widget (none by default); see docs/embedding-the-widget.md
 escalated.widget.allowed-origins=
 escalated.guest-access.enabled=true
+# Verified guest access (docs/guest-access.md): grant lifetime, the key for codes and
+# grants (falls back to escalated.email.inbound-secret), and permanent tokens
+escalated.guest-access.ttl-minutes=1440
+escalated.guest-access.secret=change-me
+escalated.guest-access.legacy-tokens=true
 
 # Per-client-IP limits on the public guest endpoints (429 + Retry-After when exceeded)
 escalated.guest-rate-limit.enabled=true
@@ -376,18 +381,21 @@ See the [inbound email docs](https://docs.escalated.dev/inbound-email) for provi
 |--------|------|-------------|
 | GET | `/config` | Widget configuration |
 | GET | `/embed.js` | Standalone widget script |
-| POST | `/tickets` | Create ticket (public; optional `metadata` object) |
-| GET | `/tickets/{token}` | View ticket by guest token |
-| POST | `/tickets/{token}/replies` | Reply via guest token |
+| POST | `/verification` | Email a verification code (`email`, `purpose`) |
+| POST | `/tickets` | Create ticket (public; needs a `ticket` code; optional `metadata` object) |
+| POST | `/lookup` | Find a ticket by reference and verified email; answers fresh grants |
+| GET | `/tickets/{reference}` | Ticket status, with `Authorization: Bearer <grant>` (or a permanent token in the path while `legacy-tokens` is on) |
+| POST | `/tickets/{reference}/replies` | Reply, with a grant or a permanent token |
 | GET | `/kb/search?query=` | Search knowledge base |
 | POST | `/csat/{token}` | Submit satisfaction rating |
 
 ### Guest (`/escalated/api/guest/`)
 | Method | Path | Description |
 |--------|------|-------------|
-| GET | `/tickets/{token}` | View ticket |
-| GET | `/tickets/{token}/replies` | View replies |
-| POST | `/tickets/{token}/replies` | Add reply |
+| POST | `/verification`, `/lookup` | As on the widget |
+| GET | `/tickets/{reference}` | View ticket (grant or permanent token, as on the widget) |
+| GET | `/tickets/{reference}/replies` | View replies |
+| POST | `/tickets/{reference}/replies` | Add reply |
 
 ### Guest endpoint rate limits
 

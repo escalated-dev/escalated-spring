@@ -56,6 +56,7 @@ class WidgetApiContractTest {
     @Autowired private KnowledgeBaseService knowledgeBase;
     @Autowired private ChatSessionService chats;
     @Autowired private dev.escalated.services.TicketService tickets;
+    @Autowired private dev.escalated.services.GuestVerificationService verification;
     @Autowired private dev.escalated.repositories.KnowledgeBaseCategoryRepository categories;
 
     private final ObjectMapper json = new ObjectMapper();
@@ -63,13 +64,13 @@ class WidgetApiContractTest {
     // --- /config ---
 
     @Test
-    void configHidesTheStatusTabAndListsDepartments() throws Exception {
+    void configAdvertisesVerifiedStatusLookupAndListsDepartments() throws Exception {
         Department sales = departments.create("Sales " + unique(), null);
 
         mockMvc.perform(get(WIDGET + "/config"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.status_lookup_enabled").value(false))
-                .andExpect(jsonPath("$.guest_verification_required").doesNotExist())
+                .andExpect(jsonPath("$.status_lookup_enabled").value(true))
+                .andExpect(jsonPath("$.guest_verification_required").value(true))
                 .andExpect(jsonPath("$.guest_tickets_enabled").value(true))
                 .andExpect(jsonPath("$.departments[*].id", Matchers.hasItem(sales.getId().intValue())));
     }
@@ -124,12 +125,13 @@ class WidgetApiContractTest {
     @Test
     void aWidgetTicketKeepsItsDescriptionAndAnswersWithAReference() throws Exception {
         Department support = departments.create("Support " + unique(), null);
-        String body = json.writeValueAsString(java.util.Map.of(
+        String grace = "grace-" + unique() + "@example.com";
+        String body = dev.escalated.GuestProofs.with(verification, json.writeValueAsString(java.util.Map.of(
                 "name", "Grace",
-                "email", "grace-" + unique() + "@example.com",
+                "email", grace,
                 "subject", "Order missing",
                 "description", "It never arrived.",
-                "department_id", support.getId()));
+                "department_id", support.getId())), grace, "ticket");
 
         JsonNode answer = json.readTree(mockMvc.perform(guest(post(WIDGET + "/tickets"))
                         .contentType(MediaType.APPLICATION_JSON)
@@ -162,8 +164,9 @@ class WidgetApiContractTest {
 
         String raw = mockMvc.perform(guest(post(WIDGET + "/tickets"))
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"name\":\"Attacker\",\"email\":\"" + victim + "\","
-                                + "\"subject\":\"Hi\",\"description\":\"Who are you?\"}"))
+                        .content(dev.escalated.GuestProofs.with(verification,
+                                "{\"name\":\"Attacker\",\"email\":\"" + victim + "\","
+                                        + "\"subject\":\"Hi\",\"description\":\"Who are you?\"}", victim, "ticket")))
                 .andExpect(status().isCreated())
                 .andReturn().getResponse().getContentAsString();
 
@@ -172,10 +175,11 @@ class WidgetApiContractTest {
 
     @Test
     void anUnknownDepartmentIsIgnored() throws Exception {
+        String g = "g-" + unique() + "@example.com";
         JsonNode answer = json.readTree(mockMvc.perform(guest(post(WIDGET + "/tickets"))
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"name\":\"G\",\"email\":\"g-" + unique() + "@example.com\","
-                                + "\"subject\":\"S\",\"description\":\"D\",\"department_id\":987654321}"))
+                        .content(dev.escalated.GuestProofs.with(verification, "{\"name\":\"G\",\"email\":\"" + g + "\","
+                                + "\"subject\":\"S\",\"description\":\"D\",\"department_id\":987654321}", g, "ticket")))
                 .andExpect(status().isCreated())
                 .andReturn().getResponse().getContentAsString());
 
@@ -300,9 +304,10 @@ class WidgetApiContractTest {
     // --- helpers ---
 
     private JsonNode startChat(String message) throws Exception {
-        String body = "{\"name\":\"Visitor Vi\",\"email\":\"vi-" + unique() + "@example.com\","
+        String vi = "vi-" + unique() + "@example.com";
+        String body = dev.escalated.GuestProofs.with(verification, "{\"name\":\"Visitor Vi\",\"email\":\"" + vi + "\","
                 + "\"department_id\":null"
-                + (message == null ? "" : ",\"message\":" + json.writeValueAsString(message)) + "}";
+                + (message == null ? "" : ",\"message\":" + json.writeValueAsString(message)) + "}", vi, "chat");
         return json.readTree(mockMvc.perform(guest(post(WIDGET + "/chat/start"))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(body))

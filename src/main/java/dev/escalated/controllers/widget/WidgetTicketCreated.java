@@ -18,11 +18,10 @@ record WidgetTicketCreated(
         @JsonProperty("message") String message,
         @JsonProperty("reference") String reference,
         @JsonProperty("guest_access_token") String guestAccessToken,
-        // Guest tokens on this port do not expire yet; the key is there for the widget.
         @JsonProperty("expires_at") String expiresAt) {
 
-    static WidgetTicketCreated of(Ticket ticket) {
-        return new WidgetTicketCreated(
-                "Ticket created successfully.", ticket.getTicketNumber(), ticket.getGuestAccessToken(), null);
+    static WidgetTicketCreated of(Ticket ticket, dev.escalated.services.GuestAccessGrants.Grant grant) {
+        return new WidgetTicketCreated("Ticket created successfully.", ticket.getTicketNumber(), grant.token(),
+                grant.expiresAt().toString());
     }
 }

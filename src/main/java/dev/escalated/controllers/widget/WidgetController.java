@@ -6,15 +6,17 @@ import dev.escalated.models.Reply;
 import dev.escalated.models.Ticket;
 import dev.escalated.models.TicketPriority;
 import dev.escalated.services.DepartmentService;
+import dev.escalated.services.GuestAccessGrants;
+import dev.escalated.services.GuestVerificationService;
 import dev.escalated.services.KnowledgeBaseService;
 import dev.escalated.services.SatisfactionRatingService;
 import dev.escalated.services.TicketService;
 import dev.escalated.widget.WidgetMetadata;
 import jakarta.servlet.http.HttpServletRequest;
-import jakarta.persistence.EntityNotFoundException;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.http.ResponseEntity;
@@ -34,21 +36,29 @@ public class WidgetController {
     private final KnowledgeBaseService knowledgeBaseService;
     private final SatisfactionRatingService ratingService;
     private final DepartmentService departmentService;
+    private final GuestVerificationService verification;
+    private final GuestAccessGrants grants;
 
     public WidgetController(TicketService ticketService,
                             KnowledgeBaseService knowledgeBaseService,
                             SatisfactionRatingService ratingService,
-                            DepartmentService departmentService) {
+                            DepartmentService departmentService,
+                            GuestVerificationService verification,
+                            GuestAccessGrants grants) {
         this.ticketService = ticketService;
         this.knowledgeBaseService = knowledgeBaseService;
         this.ratingService = ratingService;
         this.departmentService = departmentService;
+        this.verification = verification;
+        this.grants = grants;
     }
 
     /**
      * The shared widget sends {@code description}; older clients send
-     * {@code body}, which still works. The answer is {@link WidgetTicketCreated}:
-     * {@code message}, {@code reference}, {@code guest_access_token}, {@code expires_at}.
+     * {@code body}, which still works. It needs a {@code ticket} mailbox proof
+     * ({@code verification_id}, {@code verification_code}). The answer is
+     * {@link WidgetTicketCreated}: {@code message}, {@code reference}, and an
+     * expiring grant as {@code guest_access_token} with {@code expires_at}.
      */
     @PostMapping("/tickets")
     @GuestThrottle(GuestThrottle.Scope.TICKET)
@@ -78,51 +88,70 @@ public class WidgetController {
         }
 
         Map<String, Object> metadata = WidgetMetadata.fromRequest(body.get("metadata"), request);
-        Ticket ticket = ticketService.create(
-                subject,
-                description,
-                name == null || name.isBlank() ? email : name,
-                email,
-                TicketPriority.MEDIUM,
-                WidgetRequestBodies.activeDepartment(body.get("department_id"), departmentService),
-                null,
-                metadata);
-        return ResponseEntity.status(201).body(WidgetTicketCreated.of(ticket));
-    }
-
-    @GetMapping("/tickets/{token}")
-    public ResponseEntity<?> getTicketByToken(@PathVariable String token) {
-        try {
-            return ResponseEntity.ok(ticketService.findGuestView(token));
-        } catch (EntityNotFoundException ex) {
-            return invalidToken();
-        }
-    }
-
-    @PostMapping("/tickets/{token}/replies")
-    // Counted before the token lookup, so wrong-token guesses count too.
-    @GuestThrottle(GuestThrottle.Scope.REPLY)
-    public ResponseEntity<?> addReply(@PathVariable String token, @RequestBody Map<String, String> body) {
+        // Mailbox proof first: the code is spent with the ticket, and handed
+        // back if the ticket cannot be filed.
+        verification.claim(body.get("verification_id"), body.get("verification_code"), email, "ticket");
         Ticket ticket;
         try {
-            ticket = ticketService.findByGuestToken(token);
-        } catch (EntityNotFoundException ex) {
-            return invalidToken();
+            ticket = ticketService.create(
+                    subject,
+                    description,
+                    name == null || name.isBlank() ? email : name,
+                    email,
+                    TicketPriority.MEDIUM,
+                    WidgetRequestBodies.activeDepartment(body.get("department_id"), departmentService),
+                    null,
+                    metadata);
+        } catch (RuntimeException ex) {
+            verification.release(body.get("verification_id"));
+            throw ex;
         }
-        // The guest token belongs to the requester, so the reply is theirs;
-        // any name or email in the body is ignored (as in the NestJS reference).
-        Reply reply = ticketService.addReply(ticket.getId(),
-                body.get("body"), ticket.getRequesterName(), ticket.getRequesterEmail(), "customer", false);
-        return ResponseEntity.status(201).body(GuestReplyDto.from(reply));
+        return GuestResponses.of(201, WidgetTicketCreated.of(ticket, grants.issue(ticket.getId())));
     }
 
-    @GetMapping("/tickets/{token}/replies")
-    public ResponseEntity<?> getReplies(@PathVariable String token) {
-        try {
-            return ResponseEntity.ok(ticketService.findGuestReplies(token));
-        } catch (EntityNotFoundException ex) {
-            return invalidToken();
+    /**
+     * With {@code Authorization: Bearer <grant>}, {@code reference} is the
+     * ticket reference and the answer is what the Check Status tab reads.
+     * Without one, while legacy tokens are on, {@code reference} is a
+     * ticket's permanent guest token.
+     */
+    @GetMapping("/tickets/{reference}")
+    public ResponseEntity<?> getTicket(@PathVariable String reference, HttpServletRequest request) {
+        String authorization = request.getHeader("Authorization");
+        Optional<Ticket> ticket = grants.resolve(reference, authorization);
+        if (ticket.isEmpty()) {
+            return GuestResponses.invalidToken();
         }
+        if (GuestAccessGrants.bearer(authorization) != null) {
+            return GuestResponses.of(200, ticketService.guestStatus(ticket.get().getId()));
+        }
+        return GuestResponses.of(200, ticketService.guestView(ticket.get().getId()));
+    }
+
+    @PostMapping("/tickets/{reference}/replies")
+    // Counted before the token lookup, so wrong-token guesses count too.
+    @GuestThrottle(GuestThrottle.Scope.REPLY)
+    public ResponseEntity<?> addReply(@PathVariable String reference, @RequestBody Map<String, String> body,
+                                      HttpServletRequest request) {
+        Optional<Ticket> resolved = grants.resolve(reference, request.getHeader("Authorization"));
+        if (resolved.isEmpty()) {
+            return GuestResponses.invalidToken();
+        }
+        Ticket ticket = resolved.get();
+        // The grant belongs to the requester, so the reply is theirs; any name
+        // or email in the body is ignored (as in the NestJS reference).
+        Reply reply = ticketService.addReply(ticket.getId(),
+                body.get("body"), ticket.getRequesterName(), ticket.getRequesterEmail(), "customer", false);
+        return GuestResponses.of(201, GuestReplyDto.from(reply));
+    }
+
+    @GetMapping("/tickets/{reference}/replies")
+    public ResponseEntity<?> getReplies(@PathVariable String reference, HttpServletRequest request) {
+        Optional<Ticket> ticket = grants.resolve(reference, request.getHeader("Authorization"));
+        if (ticket.isEmpty()) {
+            return GuestResponses.invalidToken();
+        }
+        return GuestResponses.of(200, ticketService.guestReplies(ticket.get().getId()));
     }
 
     @GetMapping("/kb/search")
@@ -174,8 +203,4 @@ public class WidgetController {
         return ResponseEntity.ok(ratingService.submitRating(token, score, comment));
     }
 
-    /** Matches the NestJS reference's GuestAccessGuard. */
-    private static ResponseEntity<Map<String, String>> invalidToken() {
-        return ResponseEntity.status(403).body(Map.of("error", "Invalid guest access token"));
-    }
 }

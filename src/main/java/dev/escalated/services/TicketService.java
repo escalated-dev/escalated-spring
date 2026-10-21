@@ -667,6 +667,82 @@ public class TicketService {
         return GuestTicketDto.from(findByGuestToken(token));
     }
 
+    /** The guest view of a ticket a grant has opened. */
+    @Transactional(transactionManager = EscalatedTransactionManagers.ESCALATED, readOnly = true)
+    public GuestTicketDto guestView(Long ticketId) {
+        return GuestTicketDto.from(findById(ticketId));
+    }
+
+    /** The public replies on a ticket a grant has opened. */
+    @Transactional(transactionManager = EscalatedTransactionManagers.ESCALATED, readOnly = true)
+    public List<GuestReplyDto> guestReplies(Long ticketId) {
+        return replyRepository.findByTicketIdAndInternalFalseOrderByCreatedAtAsc(ticketId).stream()
+                .map(GuestReplyDto::from)
+                .toList();
+    }
+
+    /**
+     * What the widget's Check Status tab reads: reference, subject, status
+     * (with label and colour), department name, created_at, and the 20 latest
+     * public replies. No internal notes, no staff email addresses.
+     */
+    @Transactional(transactionManager = EscalatedTransactionManagers.ESCALATED, readOnly = true)
+    public Map<String, Object> guestStatus(Long ticketId) {
+        Ticket ticket = findById(ticketId);
+        List<Reply> publicReplies = replyRepository.findByTicketIdAndInternalFalseOrderByCreatedAtAsc(ticketId);
+        List<Map<String, Object>> replies = publicReplies
+                .subList(Math.max(0, publicReplies.size() - 20), publicReplies.size()).stream()
+                .map(reply -> {
+                    Map<String, Object> entry = new java.util.LinkedHashMap<>();
+                    entry.put("author", reply.getAuthorName());
+                    entry.put("is_agent", "agent".equals(reply.getAuthorType()));
+                    entry.put("body", reply.getBody());
+                    entry.put("created_at", reply.getCreatedAt());
+                    return entry;
+                })
+                .toList();
+        String status = ticket.getStatus() == null ? "open" : ticket.getStatus().name().toLowerCase();
+        Map<String, Object> view = new java.util.LinkedHashMap<>();
+        view.put("reference", ticket.getTicketNumber());
+        view.put("subject", ticket.getSubject());
+        view.put("status", status);
+        view.put("status_label", statusLabel(status));
+        view.put("status_color", statusColor(status));
+        view.put("created_at", ticket.getCreatedAt());
+        view.put("department", ticket.getDepartment() == null ? null : ticket.getDepartment().getName());
+        view.put("replies", replies);
+        return view;
+    }
+
+    /** Tickets a verified guest may look up: this reference, requested by this email. */
+    @Transactional(transactionManager = EscalatedTransactionManagers.ESCALATED, readOnly = true)
+    public List<Ticket> findForGuestLookup(String reference, String email) {
+        if (reference == null || reference.isBlank() || email == null || email.isBlank()) {
+            return List.of();
+        }
+        return ticketRepository.findByTicketNumber(reference.trim()).stream()
+                .filter(ticket -> ticket.getRequesterEmail() != null
+                        && ticket.getRequesterEmail().trim().equalsIgnoreCase(email.trim()))
+                .limit(20)
+                .toList();
+    }
+
+    private static String statusLabel(String status) {
+        String words = status.replace('_', ' ');
+        return Character.toUpperCase(words.charAt(0)) + words.substring(1);
+    }
+
+    private static String statusColor(String status) {
+        return switch (status) {
+            case "open" -> "#3B82F6";
+            case "pending", "snoozed" -> "#F59E0B";
+            case "in_progress" -> "#8B5CF6";
+            case "resolved" -> "#10B981";
+            case "closed", "merged" -> "#6B7280";
+            default -> "#6B7280";
+        };
+    }
+
     /** The public replies on the guest's ticket. Internal notes are never included. */
     @Transactional(transactionManager = EscalatedTransactionManagers.ESCALATED, readOnly = true)
     public List<GuestReplyDto> findGuestReplies(String token) {
