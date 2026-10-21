@@ -25,6 +25,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   and `Webhooks/Index`, `Form` and `DeliveryLog` (create, update, delete, the delivery log and
   delivery retry). Webhook secrets are never sent to a page; a blank secret on update keeps the
   stored one.
+- The people pages, behind `escalated.ui.enabled`, as escalated-laravel's: `Escalated/Admin/Users/Index`
+  (search, and granting or revoking the admin and agent flags with
+  `PATCH /escalated/admin/users/{id}/role`), `Roles/Index` and `Form` (create, update, delete, with
+  the permissions grouped by category; system roles are refused), and `ApiTokens/Index` (issue,
+  rename, revoke; the plain-text token is flashed once as `plain_text_token`).
 - `MacroService` also applies the action types the shared Macros page saves (`status`, `priority`,
   `assign`, `tags`, `department`, `reply`, `note`), alongside the existing `set_status`,
   `set_priority`, `add_tag`, `add_reply`, `add_internal_note` and `assign`.
