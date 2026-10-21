@@ -1,5 +1,7 @@
 package dev.escalated.security;
 
+import dev.escalated.config.EscalatedProperties;
+
 import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -8,6 +10,8 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
+import org.springframework.security.web.csrf.CsrfTokenRequestAttributeHandler;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 @Configuration
@@ -17,14 +21,17 @@ public class EscalatedSecurityConfig {
     private final ApiTokenAuthenticationFilter apiTokenFilter;
     private final EscalatedAuthorization authorization;
     private final TicketVisibilityFilter ticketVisibilityFilter;
+    private final EscalatedProperties properties;
 
     public EscalatedSecurityConfig(
             ApiTokenAuthenticationFilter apiTokenFilter,
             EscalatedAuthorization authorization,
-            TicketAccess ticketAccess) {
+            TicketAccess ticketAccess,
+            EscalatedProperties properties) {
         this.ticketVisibilityFilter = new TicketVisibilityFilter(ticketAccess);
         this.apiTokenFilter = apiTokenFilter;
         this.authorization = authorization;
+        this.properties = properties;
     }
 
     /**
@@ -89,35 +96,52 @@ public class EscalatedSecurityConfig {
     @Bean
     @Order(2)
     public SecurityFilterChain escalatedWebSecurityFilterChain(HttpSecurity http) throws Exception {
+        boolean ui = properties.getUi().isEnabled();
         http.securityMatcher("/escalated/**")
                 .csrf(
-                        csrf ->
-                                csrf.ignoringRequestMatchers(
-                                        "/escalated/api/**",
-                                        "/escalated/n/**",
-                                        "/escalated/webhook/**",
-                                        "/escalated/webhooks/newsletter/**"))
+                        csrf -> {
+                            csrf.ignoringRequestMatchers(
+                                    "/escalated/api/**",
+                                    "/escalated/n/**",
+                                    "/escalated/webhook/**",
+                                    "/escalated/webhooks/newsletter/**");
+                            if (ui) {
+                                // Inertia's client (axios) echoes the XSRF-TOKEN cookie back as
+                                // X-XSRF-TOKEN, unmasked, as on Laravel.
+                                csrf.csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
+                                        .csrfTokenRequestHandler(new CsrfTokenRequestAttributeHandler());
+                            }
+                        })
                 .addFilterBefore(
                         ticketVisibilityFilter,
                         org.springframework.security.web.access.intercept.AuthorizationFilter.class)
                 .authorizeHttpRequests(
-                        auth ->
-                                auth.requestMatchers("/escalated/ws/**")
-                                        .permitAll()
-                                        .requestMatchers("/escalated/kb/**")
-                                        .permitAll()
-                                        .requestMatchers("/escalated/n/**")
-                                        .permitAll()
-                                        // Mail providers have no session and no CSRF token.
-                                        // InboundEmailController authenticates them by the
-                                        // shared-secret header, and refuses everything while
-                                        // no secret is configured.
-                                        .requestMatchers("/escalated/webhook/**")
-                                        .permitAll()
-                                        .requestMatchers("/escalated/webhooks/newsletter/**")
-                                        .permitAll()
-                                        .anyRequest()
-                                        .authenticated());
+                        auth -> {
+                            if (ui) {
+                                // The pages behind escalated.ui.enabled: the same two gates as
+                                // the admin and agent APIs.
+                                auth.requestMatchers("/escalated/admin", "/escalated/admin/**")
+                                        .access(authorization.admin())
+                                        .requestMatchers("/escalated/agent", "/escalated/agent/**")
+                                        .access(authorization.agent());
+                            }
+                            auth.requestMatchers("/escalated/ws/**")
+                                    .permitAll()
+                                    .requestMatchers("/escalated/kb/**")
+                                    .permitAll()
+                                    .requestMatchers("/escalated/n/**")
+                                    .permitAll()
+                                    // Mail providers have no session and no CSRF token.
+                                    // InboundEmailController authenticates them by the
+                                    // shared-secret header, and refuses everything while
+                                    // no secret is configured.
+                                    .requestMatchers("/escalated/webhook/**")
+                                    .permitAll()
+                                    .requestMatchers("/escalated/webhooks/newsletter/**")
+                                    .permitAll()
+                                    .anyRequest()
+                                    .authenticated();
+                        });
         return http.build();
     }
 }

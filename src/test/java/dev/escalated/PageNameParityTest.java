@@ -103,6 +103,26 @@ class PageNameParityTest {
     assertTrue(missing.isEmpty(), () -> explain(missing, rendered));
   }
 
+  /**
+   * The pages the Inertia layer ({@code escalated.ui.enabled}) serves. Each must be rendered from
+   * {@code dev.escalated.ui}, and each must ship: a page dropped from here, or renamed there, fails.
+   */
+  static final List<String> SERVED_BY_UI =
+      List.of("Escalated/Agent/Dashboard", "Escalated/Agent/TicketIndex", "Escalated/Agent/TicketShow");
+
+  @Test
+  void theUiLayerRendersEveryPageItServes() throws IOException {
+    Map<String, Set<String>> rendered = renderedPages();
+    Set<String> shipped = Set.copyOf(shippedPages());
+
+    for (String page : SERVED_BY_UI) {
+      assertTrue(shipped.contains(page), () -> page + " is not in the frontend's manifest");
+      assertTrue(
+          rendered.getOrDefault(page, Set.of()).stream().anyMatch(file -> file.startsWith("dev/escalated/ui/")),
+          () -> page + " is not rendered by the UI layer (dev.escalated.ui)");
+    }
+  }
+
   @Test
   void thePageManifestIsPresentAndLooksLikeOne() throws IOException {
     // A fixture gone missing or empty would make the test above pass by comparing

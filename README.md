@@ -25,6 +25,8 @@ For opt-in department/account visibility and targeted SLAs, see [ticket access a
 
 To run the support widget on other sites (a store, a marketing site), see [embedding the widget](docs/embedding-the-widget.md).
 
+To serve the shared agent, customer and admin screens (`@escalated-dev/escalated`, Vue 3 + Inertia), set `escalated.ui.enabled=true`; see [the Inertia pages](docs/ui.md). It is off by default, so an API-only host is unchanged.
+
 ## Features
 
 1. **Ticket CRUD** -- Full lifecycle management with statuses, priorities, and assignments
@@ -105,6 +107,9 @@ escalated.enabled=true
 
 # Route prefix (default: escalated)
 escalated.route-prefix=escalated
+
+# The shared Inertia pages (off by default; Laravel defaults to on). See docs/ui.md
+escalated.ui.enabled=false
 
 # Feature toggles
 escalated.knowledge-base.enabled=true
