@@ -3,6 +3,7 @@ package dev.escalated.services;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import dev.escalated.config.EscalatedTransactionManagers;
 import dev.escalated.config.EscalatedProperties;
+import dev.escalated.events.EventNames;
 import dev.escalated.models.Webhook;
 import dev.escalated.models.WebhookDelivery;
 import dev.escalated.repositories.WebhookDeliveryRepository;
@@ -17,6 +18,7 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import javax.crypto.Mac;
@@ -84,7 +86,7 @@ public class WebhookService {
         Webhook webhook = new Webhook();
         webhook.setUrl(webhookUri.toString());
         webhook.setSecret(secret);
-        webhook.setEvents(events);
+        webhook.setEvents(EventNames.canonicalise(events));
         webhook.setDescription(description);
         webhook.setMaxRetries(properties.getWebhook().getMaxRetries());
         return webhookRepository.save(webhook);
@@ -96,7 +98,7 @@ public class WebhookService {
         URI webhookUri = validateWebhookUrl(url);
         assertPublicHost(webhookUri, false);
         webhook.setUrl(webhookUri.toString());
-        webhook.setEvents(events);
+        webhook.setEvents(EventNames.canonicalise(events));
         webhook.setDescription(description);
         webhook.setActive(active);
         return webhookRepository.save(webhook);
@@ -109,23 +111,47 @@ public class WebhookService {
 
     @Transactional(transactionManager = EscalatedTransactionManagers.ESCALATED)
     public void dispatchEvent(String eventName, Long entityId) {
-        List<Webhook> webhooks = webhookRepository.findActiveByEvent(eventName);
-        for (Webhook webhook : webhooks) {
-            deliverWebhook(webhook, eventName, entityId);
+        dispatchEvent(eventName, entityId, Map.of());
+    }
+
+    /**
+     * Delivers {@code eventName} to every active webhook subscribed to it,
+     * including webhooks whose stored subscription uses a legacy name for it
+     * ({@code ticket.tagged} for {@code ticket.tag_added}, and so on).
+     * {@code data} adds event-specific keys to the payload.
+     */
+    @Transactional(transactionManager = EscalatedTransactionManagers.ESCALATED)
+    public void dispatchEvent(String eventName, Long entityId, Map<String, Object> data) {
+        String canonical = EventNames.canonical(eventName);
+        List<Webhook> subscribed = new java.util.ArrayList<>();
+        for (String name : EventNames.aliasesOf(canonical)) {
+            for (Webhook webhook : webhookRepository.findActiveByEvent(name)) {
+                // The query is a substring match; a subscription to
+                // ticket.reopened must not receive ticket.opened.
+                boolean seen = subscribed.stream().anyMatch(other -> other == webhook
+                        || (other.getId() != null && other.getId().equals(webhook.getId())));
+                if (!seen && EventNames.namesIn(webhook.getEvents()).contains(canonical)) {
+                    subscribed.add(webhook);
+                }
+            }
+        }
+        for (Webhook webhook : subscribed) {
+            deliverWebhook(webhook, canonical, entityId, data == null ? Map.of() : data);
         }
     }
 
-    private void deliverWebhook(Webhook webhook, String eventName, Long entityId) {
+    private void deliverWebhook(Webhook webhook, String eventName, Long entityId, Map<String, Object> data) {
         WebhookDelivery delivery = new WebhookDelivery();
         delivery.setWebhook(webhook);
         delivery.setEventType(eventName);
 
         try {
-            String payload = objectMapper.writeValueAsString(Map.of(
-                    "event", eventName,
-                    "entity_id", entityId,
-                    "timestamp", System.currentTimeMillis()
-            ));
+            Map<String, Object> body = new LinkedHashMap<>();
+            body.put("event", eventName);
+            body.put("entity_id", entityId);
+            body.put("timestamp", System.currentTimeMillis());
+            data.forEach(body::putIfAbsent);
+            String payload = objectMapper.writeValueAsString(body);
             delivery.setPayload(payload);
 
             URI target = validateWebhookUrl(webhook.getUrl());

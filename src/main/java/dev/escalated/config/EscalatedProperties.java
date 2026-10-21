@@ -332,6 +332,19 @@ public class EscalatedProperties {
 
     public static class SlaProperties {
         private int checkIntervalSeconds = 60;
+        /**
+         * Minutes before an SLA deadline at which {@code sla.warning} is
+         * announced, once per deadline. 0 turns warnings off.
+         */
+        private int warningMinutes = 30;
+
+        public int getWarningMinutes() {
+            return warningMinutes;
+        }
+
+        public void setWarningMinutes(int warningMinutes) {
+            this.warningMinutes = warningMinutes;
+        }
 
         public int getCheckIntervalSeconds() {
             return checkIntervalSeconds;

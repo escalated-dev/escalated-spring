@@ -60,6 +60,51 @@ class WebhookServiceTest {
         assertEquals("secret123", result.getSecret());
     }
 
+    @Test
+    void create_shouldStoreLegacyEventNamesAsTheirCanonicalNames() {
+        when(webhookRepository.save(any(Webhook.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        Webhook result = webhookService.create("https://example.com/hook", null,
+                "ticket.created,ticket.tagged,internal_note.added,ticket.replied", "Legacy names");
+
+        assertEquals("ticket.created,ticket.tag_added,note.created,reply.created", result.getEvents());
+    }
+
+    @Test
+    void dispatchEvent_shouldDeliverToAWebhookSubscribedUnderALegacyName() {
+        Webhook webhook = new Webhook();
+        webhook.setId(4L);
+        webhook.setUrl("https://hooks.example/x");
+        webhook.setEvents("ticket.tagged");
+        webhook.setActive(true);
+        // Fails at send time, after the delivery row records the event name.
+        webhookService.setResolver(host -> new InetAddress[] {InetAddress.getByName("127.0.0.1")});
+        // Looked up under the canonical name and each legacy alias.
+        org.mockito.Mockito.lenient().when(webhookRepository.findActiveByEvent(any())).thenReturn(List.of());
+        org.mockito.Mockito.lenient().when(webhookRepository.findActiveByEvent("ticket.tagged"))
+                .thenReturn(List.of(webhook));
+        ArgumentCaptor<WebhookDelivery> delivery = ArgumentCaptor.forClass(WebhookDelivery.class);
+
+        webhookService.dispatchEvent("ticket.tag_added", 1L);
+
+        verify(deliveryRepository).save(delivery.capture());
+        assertEquals("ticket.tag_added", delivery.getValue().getEventType());
+    }
+
+    @Test
+    void dispatchEvent_shouldNotDeliverToASubscriptionThatOnlyContainsTheNameAsASubstring() {
+        Webhook webhook = new Webhook();
+        webhook.setId(5L);
+        webhook.setUrl("https://hooks.example/x");
+        webhook.setEvents("ticket.status_changed_digest");
+        webhook.setActive(true);
+        when(webhookRepository.findActiveByEvent("ticket.status_changed")).thenReturn(List.of(webhook));
+
+        webhookService.dispatchEvent("ticket.status_changed", 1L);
+
+        verify(deliveryRepository, org.mockito.Mockito.never()).save(any());
+    }
+
     @ParameterizedTest
     @ValueSource(strings = {
             "ftp://example.com/hook",

@@ -426,6 +426,7 @@ public class TicketService {
                 ticket.getAssignedAgent() != null
                         ? ticket.getAssignedAgent().getName()
                         : "unassigned";
+        boolean wasAssigned = ticket.getAssignedAgent() != null;
 
         if (agentId != null) {
             AgentProfile agent = agentRepository.findById(agentId)
@@ -448,7 +449,13 @@ public class TicketService {
         }
 
         Ticket saved = ticketRepository.save(ticket);
-        eventPublisher.publishEvent(new TicketEvent(this, saved, TicketEvent.Type.ASSIGNED, actorEmail));
+        if (agentId != null) {
+            eventPublisher.publishEvent(new TicketEvent(this, saved, TicketEvent.Type.ASSIGNED, actorEmail));
+        } else if (wasAssigned) {
+            // Unassigning is ticket.unassigned, never ticket.assigned.
+            eventPublisher.publishEvent(
+                    new TicketEvent(this, saved, TicketEvent.Type.UNASSIGNED, actorEmail, oldAgent, null));
+        }
         return saved;
     }
 
@@ -497,15 +504,27 @@ public class TicketService {
             newTag.setName(tagName);
             return tagRepository.save(newTag);
         });
-        ticket.getTags().add(tag);
-        return ticketRepository.save(ticket);
+        boolean added = ticket.getTags().stream().noneMatch(t -> t.getId() != null && t.getId().equals(tag.getId()))
+                && ticket.getTags().add(tag);
+        Ticket saved = ticketRepository.save(ticket);
+        if (added) {
+            eventPublisher.publishEvent(
+                    new TicketEvent(this, saved, TicketEvent.Type.TAG_ADDED, null, null, tag.getName()));
+        }
+        return saved;
     }
 
     @Transactional(transactionManager = EscalatedTransactionManagers.ESCALATED)
     public Ticket removeTag(Long ticketId, Long tagId) {
         Ticket ticket = findById(ticketId);
+        Tag removed = ticket.getTags().stream().filter(t -> t.getId().equals(tagId)).findFirst().orElse(null);
         ticket.getTags().removeIf(t -> t.getId().equals(tagId));
-        return ticketRepository.save(ticket);
+        Ticket saved = ticketRepository.save(ticket);
+        if (removed != null) {
+            eventPublisher.publishEvent(
+                    new TicketEvent(this, saved, TicketEvent.Type.TAG_REMOVED, null, null, removed.getName()));
+        }
+        return saved;
     }
 
     @Transactional(transactionManager = EscalatedTransactionManagers.ESCALATED)
@@ -668,6 +687,10 @@ public class TicketService {
                                 .findById(departmentId)
                                 .orElseThrow(
                                         () -> new EntityNotFoundException("Department not found"));
+        Long oldDepartmentId = ticket.getDepartment() == null ? null : ticket.getDepartment().getId();
+        if (java.util.Objects.equals(oldDepartmentId, departmentId)) {
+            return ticket;
+        }
         java.util.function.Supplier<Ticket> change =
                 () -> {
                     ticket.setDepartment(department);
@@ -685,7 +708,11 @@ public class TicketService {
                             String.valueOf(departmentId));
                     return ticketRepository.saveAndFlush(ticket);
                 };
-        return access == null ? change.get() : access.withoutRestriction(change);
+        Ticket saved = access == null ? change.get() : access.withoutRestriction(change);
+        eventPublisher.publishEvent(new TicketEvent(this, saved, TicketEvent.Type.DEPARTMENT_CHANGED, actorEmail,
+                oldDepartmentId == null ? null : String.valueOf(oldDepartmentId),
+                departmentId == null ? null : String.valueOf(departmentId)));
+        return saved;
     }
 
     private String generateTicketNumber() {

@@ -159,6 +159,23 @@ public class AdminTicketController {
         return ResponseEntity.ok(ticketService.addTag(id, body.get("tag")));
     }
 
+    @DeleteMapping("/{id}/tags/{tagId}")
+    public ResponseEntity<Ticket> removeTag(@PathVariable Long id, @PathVariable Long tagId) {
+        return ResponseEntity.ok(ticketService.removeTag(id, tagId));
+    }
+
+    /**
+     * Moves the ticket to another department ({@code department_id}, or null
+     * for none). Announced as {@code ticket.department_changed}.
+     */
+    @PostMapping("/{id}/department")
+    public ResponseEntity<Ticket> changeDepartment(@PathVariable Long id, @RequestBody Map<String, Object> body,
+                                                   Authentication authentication) {
+        Object raw = body.get("department_id");
+        Long departmentId = raw == null || raw.toString().isBlank() ? null : Long.valueOf(raw.toString());
+        return ResponseEntity.ok(ticketService.changeDepartment(id, departmentId, actor(authentication)));
+    }
+
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> destroy(@PathVariable Long id, Authentication authentication) {
         ticketService.delete(id, actor(authentication));

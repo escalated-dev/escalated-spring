@@ -44,20 +44,13 @@ public class WorkflowEngine {
                     "delay",
                     "add_follower",
                     "send_notification");
-    public static final List<String> TRIGGER_EVENTS =
-            List.of(
-                    "ticket.created",
-                    "ticket.updated",
-                    "ticket.status_changed",
-                    "ticket.assigned",
-                    "ticket.priority_changed",
-                    "ticket.tagged",
-                    "ticket.department_changed",
-                    "reply.created",
-                    "reply.agent_reply",
-                    "sla.warning",
-                    "sla.breached",
-                    "ticket.reopened");
+    /**
+     * Every trigger this package fires: the canonical names of the shared
+     * event vocabulary ({@link dev.escalated.events.EventNames#EMITTED}).
+     * Workflows saved under a legacy name still run (see
+     * {@link WorkflowRunnerService}).
+     */
+    public static final List<String> TRIGGER_EVENTS = dev.escalated.events.EventNames.EMITTED;
 
     @SuppressWarnings("unchecked")
     public boolean evaluateConditions(Map<String, Object> conditions, Map<String, String> ticket) {

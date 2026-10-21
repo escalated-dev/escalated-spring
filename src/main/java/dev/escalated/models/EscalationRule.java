@@ -50,6 +50,21 @@ public class EscalationRule extends BaseEntity {
     @Column(name = "is_active", nullable = false)
     private boolean active = true;
 
+    /**
+     * Hours after which the rule may act again on a ticket that still
+     * matches. Null (the default) means once, until the ticket stops matching.
+     */
+    @Column(name = "repeat_after_hours")
+    private Integer repeatAfterHours;
+
+    public Integer getRepeatAfterHours() {
+        return repeatAfterHours;
+    }
+
+    public void setRepeatAfterHours(Integer repeatAfterHours) {
+        this.repeatAfterHours = repeatAfterHours;
+    }
+
     public SlaPolicy getSlaPolicy() {
         return slaPolicy;
     }

@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import dev.escalated.config.EscalatedTransactionManagers;
+import dev.escalated.events.EventNames;
 import dev.escalated.models.Ticket;
 import dev.escalated.models.Workflow;
 import dev.escalated.models.WorkflowLog;
@@ -17,6 +18,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
+import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -91,8 +94,7 @@ public class WorkflowRunnerService {
      * @param ticket       the ticket being acted on
      */
     public void runForEvent(String triggerEvent, Ticket ticket) {
-        List<Workflow> workflows =
-                workflowRepository.findByTriggerEventAndIsActiveTrueOrderByPositionAsc(triggerEvent);
+        List<Workflow> workflows = activeWorkflowsFor(triggerEvent);
         if (workflows.isEmpty()) {
             return;
         }
@@ -132,6 +134,30 @@ public class WorkflowRunnerService {
                 break;
             }
         }
+    }
+
+    /**
+     * The active workflows for an event, in position order, including those
+     * saved under a legacy name for it (e.g. {@code ticket.replied} for
+     * {@code reply.created}).
+     */
+    private List<Workflow> activeWorkflowsFor(String triggerEvent) {
+        List<String> names = EventNames.aliasesOf(triggerEvent);
+        if (names.size() == 1) {
+            return workflowRepository.findByTriggerEventAndIsActiveTrueOrderByPositionAsc(names.get(0));
+        }
+        List<Workflow> merged = new ArrayList<>();
+        for (String name : names) {
+            for (Workflow wf : workflowRepository.findByTriggerEventAndIsActiveTrueOrderByPositionAsc(name)) {
+                boolean seen = merged.stream().anyMatch(existing -> existing == wf
+                        || (existing.getId() != null && existing.getId().equals(wf.getId())));
+                if (!seen) {
+                    merged.add(wf);
+                }
+            }
+        }
+        merged.sort(Comparator.comparingInt(Workflow::getPosition));
+        return merged;
     }
 
     /**
