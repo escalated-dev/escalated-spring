@@ -122,6 +122,9 @@ public class EscalatedSecurityConfig {
                                 // the admin and agent APIs.
                                 auth.requestMatchers("/escalated/admin", "/escalated/admin/**")
                                         .access(authorization.admin())
+                                        // The guest pages: no sign-in, a verified email or a grant instead.
+                                        .requestMatchers("/escalated/guest", "/escalated/guest/**")
+                                        .permitAll()
                                         .requestMatchers("/escalated/agent", "/escalated/agent/**")
                                         .access(authorization.agent());
                             }

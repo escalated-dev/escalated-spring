@@ -36,6 +36,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `/escalated/kb` and `/escalated/kb/{slug}`, with `POST /escalated/kb/{slug}/feedback`. The reader
   pages follow `escalated.knowledge-base.enabled` (404 when off) and the `knowledge_base_public`
   and `knowledge_base_feedback_enabled` settings.
+- The guest pages, behind `escalated.ui.enabled`, as escalated-laravel's `Guest\TicketController`:
+  `Escalated/Guest/Create` (`GET /escalated/guest/create`, `POST /escalated/guest` with a verified
+  email code) and `Escalated/Guest/Show` (`GET /escalated/guest/{token}` by expiring grant, with
+  `reply` and `rate`). `/escalated/guest/**` is open in the web chain when the UI is on. The form
+  uses the existing `/escalated/api/guest/verification` and `/lookup`.
 - `MacroService` also applies the action types the shared Macros page saves (`status`, `priority`,
   `assign`, `tags`, `department`, `reply`, `note`), alongside the existing `set_status`,
   `set_priority`, `add_tag`, `add_reply`, `add_internal_note` and `assign`.
