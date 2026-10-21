@@ -34,6 +34,11 @@ public interface SatisfactionRatingRepository extends JpaRepository<Satisfaction
     @Query("SELECT sr.createdAt, sr.rating FROM SatisfactionRating sr WHERE sr.createdAt >= :since")
     List<Object[]> ratingRowsSince(@Param("since") Instant since);
 
+    /** Ratings given since {@code since}; a survey sent but not answered (rating 0) is not one. */
+    @Query("SELECT sr FROM SatisfactionRating sr LEFT JOIN FETCH sr.ticket t LEFT JOIN FETCH t.assignedAgent"
+            + " WHERE sr.createdAt >= :since AND sr.rating > 0")
+    List<SatisfactionRating> findSubmittedSince(@Param("since") Instant since);
+
     @Query("SELECT t.assignedAgent.id, AVG(sr.rating) FROM SatisfactionRating sr JOIN sr.ticket t "
             + "WHERE t.assignedAgent IS NOT NULL AND sr.createdAt >= :since GROUP BY t.assignedAgent.id")
     List<Object[]> avgRatingByAgentSince(@Param("since") Instant since);

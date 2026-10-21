@@ -136,6 +136,8 @@ JSON `pageJson`, `routesScript` (the `route()` definition) and `csrfToken` (for 
 | `Escalated/Admin/KnowledgeBase/Categories/Index` | `GET /escalated/admin/kb-categories` |
 | `Escalated/Customer/KnowledgeBase/Index` | `GET /escalated/kb` (`search`, `category`) |
 | `Escalated/Customer/KnowledgeBase/Article` | `GET /escalated/kb/{slug}` |
+| `Escalated/Admin/Reports` | `GET /escalated/admin/reports` |
+| `Escalated/Admin/Reports/Dashboard`, `AgentMetrics`, `SlaReport`, `CsatReport`, `Comparison` | `GET /escalated/admin/reports/` `dashboard`, `agents`, `sla`, `csat`, `comparison` |
 | `Escalated/Guest/Create` | `GET /escalated/guest/create` (no sign-in) |
 | `Escalated/Guest/Show` | `GET /escalated/guest/{token}` (no sign-in) |
 
@@ -182,6 +184,13 @@ only, each read counts a view, and `POST /escalated/kb/{slug}/feedback` (`helpfu
 while the `knowledge_base_feedback_enabled` setting is on. The reader pages answer 404 while
 `escalated.knowledge-base.enabled` is off, and 403 to someone not signed in once the
 `knowledge_base_public` setting is turned off.
+
+The report screens take `days` (or `period`; 1-365, default 30) and cover tickets created in that
+period, dates in UTC; the dashboard's status and priority breakdowns are all-time, as on Laravel.
+A ticket breached its SLA when it was answered or resolved after the due time, or is still open
+past it. Ratings are the ones given (a survey sent but not answered is not counted). The figures
+are worked out from the period's tickets in memory, which suits the usual 30-day window; the JSON
+reports under `/escalated/api/admin/reports` aggregate in SQL.
 
 The guest pages need no sign-in (`/escalated/guest/**` is open in the web chain; writes still need
 the CSRF token). The form verifies the email with the existing `/escalated/api/guest/verification`

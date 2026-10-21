@@ -141,7 +141,13 @@ class PageNameParityTest {
           "Escalated/Customer/KnowledgeBase/Article",
           "Escalated/Guest/Create",
           "Escalated/Guest/Show",
-          "Escalated/Admin/Workflows/Logs");
+          "Escalated/Admin/Workflows/Logs",
+          "Escalated/Admin/Reports",
+          "Escalated/Admin/Reports/Dashboard",
+          "Escalated/Admin/Reports/AgentMetrics",
+          "Escalated/Admin/Reports/SlaReport",
+          "Escalated/Admin/Reports/CsatReport",
+          "Escalated/Admin/Reports/Comparison");
 
   @Test
   void theUiLayerRendersEveryPageItServes() throws IOException {
