@@ -7,6 +7,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- The admin ticket pages, behind `escalated.ui.enabled`: `Escalated/Admin/Tickets/Index`
+  (`GET /escalated/admin/tickets`, with the agent queue's filters, plus `agents` and `savedViews`)
+  and `Escalated/Admin/Tickets/Show` (`GET /escalated/admin/tickets/{reference}`, plus `agents` and
+  `is_snoozed`), as escalated-laravel's `Admin\TicketController`. They post the agent ticket writes
+  under `/escalated/admin/tickets/{reference}/` (`reply`, `note`, `assign`, `status`, `priority`,
+  `tags`, `department`, `macro`, `follow`), and also `snooze` (`snoozed_until`) and `unsnooze`.
+- `POST /escalated/admin/tickets/bulk`: the admin queue's bulk actions (`status`, `priority`,
+  `assign`, `tags`, `department`, `delete`) on up to 50 tickets; a ticket the action fails on is
+  skipped, as on Laravel.
+- `GET`/`POST /escalated/admin/saved-views` and `PUT`/`DELETE /escalated/admin/saved-views/{id}`:
+  the saved queue views the admin queue's sidebar and save dialog call (JSON). Only the owner may
+  change or delete a view; shared views are listed to everyone.
+- `TicketService.unsnooze(ticketId, actor)`: wakes a snoozed ticket now (status `open`).
+- The built-in root page writes `<meta name="csrf-token">`, and the web chain accepts the token
+  in `X-CSRF-TOKEN` as well as `X-XSRF-TOKEN`, so the pages' `fetch` calls (saved views, presence,
+  mentions) pass CSRF as on Laravel. A custom `escalated.ui.root-view` receives it as `csrfToken`.
+
+### Not rendered yet
+- Admin ticket presence, pinned notes, split, merge, links and side conversations from the ticket
+  page: the routes are not served here yet, so those controls do nothing.
+
 ## [0.2.3] - 2026-10-21
 
 ### Upgrading

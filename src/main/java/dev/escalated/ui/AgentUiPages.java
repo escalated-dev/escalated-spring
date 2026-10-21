@@ -135,11 +135,17 @@ public class AgentUiPages {
 
     @Transactional(transactionManager = EscalatedTransactionManagers.ESCALATED, readOnly = true)
     public Map<String, Object> index(Map<String, String> filters, Long agentId) {
+        return index(filters, agentId, "escalated.agent.tickets.index");
+    }
+
+    /** The queue's props, paginated against the named index route. */
+    @Transactional(transactionManager = EscalatedTransactionManagers.ESCALATED, readOnly = true)
+    public Map<String, Object> index(Map<String, String> filters, Long agentId, String indexRoute) {
         Page<Ticket> page = tickets.findAll(UiTicketFilters.specification(filters, agentId),
                 UiTicketFilters.pageable(filters));
         Map<String, Object> props = new LinkedHashMap<>();
         props.put("tickets", UiPresenter.paginator(page, rows(page.getContent()),
-                routes.url("escalated.agent.tickets.index")));
+                routes.url(indexRoute)));
         props.put("filters", new LinkedHashMap<>(filters));
         props.put("departments", activeDepartments());
         props.put("tags", UiPresenter.tags(tags.findAll()));

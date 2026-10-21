@@ -11,7 +11,6 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
-import org.springframework.security.web.csrf.CsrfTokenRequestAttributeHandler;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 @Configuration
@@ -107,9 +106,10 @@ public class EscalatedSecurityConfig {
                                     "/escalated/webhooks/newsletter/**");
                             if (ui) {
                                 // Inertia's client (axios) echoes the XSRF-TOKEN cookie back as
-                                // X-XSRF-TOKEN, unmasked, as on Laravel.
+                                // X-XSRF-TOKEN, unmasked, as on Laravel; the pages' fetch calls
+                                // send the csrf-token meta tag as X-CSRF-TOKEN.
                                 csrf.csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
-                                        .csrfTokenRequestHandler(new CsrfTokenRequestAttributeHandler());
+                                        .csrfTokenRequestHandler(new InertiaCsrfTokenRequestHandler());
                             }
                         })
                 .addFilterBefore(

@@ -93,6 +93,7 @@ public class Inertia {
             view.addObject("page", page);
             view.addObject("pageJson", pageJson);
             view.addObject("routesScript", routes.script());
+            view.addObject("csrfToken", DefaultInertiaRootTemplate.csrfToken(request));
             return view;
         }
 
