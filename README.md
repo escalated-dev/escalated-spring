@@ -466,6 +466,15 @@ The response includes the plain-text token (shown only once). Use it in subseque
 curl -H "Authorization: Bearer <token>" /escalated/api/agent/tickets
 ```
 
+`abilities` is a list of `agent`, `admin` and `*` (the default), and
+`expires_in_days` (1-365) is optional. As in the Laravel reference, the agent
+API needs a token with `agent` (or `*`) and the admin API one with `admin` (or
+`*`). The token's owner must also still pass that gate, so a token never grants
+more than its owner has. Tokens made before abilities were enforced hold `*`.
+`GET /escalated/api/admin/tokens` lists tokens (never the token itself),
+`PUT /tokens/{id}` changes `name` or `abilities`, and `DELETE /tokens/{id}`
+revokes one.
+
 ## WebSocket (Real-time)
 
 Enable with `escalated.broadcasting.enabled=true`. Connect to `/escalated/ws` via SockJS/STOMP.

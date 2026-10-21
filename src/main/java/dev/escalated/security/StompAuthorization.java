@@ -117,9 +117,11 @@ public class StompAuthorization implements ChannelInterceptor {
             return null;
         }
         AgentProfile agent;
+        String abilities = null;
         try {
             ApiToken token = tokens.getObject().validateToken(header.substring(7));
             agent = token.getAgent();
+            abilities = token.getAbilities();
         } catch (RuntimeException ex) {
             agent = null;
         }
@@ -127,7 +129,7 @@ public class StompAuthorization implements ChannelInterceptor {
             throw new MessageDeliveryException("Invalid or expired token");
         }
         return UsernamePasswordAuthenticationToken.authenticated(
-                agent.getEmail(), null, EscalatedAuthorization.authoritiesOf(agent));
+                agent.getEmail(), null, EscalatedAuthorization.authoritiesOf(agent, abilities));
     }
 
     private static Authentication authentication(Principal principal) {

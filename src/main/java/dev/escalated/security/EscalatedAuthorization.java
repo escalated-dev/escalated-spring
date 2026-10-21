@@ -41,6 +41,16 @@ public class EscalatedAuthorization {
     static final String ADMIN_AUTHORITY = "ROLE_" + ADMIN_ROLE;
     static final String AGENT_AUTHORITY = "ROLE_" + AGENT_ROLE;
 
+    /**
+     * Carried by a request authenticated with an Escalated API token. Such a
+     * request passes the gates only through the authorities the token's
+     * abilities allow, never through a profile lookup by email.
+     */
+    public static final String API_TOKEN_AUTHORITY = "ESCALATED_API_TOKEN";
+
+    /** The abilities a token may hold, as in Laravel: {@code agent}, {@code admin} or {@code *}. */
+    public static final List<String> ABILITIES = List.of("agent", "admin", "*");
+
     private final AgentProfileRepository agents;
 
     public EscalatedAuthorization(AgentProfileRepository agents) {
@@ -61,6 +71,9 @@ public class EscalatedAuthorization {
         if (!isAuthenticated(authentication)) {
             return false;
         }
+        if (hasAuthority(authentication, API_TOKEN_AUTHORITY)) {
+            return hasAuthority(authentication, ADMIN_AUTHORITY);
+        }
         if (hasAuthority(authentication, ADMIN_AUTHORITY)) {
             return true;
         }
@@ -72,6 +85,10 @@ public class EscalatedAuthorization {
     public boolean isAgent(Authentication authentication) {
         if (!isAuthenticated(authentication)) {
             return false;
+        }
+        if (hasAuthority(authentication, API_TOKEN_AUTHORITY)) {
+            // As in Laravel, the agent API needs the agent ability itself.
+            return hasAuthority(authentication, AGENT_AUTHORITY);
         }
         if (hasAuthority(authentication, ADMIN_AUTHORITY) || hasAuthority(authentication, AGENT_AUTHORITY)) {
             return true;
@@ -98,6 +115,47 @@ public class EscalatedAuthorization {
             authorities.add(new SimpleGrantedAuthority(ADMIN_AUTHORITY));
         }
         return authorities;
+    }
+
+    /**
+     * The authorities an API token carries: its owner's gates, narrowed to the
+     * token's abilities ({@code agent}, {@code admin}, {@code *}), plus the
+     * API-token marker. Derived when the token is used, so a demotion or an
+     * ability change takes effect on the next request.
+     */
+    public static List<GrantedAuthority> authoritiesOf(AgentProfile profile, String abilities) {
+        List<GrantedAuthority> authorities = new ArrayList<>();
+        authorities.add(new SimpleGrantedAuthority(API_TOKEN_AUTHORITY));
+        if (profile == null || !profile.isActive()) {
+            return authorities;
+        }
+        java.util.Set<String> granted = abilitiesOf(abilities);
+        boolean all = granted.contains("*");
+        if ((profile.isAgent() || profile.isAdmin()) && (all || granted.contains("agent"))) {
+            authorities.add(new SimpleGrantedAuthority(AGENT_AUTHORITY));
+        }
+        if (profile.isAdmin() && (all || granted.contains("admin"))) {
+            authorities.add(new SimpleGrantedAuthority(ADMIN_AUTHORITY));
+        }
+        return authorities;
+    }
+
+    /**
+     * The abilities stored on a token: a JSON array or a comma-separated list.
+     * Blank (tokens made before abilities were enforced) means {@code *}.
+     */
+    public static java.util.Set<String> abilitiesOf(String stored) {
+        java.util.Set<String> abilities = new java.util.LinkedHashSet<>();
+        if (stored != null) {
+            java.util.regex.Matcher matcher = java.util.regex.Pattern.compile("[A-Za-z*]+").matcher(stored);
+            while (matcher.find()) {
+                abilities.add(matcher.group().toLowerCase(java.util.Locale.ROOT));
+            }
+        }
+        if (abilities.isEmpty()) {
+            abilities.add("*");
+        }
+        return abilities;
     }
 
     private Optional<AgentProfile> profileOf(Authentication authentication) {
