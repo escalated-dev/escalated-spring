@@ -138,7 +138,9 @@ class PageNameParityTest {
           "Escalated/Admin/KnowledgeBase/Articles/Form",
           "Escalated/Admin/KnowledgeBase/Categories/Index",
           "Escalated/Customer/KnowledgeBase/Index",
-          "Escalated/Customer/KnowledgeBase/Article");
+          "Escalated/Customer/KnowledgeBase/Article",
+          "Escalated/Guest/Create",
+          "Escalated/Guest/Show");
 
   @Test
   void theUiLayerRendersEveryPageItServes() throws IOException {

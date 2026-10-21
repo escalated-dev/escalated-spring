@@ -135,6 +135,8 @@ JSON `pageJson`, `routesScript` (the `route()` definition) and `csrfToken` (for 
 | `Escalated/Admin/KnowledgeBase/Categories/Index` | `GET /escalated/admin/kb-categories` |
 | `Escalated/Customer/KnowledgeBase/Index` | `GET /escalated/kb` (`search`, `category`) |
 | `Escalated/Customer/KnowledgeBase/Article` | `GET /escalated/kb/{slug}` |
+| `Escalated/Guest/Create` | `GET /escalated/guest/create` (no sign-in) |
+| `Escalated/Guest/Show` | `GET /escalated/guest/{token}` (no sign-in) |
 
 Customer writes: `POST /escalated` (`subject`, `description`, `priority`, `department_id`,
 `ticket_type`), and `POST /escalated/{reference}/` `reply`, `close` (unless the `allow_customer_close`
@@ -179,6 +181,19 @@ only, each read counts a view, and `POST /escalated/kb/{slug}/feedback` (`helpfu
 while the `knowledge_base_feedback_enabled` setting is on. The reader pages answer 404 while
 `escalated.knowledge-base.enabled` is off, and 403 to someone not signed in once the
 `knowledge_base_public` setting is turned off.
+
+The guest pages need no sign-in (`/escalated/guest/**` is open in the web chain; writes still need
+the CSRF token). The form verifies the email with the existing `/escalated/api/guest/verification`
+and finds earlier tickets with `/escalated/api/guest/lookup` (both named in its props), then posts
+`POST /escalated/guest` (`guest_name`, `guest_email`, `subject`, `description`, `priority`,
+`department_id`, `verification_id`, `verification_code`). The code is spent with the ticket, and
+the guest is sent to `/escalated/guest/{grant}`, the expiring grant from `docs/guest-access.md`.
+That page posts `reply` (refused once the ticket is closed) and `rate` (resolved or closed tickets,
+once). An unknown, expired or revoked link is a 404; a permanent token still opens its ticket while
+`escalated.guest-access.legacy-tokens` is on. The form is a 404 while the `guest_tickets_enabled`
+setting is off. Guest responses send `Cache-Control: no-store, private` and
+`Referrer-Policy: no-referrer`, and the writes share the guest API's rate limits. Attachments are
+listed on the guest page without a download link (downloads need a signed-in session).
 
 Agent writes: `POST /escalated/agent/tickets/{reference}/` `reply`, `note`, `assign` (`agent_id`),
 `status`, `priority`, `tags` (`tag_ids`), `department` (`department_id`), `macro` (`macro_id`),

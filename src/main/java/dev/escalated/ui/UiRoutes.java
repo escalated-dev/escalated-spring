@@ -98,6 +98,13 @@ public class UiRoutes {
         register("escalated.customer.kb.index", "/kb");
         register("escalated.customer.kb.show", "/kb/{slug}");
         register("escalated.customer.kb.feedback", "/kb/{slug}/feedback");
+        register("escalated.guest.tickets.create", "/guest/create");
+        register("escalated.guest.tickets.store", "/guest");
+        register("escalated.guest.tickets.show", "/guest/{token}");
+        register("escalated.guest.tickets.reply", "/guest/{token}/reply");
+        register("escalated.guest.tickets.rate", "/guest/{token}/rate");
+        register("escalated.guest.verification", "/api/guest/verification");
+        register("escalated.guest.lookup", "/api/guest/lookup");
         register("escalated.attachments.download", "/attachments/{attachment}/download");
     }
 
