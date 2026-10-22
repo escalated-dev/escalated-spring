@@ -48,6 +48,10 @@ public class SlaService {
      */
     @Transactional(transactionManager = EscalatedTransactionManagers.ESCALATED)
     public void applySlaPolicy(Ticket ticket) {
+        // Import mode (ImportContext): imported history gets no SLA clock.
+        if (ImportContext.isImporting()) {
+            return;
+        }
         dev.escalated.security.TicketAccess.assertVisible(ticket);
         boolean targeted = properties != null && properties.isTargetedSlas();
         java.util.Optional<SlaPolicy> selected = selectPolicy(ticket, targeted);

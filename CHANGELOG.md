@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Upgrading
+- Run the migrations: `V21__create_escalated_import_tables` adds `escalated_import_jobs` and `escalated_import_source_maps` (MySQL and PostgreSQL).
 - Run migration `V20` (PostgreSQL and MySQL). It adds `escalated_ticket_statuses`, seeded with one
   system row per built-in status, and a nullable `escalated_tickets.ticket_status_id`
   (`ON DELETE SET NULL`). Existing tickets have no custom status and behave exactly as before; the
@@ -42,6 +43,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   needs the new setters.
 
 ### Added
+- The admin Import wizard and the import framework behind it, as escalated-laravel's: the shared `Admin/Import/Index`, `Connect`, `Mapping`, `Review` and `Progress` pages on Laravel's paths and props under `/escalated/admin/import` (route names `escalated.admin.import.*`), admins only. `POST .../{platform}/test-connection` answers `{success[, error]}` (422 when the source throws); `review` writes nothing; `start` creates the job and queues it; `status/{job}` answers the Progress poll; `pause`, `resume` and `cancel` act on the job.
+  - Sources are beans implementing `dev.escalated.contracts.ImportAdapter`; Escalated ships none, so a Zendesk or Freshdesk adapter is the host's or a plugin library's.
+  - `ImportJob` and `ImportSourceMap` (migration `V21`), and `ImportJobService`, which resumes each entity type from its saved cursor, skips what is already mapped (so a paused, failed or interrupted run imports nothing twice), saves progress and an error log per batch, and stops between batches when the job is paused or cancelled. It imports agents (existing agent profiles, by email), contacts, tags, departments, tickets (status and priority falling back to open and medium, requester from the contact, assignee, department, tags, source creation time) and replies.
+  - Tested credentials wait in the session, sealed with AES-GCM under a key derived from `escalated.guest-access.secret`, until the import starts, then on the job; never in a page. A completed or cancelled job drops them.
+  - Imports run on a thread of their own (`ImportRunner`); declare a `@Primary` `ImportDispatcher` bean to hand them to a queue and call `ImportJobService.run(jobId)` from it.
+  - Import mode (`ImportContext`, thread-bound) holds back SLA policy attachment, SLA breach checks and automations during a run.
 - Custom ticket statuses, as the shared statuses spec: admin-defined sub-statuses of five categories
   (`new`, `open`, `pending`, `on_hold`, `solved`), managed on `Escalated/Admin/Statuses/Index` and
   `Form` (`/escalated/admin/statuses`, behind `escalated.ui.enabled`, admins only) with

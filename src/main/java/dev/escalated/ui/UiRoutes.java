@@ -125,6 +125,18 @@ public class UiRoutes {
             register("escalated.admin.reports." + report, "/admin/reports/" + report);
         }
         register("escalated.attachments.download", "/attachments/{attachment}/download");
+        // Import wizard (Laravel's escalated.admin.import.*)
+        register("escalated.admin.import.index", "/admin/import");
+        register("escalated.admin.import.connect", "/admin/import/{platform}/connect");
+        register("escalated.admin.import.test-connection", "/admin/import/{platform}/test-connection");
+        register("escalated.admin.import.mapping", "/admin/import/{platform}/mapping");
+        register("escalated.admin.import.review", "/admin/import/{platform}/review");
+        register("escalated.admin.import.start", "/admin/import/{platform}/start");
+        register("escalated.admin.import.progress", "/admin/import/progress/{jobId}");
+        register("escalated.admin.import.status", "/admin/import/status/{jobId}");
+        register("escalated.admin.import.pause", "/admin/import/pause/{jobId}");
+        register("escalated.admin.import.resume", "/admin/import/resume/{jobId}");
+        register("escalated.admin.import.cancel", "/admin/import/cancel/{jobId}");
     }
 
     /** Laravel's resource routes (less {@code show}), with the edit page at {@code edit}. */

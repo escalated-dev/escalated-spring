@@ -1,0 +1,36 @@
+-- MySQL edition; db/escalated/postgresql/V21__create_escalated_import_tables.sql
+-- is the same migration. Change them together, never one alone.
+
+-- The import framework's tables, as escalated-laravel's: escalated_import_jobs
+-- (status, sealed credentials, mappings, progress and error log as JSON text)
+-- and escalated_import_source_maps (which Escalated record each source record
+-- became). The job id is a UUID string made by the application.
+
+CREATE TABLE escalated_import_jobs (
+    id VARCHAR(36) PRIMARY KEY,
+    user_id VARCHAR(255) NULL,
+    platform VARCHAR(50) NOT NULL,
+    status VARCHAR(30) NOT NULL DEFAULT 'pending',
+    credentials TEXT NULL,
+    field_mappings TEXT NULL,
+    progress TEXT NULL,
+    error_log TEXT NULL,
+    started_at TIMESTAMP NULL,
+    completed_at TIMESTAMP NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX idx_escalated_import_jobs_status ON escalated_import_jobs (status);
+
+CREATE TABLE escalated_import_source_maps (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    import_job_id VARCHAR(36) NOT NULL,
+    entity_type VARCHAR(50) NOT NULL,
+    source_id VARCHAR(191) NOT NULL,
+    escalated_id VARCHAR(191) NOT NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT uq_escalated_import_source_maps UNIQUE (import_job_id, entity_type, source_id),
+    CONSTRAINT fk_escalated_import_source_maps_job FOREIGN KEY (import_job_id)
+        REFERENCES escalated_import_jobs (id) ON DELETE CASCADE
+);
