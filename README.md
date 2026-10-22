@@ -32,7 +32,7 @@ To serve the shared agent, customer and admin screens (`@escalated-dev/escalated
 1. **Ticket CRUD** -- Full lifecycle management with statuses, priorities, and assignments
 2. **SLA Policies** -- Configurable SLAs with business hours support and holiday calendars
 3. **Automations** -- Time-based rules for auto-closing resolved tickets and auto-assignment
-4. **Escalation Rules** -- Automatic escalation on SLA breach with reassignment and notifications
+4. **Escalation Rules** -- Condition-based escalation (SLA breach, age, no response) with reassignment, priority and department changes
 5. **Macros & Canned Responses** -- Pre-defined actions and response templates for agents
 6. **Custom Fields** -- Extensible ticket data with multiple field types
 7. **Knowledge Base** -- Articles and categories with search, view counts, and feedback

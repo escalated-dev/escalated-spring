@@ -8,7 +8,8 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface EscalationRuleRepository extends JpaRepository<EscalationRule, Long> {
 
-    List<EscalationRule> findBySlaPolicyIdAndActiveTrueOrderByMinutesBeforeOrAfterAsc(Long slaPolicyId);
+    /** The active rules in the order they run: by position, then oldest first. */
+    List<EscalationRule> findByActiveTrueOrderBySortOrderAscIdAsc();
 
-    List<EscalationRule> findByActiveTrueOrderByMinutesBeforeOrAfterAsc();
+    List<EscalationRule> findAllByOrderBySortOrderAscIdAsc();
 }

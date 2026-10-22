@@ -155,8 +155,8 @@ class AdminReportControllerTest {
     private SlaPolicy slaPolicy() {
         SlaPolicy policy = new SlaPolicy();
         policy.setName("Standard");
-        policy.setFirstResponseMinutes(240);
-        policy.setResolutionMinutes(1440);
+        policy.setFirstResponseHours(java.util.Map.of("medium", 4));
+        policy.setResolutionHours(java.util.Map.of("medium", 24));
         return slaPolicies.saveAndFlush(policy);
     }
 
