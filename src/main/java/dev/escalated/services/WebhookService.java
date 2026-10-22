@@ -110,8 +110,22 @@ public class WebhookService {
      */
     @Transactional(transactionManager = EscalatedTransactionManagers.ESCALATED)
     public Webhook update(Long id, String url, String events, String description, boolean active, String secret) {
+        return update(id, url, events, description, active, secret, false);
+    }
+
+    /**
+     * As {@link #update(Long, String, String, String, boolean, String)}; {@code clearSecret}
+     * removes the stored signing secret instead. Pages and JSON never receive the secret, so a
+     * blank one means "leave it as it is", as escalated-laravel's {@code WebhookController}.
+     */
+    @Transactional(transactionManager = EscalatedTransactionManagers.ESCALATED)
+    public Webhook update(Long id, String url, String events, String description, boolean active, String secret,
+                          boolean clearSecret) {
         Webhook webhook = update(id, url, events, description, active);
-        if (secret != null && !secret.isBlank()) {
+        if (clearSecret) {
+            webhook.setSecret(null);
+            webhook = webhookRepository.save(webhook);
+        } else if (secret != null && !secret.isBlank()) {
             webhook.setSecret(secret);
             webhook = webhookRepository.save(webhook);
         }

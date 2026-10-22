@@ -235,22 +235,22 @@ public class AdminImportUiController {
     }
 
     /**
-     * The job as the screens read it. Laravel sends the model as is; its credentials are left out
-     * here: they are a secret, and no screen reads them.
+     * The job as the screens read it, from an explicit field list as escalated-laravel's
+     * {@code ImportJob::toPageProps()}, so a column added later is not sent to the browser by
+     * default. The credentials are a secret no screen reads; the error log is the newest 50.
      */
     private Map<String, Object> job(ImportJob job) {
+        List<Map<String, Object>> errors = ImportJobService.errorsOf(job);
         Map<String, Object> row = new LinkedHashMap<>();
         row.put("id", job.getId());
-        row.put("user_id", job.getUserId());
         row.put("platform", job.getPlatform());
         row.put("status", job.getStatus());
-        row.put("field_mappings", ImportJobService.mappingsOf(job));
         row.put("progress", ImportJobService.progressOf(job));
-        row.put("error_log", ImportJobService.errorsOf(job));
+        row.put("field_mappings", ImportJobService.mappingsOf(job));
+        row.put("error_log", errors.subList(Math.max(0, errors.size() - 50), errors.size()));
         row.put("started_at", time(job.getStartedAt()));
         row.put("completed_at", time(job.getCompletedAt()));
         row.put("created_at", time(job.getCreatedAt()));
-        row.put("updated_at", time(job.getUpdatedAt()));
         return row;
     }
 

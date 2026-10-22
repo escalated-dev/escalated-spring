@@ -41,13 +41,20 @@ public class AdminWebhookController {
                 body.get("url"), body.get("secret"), body.get("events"), body.get("description")));
     }
 
+    /**
+     * The stored secret is never answered, so a missing or blank {@code secret} keeps it; a
+     * non-blank one replaces it and {@code clear_secret: true} removes it.
+     */
     @PutMapping("/{id}")
     public ResponseEntity<Webhook> update(@PathVariable Long id, @RequestBody Map<String, Object> body) {
+        Object secret = body.get("secret");
         return ResponseEntity.ok(webhookService.update(id,
                 (String) body.get("url"),
                 (String) body.get("events"),
                 (String) body.get("description"),
-                Boolean.parseBoolean(body.getOrDefault("active", "true").toString())));
+                Boolean.parseBoolean(body.getOrDefault("active", "true").toString()),
+                secret == null ? null : secret.toString(),
+                Boolean.parseBoolean(String.valueOf(body.getOrDefault("clear_secret", "false")))));
     }
 
     @DeleteMapping("/{id}")

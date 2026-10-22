@@ -8,6 +8,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Upgrading
+- Saving a webhook with the secret left blank keeps the stored secret, on the admin page (as
+  before) and now also through `PUT /escalated/api/admin/webhooks/{id}`, which used to ignore
+  `secret` altogether: a non-blank `secret` now replaces it there. Send `clear_secret: true` (page
+  or JSON) to remove it.
+- The JSON webhook API answers `has_secret` instead of embedding each webhook's deliveries, and
+  a delivery answers `webhookId` instead of embedding its webhook. List deliveries through
+  `GET /escalated/api/admin/webhooks/{id}/deliveries`.
 - `RetentionScheduler` runs the data retention purge daily (`escalated.retention.cron`, default
   `0 30 3 * * *`). Every period defaults to `never`, so until an admin sets one on the Data
   retention page it only deletes expired guest verification codes. A closed ticket past its period
@@ -197,6 +204,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The built-in root page writes `<meta name="csrf-token">`, and the web chain accepts the token
   in `X-CSRF-TOKEN` as well as `X-XSRF-TOKEN`, so the pages' `fetch` calls (saved views, presence,
   mentions) pass CSRF as on Laravel. A custom `escalated.ui.root-view` receives it as `csrfToken`.
+
+### Security
+- **Stored secrets are never serialised**, as escalated-laravel 258. Webhook signing secrets, import
+  source credentials, API token hashes and two-factor seeds were already kept out of every page
+  and of Jackson. `SecretsNeverSerializedTest` now guards each page and JSON
+  response that carries these records (import index, progress, status and wizard steps; webhook
+  index, edit and delivery-log pages and the webhook JSON API; the API token page and JSON), and
+  the entities' own serialisation. The import pages are built from Laravel's explicit field list
+  (`id`, `platform`, `status`, `progress`, `field_mappings`, the newest 50 of `error_log`,
+  `started_at`, `completed_at`, `created_at`), so `user_id` and `updated_at` are no longer sent
+  and a column added later is not sent by default. Webhooks expose `has_secret` in their JSON too.
+  This port has no SSO settings and keeps the inbound-email secret in host configuration, so
+  there is no SSO or inbound secret on any settings page to mask.
+
+### Fixed
+- `GET /escalated/api/admin/webhooks`, `/{id}` and `/{id}/deliveries` failed for a webhook with a
+  delivery: the webhook embedded its deliveries and each delivery its webhook again, until Jackson
+  stopped at its nesting limit (500) after about 50 KB of the response had been sent.
 
 ### Changed
 - A custom field's JSON no longer embeds its stored values (`values`), which looped back through
