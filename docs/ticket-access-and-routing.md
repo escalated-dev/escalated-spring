@@ -90,7 +90,7 @@ creation workflows and SLA selection.
 
 ## Rules and SLAs
 
-Workflows and escalation rules accept the same condition shape:
+Workflows accept this condition shape:
 
 ```json
 {
@@ -110,9 +110,28 @@ preserve their existing behavior. The auto-assignment task remains the package's
 existing host extension point. Workflows support `set_type` and
 `set_department` / `change_department` actions.
 
-With `targeted-slas: true`, active policies of the ticket's priority are selected
-by specificity: department plus type, department, type, then untargeted. The
-lowest policy ID breaks ties. Targeted policies are ignored when the flag is off.
+Escalation rules take escalated-laravel's shape (migration V18): a list of
+`{field, value}` conditions, all of which must hold, run against every open ticket.
+Fields: `status`, `priority`, `assigned` (`unassigned`, or anything else for
+assigned), `age_hours`, `no_response_hours`, `sla_breached`, `department_id`,
+`ticket_type`, `account` (`{"type": "Company", "id": "007"}`, exact), `account_type`
+and `account_id`; an unknown or blank field is ignored. This port adds
+`sla_policy_id`, `sla_breached` narrowed to `first_response` or `resolution`, and
+`workflow_conditions`, whose value is a workflow condition object as above. Actions
+are a list of `{type, value}`: `escalate` (no status change here; every firing is
+announced as `ticket.escalated`), `change_priority`, `assign_to` (agent id) and
+`change_department` (department id). V18 converted each rule saved before it: the
+policy it hung off and its resolution breach became `sla_policy_id` and
+`sla_breached: resolution`, its routing conditions became `workflow_conditions`, and
+its action became a one-item list (`reassign` is `assign_to`).
+
+SLA policies hold first-response and resolution hours per priority. Without
+`targeted-slas`, a ticket gets the oldest active default policy with a target for its
+priority. With `targeted-slas: true`, active policies with a target for the
+ticket's priority are selected by specificity: department plus type, department,
+type, then an untargeted default. The lowest policy ID breaks ties. Targeted
+policies are ignored when the flag is off. V18 converted each policy saved before it
+into a default policy covering its one priority, so selection is unchanged.
 `TicketService.changeDepartment` preserves existing SLA deadlines and removes an
 assignee who can no longer access the destination. Explicitly call
 `SlaService.applySlaPolicy` to reselect a policy; in targeted mode its deadlines

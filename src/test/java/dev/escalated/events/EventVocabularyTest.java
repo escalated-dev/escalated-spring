@@ -247,17 +247,16 @@ class EventVocabularyTest {
         AgentProfile agent = staff("Escalation target " + unique, false);
         SlaPolicy policy = new SlaPolicy();
         policy.setName("Escalation policy " + unique);
-        policy.setPriority(TicketPriority.LOW);
-        policy.setFirstResponseMinutes(60);
-        policy.setResolutionMinutes(120);
+        policy.setFirstResponseHours(java.util.Map.of("low", 1));
+        policy.setResolutionHours(java.util.Map.of("low", 2));
         // Inactive, so no other test's ticket is put on it.
         policy.setActive(false);
         policy = slaPolicies.save(policy);
         EscalationRule rule = new EscalationRule();
         rule.setName("Reassign overdue " + unique);
-        rule.setSlaPolicy(policy);
-        rule.setActionType("reassign");
-        rule.setActionTarget(String.valueOf(agent.getId()));
+        rule.setConditions("[{\"field\":\"sla_policy_id\",\"value\":\"" + policy.getId() + "\"},"
+                + "{\"field\":\"sla_breached\",\"value\":\"resolution\"}]");
+        rule.setActions("[{\"type\":\"assign_to\",\"value\":\"" + agent.getId() + "\"}]");
         escalationRules.save(rule);
         Ticket ticket = newTicket();
         overdue(ticket, Instant.now().minusSeconds(600), policy);

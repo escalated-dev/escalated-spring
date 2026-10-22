@@ -13,17 +13,17 @@ import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
+import java.util.Map;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -43,35 +43,64 @@ class SlaServiceTest {
 
     @Test
     void applySlaPolicy_shouldSetDueDatesWithoutSchedule() {
-        SlaPolicy policy = new SlaPolicy();
-        policy.setId(1L);
-        policy.setPriority(TicketPriority.HIGH);
-        policy.setFirstResponseMinutes(60);
-        policy.setResolutionMinutes(480);
-
-        when(slaPolicyRepository.findByPriorityAndActiveTrue(TicketPriority.HIGH))
-                .thenReturn(Optional.of(policy));
+        SlaPolicy policy = policy(1L, "high", 1, 8);
+        when(slaPolicyRepository.findByActiveTrueOrderByIdAsc()).thenReturn(List.of(policy));
 
         Ticket ticket = new Ticket();
         ticket.setPriority(TicketPriority.HIGH);
+        Instant before = Instant.now();
 
         slaService.applySlaPolicy(ticket);
 
+        assertEquals(policy, ticket.getSlaPolicy());
         assertNotNull(ticket.getSlaFirstResponseDueAt());
-        assertNotNull(ticket.getSlaDueAt());
+        assertTrue(ticket.getSlaFirstResponseDueAt().isAfter(before.plusSeconds(3599)));
+        assertTrue(ticket.getSlaDueAt().isAfter(before.plusSeconds(8 * 3600 - 1)));
         assertTrue(ticket.getSlaDueAt().isAfter(ticket.getSlaFirstResponseDueAt()));
     }
 
     @Test
+    void applySlaPolicy_takesTheFirstDefaultPolicyWithATargetForThePriority() {
+        SlaPolicy lowOnly = policy(1L, "low", 4, 24);
+        SlaPolicy notDefault = policy(2L, "high", 2, 6);
+        notDefault.setDefaultPolicy(false);
+        SlaPolicy high = policy(3L, "high", 1, 8);
+        SlaPolicy laterHigh = policy(4L, "high", 9, 9);
+        when(slaPolicyRepository.findByActiveTrueOrderByIdAsc())
+                .thenReturn(List.of(lowOnly, notDefault, high, laterHigh));
+
+        Ticket ticket = new Ticket();
+        ticket.setPriority(TicketPriority.HIGH);
+        slaService.applySlaPolicy(ticket);
+
+        assertEquals(high, ticket.getSlaPolicy());
+    }
+
+    @Test
+    void applySlaPolicy_clearsADeadlineThePolicyHasNoFigureFor() {
+        SlaPolicy policy = policy(1L, "high", 1, 8);
+        policy.setResolutionHours(Map.of());
+        when(slaPolicyRepository.findByActiveTrueOrderByIdAsc()).thenReturn(List.of(policy));
+
+        Ticket ticket = new Ticket();
+        ticket.setPriority(TicketPriority.HIGH);
+        ticket.setSlaDueAt(Instant.now());
+        slaService.applySlaPolicy(ticket);
+
+        assertNotNull(ticket.getSlaFirstResponseDueAt());
+        assertNull(ticket.getSlaDueAt());
+    }
+
+    @Test
     void applySlaPolicy_shouldNotSetDatesWhenNoPolicyMatches() {
-        when(slaPolicyRepository.findByPriorityAndActiveTrue(any()))
-                .thenReturn(Optional.empty());
+        when(slaPolicyRepository.findByActiveTrueOrderByIdAsc()).thenReturn(List.of(policy(1L, "high", 1, 8)));
 
         Ticket ticket = new Ticket();
         ticket.setPriority(TicketPriority.LOW);
 
         slaService.applySlaPolicy(ticket);
 
+        assertNull(ticket.getSlaPolicy());
         assertNull(ticket.getSlaDueAt());
     }
 
@@ -81,15 +110,11 @@ class SlaServiceTest {
         schedule.setTimezone("UTC");
         schedule.setHolidays(new ArrayList<>());
 
-        SlaPolicy policy = new SlaPolicy();
-        policy.setId(1L);
-        policy.setPriority(TicketPriority.MEDIUM);
-        policy.setFirstResponseMinutes(120);
-        policy.setResolutionMinutes(480);
+        SlaPolicy policy = policy(1L, "medium", 2, 8);
+        policy.setBusinessHoursOnly(true);
         policy.setBusinessSchedule(schedule);
 
-        when(slaPolicyRepository.findByPriorityAndActiveTrue(TicketPriority.MEDIUM))
-                .thenReturn(Optional.of(policy));
+        when(slaPolicyRepository.findByActiveTrueOrderByIdAsc()).thenReturn(List.of(policy));
 
         Ticket ticket = new Ticket();
         ticket.setPriority(TicketPriority.MEDIUM);
@@ -98,6 +123,15 @@ class SlaServiceTest {
 
         assertNotNull(ticket.getSlaFirstResponseDueAt());
         assertNotNull(ticket.getSlaDueAt());
+    }
+
+    private static SlaPolicy policy(Long id, String priority, double firstResponse, double resolution) {
+        SlaPolicy policy = new SlaPolicy();
+        policy.setId(id);
+        policy.setDefaultPolicy(true);
+        policy.setFirstResponseHours(Map.of(priority, firstResponse));
+        policy.setResolutionHours(Map.of(priority, resolution));
+        return policy;
     }
 
     @Test

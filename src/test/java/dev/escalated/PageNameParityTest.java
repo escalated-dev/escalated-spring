@@ -147,7 +147,11 @@ class PageNameParityTest {
           "Escalated/Admin/Reports/AgentMetrics",
           "Escalated/Admin/Reports/SlaReport",
           "Escalated/Admin/Reports/CsatReport",
-          "Escalated/Admin/Reports/Comparison");
+          "Escalated/Admin/Reports/Comparison",
+          "Escalated/Admin/SlaPolicies/Index",
+          "Escalated/Admin/SlaPolicies/Form",
+          "Escalated/Admin/EscalationRules/Index",
+          "Escalated/Admin/EscalationRules/Form");
 
   @Test
   void theUiLayerRendersEveryPageItServes() throws IOException {

@@ -136,6 +136,10 @@ JSON `pageJson`, `routesScript` (the `route()` definition) and `csrfToken` (for 
 | `Escalated/Admin/KnowledgeBase/Categories/Index` | `GET /escalated/admin/kb-categories` |
 | `Escalated/Customer/KnowledgeBase/Index` | `GET /escalated/kb` (`search`, `category`) |
 | `Escalated/Customer/KnowledgeBase/Article` | `GET /escalated/kb/{slug}` |
+| `Escalated/Admin/SlaPolicies/Index` | `GET /escalated/admin/sla-policies` |
+| `Escalated/Admin/SlaPolicies/Form` | `GET /escalated/admin/sla-policies/create`, `.../{id}/edit` |
+| `Escalated/Admin/EscalationRules/Index` | `GET /escalated/admin/escalation-rules` |
+| `Escalated/Admin/EscalationRules/Form` | `GET /escalated/admin/escalation-rules/create`, `.../{id}/edit` |
 | `Escalated/Admin/Reports` | `GET /escalated/admin/reports` |
 | `Escalated/Admin/Reports/Dashboard`, `AgentMetrics`, `SlaReport`, `CsatReport`, `Comparison` | `GET /escalated/admin/reports/` `dashboard`, `agents`, `sla`, `csat`, `comparison` |
 | `Escalated/Guest/Create` | `GET /escalated/guest/create` (no sign-in) |
@@ -184,6 +188,18 @@ only, each read counts a view, and `POST /escalated/kb/{slug}/feedback` (`helpfu
 while the `knowledge_base_feedback_enabled` setting is on. The reader pages answer 404 while
 `escalated.knowledge-base.enabled` is off, and 403 to someone not signed in once the
 `knowledge_base_public` setting is turned off.
+
+SLA policies and escalation rules are resources as on Laravel. A policy takes `name`,
+`description`, `is_default`, `first_response_hours` and `resolution_hours` (hours per priority,
+`{"high": 4}`; a blank figure means no target), `business_hours_only`, `is_active`, and
+`department_id` and `ticket_type` for targeted SLAs (the form does not post these two, so an update
+keeps them). New tickets get the oldest active default policy with a target for their priority (or,
+with `escalated.targeted-slas`, the most specific match). Business hours follow the policy's own
+schedule, else the first active one, else 09:00-17:00 Monday to Friday UTC. Deleting a policy
+leaves its tickets without one. An escalation rule takes `name`, `description`, `trigger_type`,
+`conditions` and `actions` (lists of `{field, value}` and `{type, value}`), `order`, `is_active` and
+`repeat_after_hours`; the SLA sweep runs active rules in `order` against open tickets, each once per
+ticket (see `docs/ticket-access-and-routing.md`).
 
 The report screens take `days` (or `period`; 1-365, default 30) and cover tickets created in that
 period, dates in UTC; the dashboard's status and priority breakdowns are all-time, as on Laravel.

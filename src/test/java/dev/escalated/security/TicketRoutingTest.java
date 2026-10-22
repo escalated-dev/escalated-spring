@@ -16,6 +16,7 @@ import dev.escalated.repositories.TicketRepository;
 import dev.escalated.repositories.WorkflowRepository;
 import dev.escalated.scheduling.AutomationScheduler;
 import dev.escalated.scheduling.SlaScheduler;
+import dev.escalated.services.EscalationConditions;
 import dev.escalated.services.SlaService;
 import dev.escalated.services.TicketRoutingConditions;
 import dev.escalated.services.TicketService;
@@ -91,8 +92,9 @@ class TicketRoutingTest {
         policy.setName(name);
         policy.setDepartmentId(departmentId);
         policy.setTicketType(type);
-        policy.setFirstResponseMinutes(minutes);
-        policy.setResolutionMinutes(minutes * 2);
+        policy.setDefaultPolicy(departmentId == null && type == null);
+        policy.setFirstResponseHours(java.util.Map.of("medium", minutes / 60.0));
+        policy.setResolutionHours(java.util.Map.of("medium", minutes * 2 / 60.0));
         return policies.saveAndFlush(policy);
     }
 
@@ -160,11 +162,17 @@ class TicketRoutingTest {
         } else if (engine.equals("escalation")) {
             EscalationRule rule = new EscalationRule();
             rule.setName("Account route");
-            rule.setConditions(json);
-            rule.setActionType("change_priority");
-            rule.setActionTarget("HIGH");
+            // Routing conditions saved before V18 are kept whole as workflow_conditions.
+            rule.setConditions("[{\"field\":\"workflow_conditions\",\"value\":" + json + "}]");
+            rule.setActions("[{\"type\":\"change_priority\",\"value\":\"high\"}]");
+            String listed = "[{\"field\":\"ticket_type\",\"value\":\"delivery\"},"
+                    + "{\"field\":\"account\",\"value\":{\"type\":\"Company\",\"id\":\"007\"}}]";
             for (Ticket ticket : List.of(match, otherType, otherAccount)) {
-                ReflectionTestUtils.invokeMethod(escalations, "applyEscalationRule", ticket, rule);
+                boolean matches = EscalationConditions.matches(rule.getConditions(), ticket, Instant.now());
+                assertThat(EscalationConditions.matches(listed, ticket, Instant.now())).isEqualTo(matches);
+                if (matches) {
+                    ReflectionTestUtils.invokeMethod(escalations, "applyEscalationRule", ticket, rule);
+                }
             }
             assertThat(match.getPriority()).isEqualTo(TicketPriority.HIGH);
         } else {

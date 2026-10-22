@@ -9,4 +9,7 @@ import org.springframework.stereotype.Repository;
 public interface BusinessScheduleRepository extends JpaRepository<BusinessSchedule, Long> {
 
     List<BusinessSchedule> findByActiveTrueOrderByName();
+
+    /** The schedule a business-hours policy without its own follows. */
+    java.util.Optional<BusinessSchedule> findFirstByActiveTrueOrderByIdAsc();
 }

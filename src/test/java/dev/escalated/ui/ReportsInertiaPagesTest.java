@@ -83,9 +83,8 @@ class ReportsInertiaPagesTest {
         // Scoped to a department no ticket has, so it is never applied to anyone else's tickets.
         policy = new SlaPolicy();
         policy.setName("Gold " + unique);
-        policy.setPriority(TicketPriority.HIGH);
-        policy.setFirstResponseMinutes(60);
-        policy.setResolutionMinutes(480);
+        policy.setFirstResponseHours(java.util.Map.of("high", 1));
+        policy.setResolutionHours(java.util.Map.of("high", 8));
         policy.setDepartmentId(-1L);
         policy = policies.save(policy);
 

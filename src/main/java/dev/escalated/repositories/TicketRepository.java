@@ -152,6 +152,15 @@ public interface TicketRepository
             + "WHERE t.createdAt >= :since AND t.resolvedAt IS NOT NULL")
     List<Object[]> resolutionTimings(@Param("since") Instant since);
 
+    /** Rows of {policy id, ticket count}, for the SLA policies page. */
+    @Query("SELECT t.slaPolicy.id, COUNT(t) FROM Ticket t WHERE t.slaPolicy IS NOT NULL GROUP BY t.slaPolicy.id")
+    List<Object[]> countBySlaPolicy();
+
+    /** Detaches a policy's tickets before it is deleted (the schema's ON DELETE SET NULL). */
+    @org.springframework.data.jpa.repository.Modifying
+    @Query("UPDATE Ticket t SET t.slaPolicy = NULL WHERE t.slaPolicy.id = :policyId")
+    int detachSlaPolicy(@Param("policyId") Long policyId);
+
     @Query("SELECT COUNT(t) FROM Ticket t WHERE t.createdAt >= :since AND t.slaPolicy IS NOT NULL")
     long countWithSlaSince(@Param("since") Instant since);
 
