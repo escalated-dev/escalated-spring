@@ -12,6 +12,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   system row per built-in status, and a nullable `escalated_tickets.ticket_status_id`
   (`ON DELETE SET NULL`). Existing tickets have no custom status and behave exactly as before; the
   built-in `status` column and its values are unchanged.
+- Run migration `V19` (PostgreSQL and MySQL). It adds `context` (default `ticket`), `placeholder`,
+  `validation_rules` and `conditions` to `escalated_custom_fields`, keeps one value per field per
+  ticket in `escalated_custom_field_values` (the newest, where an install stored a pair twice) under
+  a new unique key, and creates `escalated_custom_objects` and `escalated_custom_object_records`.
+  Existing columns keep their names (`field_key` is the slug, `field_type` the type, `sort_order`
+  the position).
+- Once a required, active ticket custom field exists, ticket creates through
+  `POST /escalated/api/admin/tickets`, `POST /escalated/api/customer/tickets` and the customer page
+  must carry it in `custom_fields`, or answer 422 (the page: back with errors). With no custom
+  fields defined, every request behaves as before.
 - Run migration `V18` (PostgreSQL and MySQL). It converts SLA policies and escalation rules to
   escalated-laravel's shape, and existing ones keep doing what they did:
   - Each SLA policy's one `priority` with `first_response_minutes`/`resolution_minutes` becomes
@@ -44,6 +54,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   custom label. Status-change webhooks that involve a custom status add `old_custom_status`,
   `new_custom_status`, `old_category` and `new_category`; built-in-only changes are unchanged.
   Changing a custom status's category does not rewrite tickets that already have it.
+- Custom fields and custom objects, as escalated-laravel's (see `docs/custom-fields.md`):
+  - Ticket values: the admin and customer ticket create/update APIs and the customer create page
+    take `custom_fields`, an object keyed by field slug (or numeric id). Only active fields with
+    context `ticket` count; an unknown or inactive key, a missing required field, or a value of the
+    wrong kind (`number`, `date` as `YYYY-MM-DD`, `checkbox`, `select`/`multi_select` options,
+    `text` up to 255) is an error keyed `custom_fields.<slug>`, checked before the ticket is
+    written. On update only the keys sent change; an empty optional value clears it.
+  - Ticket reads carry `custom_fields` (definitions with each `value`, decoded by type): the admin,
+    agent and customer JSON detail responses, the customer `Create` page (definitions only) and the
+    agent, admin and customer `Show` pages (a top-level prop).
+  - The pages, behind `escalated.ui.enabled`: `Escalated/Admin/CustomFields/Index` and `Form`
+    (`/escalated/admin/custom-fields`, with `reorder`) and `Escalated/Admin/CustomObjects/Index`,
+    `Form` and `Records` (`/escalated/admin/custom-objects`, `.../{id}/records`), with Laravel's
+    props and validation. A field's slug is made from its name when none is given (`_2`, `_3`
+    when taken); a select needs at least one option. Record `data` is checked against the object's
+    schema (`data.<name>` errors); deleting an object deletes its records.
+  - JSON: `/escalated/api/admin/custom-fields` takes Laravel's keys as well as its older
+    `field_key`/`field_type`, and answers 422 on invalid input; new
+    `/escalated/api/admin/custom-objects` with records.
+  - Not yet: values on guest and widget ticket creates.
 - The SLA policy and escalation rule pages, behind `escalated.ui.enabled`, as escalated-laravel's:
   `Escalated/Admin/SlaPolicies/Index` and `Form` (`/escalated/admin/sla-policies`, with
   `tickets_count`, and the form's `priorities`, `targeted`, `departments` and `ticketTypes`) and
@@ -141,6 +171,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   mentions) pass CSRF as on Laravel. A custom `escalated.ui.root-view` receives it as `csrfToken`.
 
 ### Changed
+- A custom field's JSON no longer embeds its stored values (`values`), which looped back through
+  each value's field and carried every ticket's answers. Field options are stored as a JSON array;
+  options saved before as a comma-separated string still read as a list.
 - **SLA policy selection follows escalated-laravel**: a new ticket gets the oldest active
   *default* policy with a target for its priority, or with `escalated.targeted-slas` the most
   specific match (department and type, department, type, then a default). A deadline the policy

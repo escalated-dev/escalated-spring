@@ -43,6 +43,10 @@ public class TicketDetailDto {
 
     private List<SerializedTicketSubjectDto> subjects = Collections.emptyList();
 
+    /** Active ticket custom fields, each with this ticket's {@code value}. */
+    @JsonProperty("custom_fields")
+    private List<Map<String, Object>> customFields = new ArrayList<>();
+
     public TicketDetailDto(Ticket ticket,
                            Long chatSessionId,
                            Instant chatStartedAt,
@@ -93,6 +97,14 @@ public class TicketDetailDto {
 
     public void setCustomActions(List<Map<String, Object>> customActions) {
         this.customActions = customActions;
+    }
+
+    public List<Map<String, Object>> getCustomFields() {
+        return customFields;
+    }
+
+    public void setCustomFields(List<Map<String, Object>> customFields) {
+        this.customFields = customFields != null ? customFields : new ArrayList<>();
     }
 
     public List<SerializedTicketSubjectDto> getSubjects() {

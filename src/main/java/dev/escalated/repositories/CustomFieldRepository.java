@@ -11,5 +11,11 @@ public interface CustomFieldRepository extends JpaRepository<CustomField, Long> 
 
     Optional<CustomField> findByFieldKey(String fieldKey);
 
+    boolean existsByFieldKey(String fieldKey);
+
     List<CustomField> findByActiveTrueOrderBySortOrderAsc();
+
+    List<CustomField> findAllByOrderBySortOrderAscIdAsc();
+
+    List<CustomField> findByActiveTrueAndContextOrderBySortOrderAscIdAsc(String context);
 }

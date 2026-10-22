@@ -62,6 +62,8 @@ public class AgentUiPages {
     private final TicketActionRegistry actions;
     private final UiRoutes routes;
 
+    private final dev.escalated.services.TicketCustomFieldValues customFields;
+
     public AgentUiPages(
             TicketRepository tickets,
             DepartmentRepository departments,
@@ -74,7 +76,9 @@ public class AgentUiPages {
             TicketLinkRepository links,
             TicketSubjectService subjects,
             TicketActionRegistry actions,
-            UiRoutes routes) {
+            UiRoutes routes,
+            dev.escalated.services.TicketCustomFieldValues customFields) {
+        this.customFields = customFields;
         this.tickets = tickets;
         this.departments = departments;
         this.tags = tags;
@@ -178,6 +182,7 @@ public class AgentUiPages {
                 && followers.existsByTicketIdAndUserId(ticket.getId(), String.valueOf(agentId)));
         props.put("followers_count", followers.findByTicketId(ticket.getId()).size());
         props.put("customActions", customActions(ticket));
+        props.put("custom_fields", customFields.forTicket(ticket.getId()));
         return props;
     }
 

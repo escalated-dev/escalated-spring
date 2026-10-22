@@ -4,6 +4,7 @@ import dev.escalated.dto.TicketDetailDto;
 import dev.escalated.models.Ticket;
 import dev.escalated.models.TicketPriority;
 import dev.escalated.models.TicketStatus;
+import dev.escalated.services.TicketCustomFieldValues;
 import dev.escalated.services.TicketService;
 
 import org.springframework.data.domain.Page;
@@ -29,9 +30,11 @@ import java.util.Map;
 public class AdminTicketController {
 
     private final TicketService ticketService;
+    private final TicketCustomFieldValues customFields;
 
-    public AdminTicketController(TicketService ticketService) {
+    public AdminTicketController(TicketService ticketService, TicketCustomFieldValues customFields) {
         this.ticketService = ticketService;
+        this.customFields = customFields;
     }
 
     @GetMapping
@@ -67,26 +70,31 @@ public class AdminTicketController {
 
     @GetMapping("/{id}")
     public ResponseEntity<TicketDetailDto> show(@PathVariable Long id) {
-        return ResponseEntity.ok(ticketService.findByIdWithDetail(id));
+        TicketDetailDto detail = ticketService.findByIdWithDetail(id);
+        detail.setCustomFields(customFields.forTicket(id));
+        return ResponseEntity.ok(detail);
     }
 
     @PostMapping
     public ResponseEntity<Ticket> store(@RequestBody Map<String, Object> body) {
+        // Checked before anything is written: a failed create creates no ticket.
+        TicketCustomFieldValues.Changes values = customFields.validate(TicketCustomFieldValues.extract(body), true);
         if (body.containsKey("ticket_type")) {
-            return ResponseEntity.status(201)
-                    .body(
-                            ticketService.create(
-                                    (String) body.get("subject"),
-                                    (String) body.get("body"),
-                                    (String) body.get("requester_name"),
-                                    (String) body.get("requester_email"),
-                                    body.get("priority") == null
-                                            ? null
-                                            : TicketPriority.valueOf((String) body.get("priority")),
-                                    body.get("department_id") == null
-                                            ? null
-                                            : Long.valueOf(body.get("department_id").toString()),
-                                    (String) body.get("ticket_type")));
+            Ticket typed =
+                    ticketService.create(
+                            (String) body.get("subject"),
+                            (String) body.get("body"),
+                            (String) body.get("requester_name"),
+                            (String) body.get("requester_email"),
+                            body.get("priority") == null
+                                    ? null
+                                    : TicketPriority.valueOf((String) body.get("priority")),
+                            body.get("department_id") == null
+                                    ? null
+                                    : Long.valueOf(body.get("department_id").toString()),
+                            (String) body.get("ticket_type"));
+            customFields.apply(typed.getId(), values);
+            return ResponseEntity.status(201).body(typed);
         }
         Ticket ticket =
                 ticketService.create(
@@ -100,11 +108,14 @@ public class AdminTicketController {
                         body.get("department_id") != null
                                 ? Long.valueOf(body.get("department_id").toString())
                                 : null);
+        customFields.apply(ticket.getId(), values);
         return ResponseEntity.status(201).body(ticket);
     }
 
     @PutMapping("/{id}")
     public ResponseEntity<Ticket> update(@PathVariable Long id, @RequestBody Map<String, Object> body) {
+        Object given = TicketCustomFieldValues.extract(body);
+        TicketCustomFieldValues.Changes values = given == null ? null : customFields.validate(given, false);
         Ticket ticket =
                 ticketService.update(
                         id,
@@ -113,6 +124,7 @@ public class AdminTicketController {
                         body.get("priority") != null
                                 ? TicketPriority.valueOf((String) body.get("priority"))
                                 : null);
+        customFields.apply(id, values);
         return ResponseEntity.ok(ticket);
     }
 

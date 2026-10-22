@@ -142,6 +142,11 @@ JSON `pageJson`, `routesScript` (the `route()` definition) and `csrfToken` (for 
 | `Escalated/Admin/EscalationRules/Form` | `GET /escalated/admin/escalation-rules/create`, `.../{id}/edit` |
 | `Escalated/Admin/Statuses/Index` | `GET /escalated/admin/statuses` |
 | `Escalated/Admin/Statuses/Form` | `GET /escalated/admin/statuses/create`, `.../{id}/edit` |
+| `Escalated/Admin/CustomFields/Index` | `GET /escalated/admin/custom-fields` |
+| `Escalated/Admin/CustomFields/Form` | `GET /escalated/admin/custom-fields/create`, `.../{id}/edit` |
+| `Escalated/Admin/CustomObjects/Index` | `GET /escalated/admin/custom-objects` |
+| `Escalated/Admin/CustomObjects/Form` | `GET /escalated/admin/custom-objects/create`, `.../{id}/edit` |
+| `Escalated/Admin/CustomObjects/Records` | `GET /escalated/admin/custom-objects/{id}/records` |
 | `Escalated/Admin/Reports` | `GET /escalated/admin/reports` |
 | `Escalated/Admin/Reports/Dashboard`, `AgentMetrics`, `SlaReport`, `CsatReport`, `Comparison` | `GET /escalated/admin/reports/` `dashboard`, `agents`, `sla`, `csat`, `comparison` |
 | `Escalated/Admin/Reports/SlaTrends`, `ResponseTimes`, `ResolutionTimes`, `AgentRanking`, `Cohorts` | `GET /escalated/admin/reports/` `sla-trends`, `response-times` (or `frt`), `resolution-times` (or `resolution`), `agent-ranking`, `cohorts` |
@@ -149,7 +154,7 @@ JSON `pageJson`, `routesScript` (the `route()` definition) and `csrfToken` (for 
 | `Escalated/Guest/Show` | `GET /escalated/guest/{token}` (no sign-in) |
 
 Customer writes: `POST /escalated` (`subject`, `description`, `priority`, `department_id`,
-`ticket_type`), and `POST /escalated/{reference}/` `reply`, `close` (unless the `allow_customer_close`
+`ticket_type`, `custom_fields` keyed by field slug; see `docs/custom-fields.md`), and `POST /escalated/{reference}/` `reply`, `close` (unless the `allow_customer_close`
 setting is off), `reopen` and `rate` (`rating` 1-5, `comment`; resolved or closed tickets, once). A
 customer sees only the tickets whose requester email is theirs (any case); anyone else's is a 404.
 The customer pages show public replies only, with staff by display name and no email.

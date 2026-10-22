@@ -86,6 +86,15 @@ public class UiRoutes {
         resource("sla-policies", "sla_policy", "/admin/sla-policies/{sla_policy}/edit");
         resource("escalation-rules", "escalation_rule", "/admin/escalation-rules/{escalation_rule}/edit");
         resource("statuses", "status", "/admin/statuses/{status}/edit");
+        resource("custom-fields", "custom_field", "/admin/custom-fields/{custom_field}/edit");
+        register("escalated.admin.custom-fields.reorder", "/admin/custom-fields/reorder");
+        resource("custom-objects", "custom_object", "/admin/custom-objects/{custom_object}/edit");
+        register("escalated.admin.custom-objects.records", "/admin/custom-objects/{custom_object}/records");
+        register("escalated.admin.custom-objects.records.store", "/admin/custom-objects/{custom_object}/records");
+        register("escalated.admin.custom-objects.records.update",
+                "/admin/custom-objects/{custom_object}/records/{record}");
+        register("escalated.admin.custom-objects.records.destroy",
+                "/admin/custom-objects/{custom_object}/records/{record}");
         register("escalated.admin.webhooks.deliveries", "/admin/webhooks/{webhook}/deliveries");
         register("escalated.admin.webhooks.retry", "/admin/webhooks/deliveries/{delivery}/retry");
         register("escalated.admin.users.index", "/admin/users");
