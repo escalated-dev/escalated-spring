@@ -30,4 +30,14 @@ public interface ImportSourceMapRepository extends JpaRepository<ImportSourceMap
     @Modifying(flushAutomatically = true, clearAutomatically = true)
     @Query("UPDATE Reply r SET r.createdAt = :at WHERE r.id = :id")
     int keepReplyCreatedAt(@Param("id") Long id, @Param("at") Instant at);
+
+    @Transactional(transactionManager = EscalatedTransactionManagers.ESCALATED)
+    @Modifying(flushAutomatically = true, clearAutomatically = true)
+    @Query("UPDATE Attachment a SET a.createdAt = :at WHERE a.id = :id")
+    int keepAttachmentCreatedAt(@Param("id") Long id, @Param("at") Instant at);
+
+    @Transactional(transactionManager = EscalatedTransactionManagers.ESCALATED)
+    @Modifying(flushAutomatically = true, clearAutomatically = true)
+    @Query("UPDATE SatisfactionRating r SET r.createdAt = :at WHERE r.id = :id")
+    int keepRatingCreatedAt(@Param("id") Long id, @Param("at") Instant at);
 }

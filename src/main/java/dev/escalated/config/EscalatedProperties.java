@@ -123,6 +123,32 @@ public class EscalatedProperties {
     private TicketSubjectsProperties ticketSubjects = new TicketSubjectsProperties();
     private NewslettersProperties newsletters = new NewslettersProperties();
     private UiProperties ui = new UiProperties();
+    private ImportsProperties imports = new ImportsProperties();
+
+    public ImportsProperties getImports() {
+        return imports;
+    }
+
+    public void setImports(ImportsProperties imports) {
+        this.imports = imports;
+    }
+
+    /**
+     * {@code escalated.imports.*}: the admin Import wizard. Imported attachments are written
+     * through the {@code AttachmentStorage} bean the host declares (none: every imported
+     * attachment fails) and capped at {@code attachment-max-kb}, Laravel's live-upload limit.
+     */
+    public static class ImportsProperties {
+        private int attachmentMaxKb = 10240;
+
+        public int getAttachmentMaxKb() {
+            return attachmentMaxKb;
+        }
+
+        public void setAttachmentMaxKb(int attachmentMaxKb) {
+            this.attachmentMaxKb = attachmentMaxKb;
+        }
+    }
 
     public UiProperties getUi() {
         return ui;
