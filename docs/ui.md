@@ -138,6 +138,7 @@ JSON `pageJson`, `routesScript` (the `route()` definition) and `csrfToken` (for 
 | `Escalated/Customer/KnowledgeBase/Article` | `GET /escalated/kb/{slug}` |
 | `Escalated/Admin/Reports` | `GET /escalated/admin/reports` |
 | `Escalated/Admin/Reports/Dashboard`, `AgentMetrics`, `SlaReport`, `CsatReport`, `Comparison` | `GET /escalated/admin/reports/` `dashboard`, `agents`, `sla`, `csat`, `comparison` |
+| `Escalated/Admin/Reports/SlaTrends`, `ResponseTimes`, `ResolutionTimes`, `AgentRanking`, `Cohorts` | `GET /escalated/admin/reports/` `sla-trends`, `response-times` (or `frt`), `resolution-times` (or `resolution`), `agent-ranking`, `cohorts` |
 | `Escalated/Guest/Create` | `GET /escalated/guest/create` (no sign-in) |
 | `Escalated/Guest/Show` | `GET /escalated/guest/{token}` (no sign-in) |
 
@@ -190,7 +191,13 @@ period, dates in UTC; the dashboard's status and priority breakdowns are all-tim
 A ticket breached its SLA when it was answered or resolved after the due time, or is still open
 past it. Ratings are the ones given (a survey sent but not answered is not counted). The figures
 are worked out from the period's tickets in memory, which suits the usual 30-day window; the JSON
-reports under `/escalated/api/admin/reports` aggregate in SQL.
+reports under `/escalated/api/admin/reports` aggregate in SQL. The analytics screens (SLA trends,
+response and resolution times, agent ranking, cohorts) group their counts and breach rates in SQL
+and work out hours, medians and 90th percentiles from the timestamps the queries return. SLA trends
+group breaches by creation `day`, ISO `week` or `month` (`group_by`) and list open tickets with a
+deadline in the next 8 hours (at most 50). The response and resolution targets are 4 and 24 hours,
+as on Laravel. The agent ranking scores as Laravel does: resolution rate 30%, first response 25%
+(100 less 5 an hour, 50 without one), CSAT 25% and volume 20% (2 a ticket, at most 100).
 
 The guest pages need no sign-in (`/escalated/guest/**` is open in the web chain; writes still need
 the CSRF token). The form verifies the email with the existing `/escalated/api/guest/verification`

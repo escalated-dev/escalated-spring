@@ -108,7 +108,8 @@ public class UiRoutes {
         register("escalated.guest.verification", "/api/guest/verification");
         register("escalated.guest.lookup", "/api/guest/lookup");
         register("escalated.admin.reports", "/admin/reports");
-        for (String report : new String[] {"dashboard", "agents", "sla", "csat", "comparison"}) {
+        for (String report : new String[] {"dashboard", "agents", "sla", "csat", "comparison", "sla-trends",
+                "response-times", "frt", "resolution-times", "resolution", "agent-ranking", "cohorts"}) {
             register("escalated.admin.reports." + report, "/admin/reports/" + report);
         }
         register("escalated.attachments.download", "/attachments/{attachment}/download");

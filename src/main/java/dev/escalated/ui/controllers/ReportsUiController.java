@@ -1,6 +1,7 @@
 package dev.escalated.ui.controllers;
 
 import dev.escalated.ui.EscalatedUiRenderer;
+import dev.escalated.ui.ReportAnalyticsUiPages;
 import dev.escalated.ui.ReportsUiPages;
 import dev.escalated.ui.UiRoutes;
 import java.util.Map;
@@ -13,8 +14,9 @@ import org.springframework.web.bind.annotation.RequestParam;
 /**
  * The report screens, as escalated-laravel's {@code Admin\ReportController}:
  * {@code Escalated/Admin/Reports} and {@code Reports/Dashboard}, {@code AgentMetrics},
- * {@code SlaReport}, {@code CsatReport} and {@code Comparison}. Each takes {@code days} (or {@code period}), default
- * 30. Admins only (the web security chain).
+ * {@code SlaReport}, {@code CsatReport}, {@code Comparison}, {@code SlaTrends}, {@code ResponseTimes},
+ * {@code ResolutionTimes}, {@code AgentRanking} and {@code Cohorts}. Each takes {@code days} (or
+ * {@code period}), default 30. Admins only (the web security chain).
  */
 @Controller
 @ConditionalOnProperty(prefix = "escalated.ui", name = "enabled", havingValue = "true")
@@ -23,10 +25,12 @@ public class ReportsUiController {
 
     private final EscalatedUiRenderer renderer;
     private final ReportsUiPages pages;
+    private final ReportAnalyticsUiPages analytics;
 
-    public ReportsUiController(EscalatedUiRenderer renderer, ReportsUiPages pages) {
+    public ReportsUiController(EscalatedUiRenderer renderer, ReportsUiPages pages, ReportAnalyticsUiPages analytics) {
         this.renderer = renderer;
         this.pages = pages;
+        this.analytics = analytics;
     }
 
     @GetMapping({"", "/"})
@@ -57,5 +61,33 @@ public class ReportsUiController {
     @GetMapping("/csat")
     public Object csat(@RequestParam Map<String, String> query) {
         return renderer.render("Escalated/Admin/Reports/CsatReport", pages.csat(ReportsUiPages.days(query)));
+    }
+
+    /** {@code group_by}: {@code day} (default), {@code week} or {@code month}. */
+    @GetMapping("/sla-trends")
+    public Object slaTrends(@RequestParam Map<String, String> query) {
+        return renderer.render("Escalated/Admin/Reports/SlaTrends",
+                analytics.slaTrends(ReportsUiPages.days(query), query.getOrDefault("group_by", "day")));
+    }
+
+    @GetMapping({"/response-times", "/frt"})
+    public Object responseTimes(@RequestParam Map<String, String> query) {
+        return renderer.render("Escalated/Admin/Reports/ResponseTimes", analytics.responseTimes(ReportsUiPages.days(query)));
+    }
+
+    @GetMapping({"/resolution-times", "/resolution"})
+    public Object resolutionTimes(@RequestParam Map<String, String> query) {
+        return renderer.render("Escalated/Admin/Reports/ResolutionTimes",
+                analytics.resolutionTimes(ReportsUiPages.days(query)));
+    }
+
+    @GetMapping("/agent-ranking")
+    public Object agentRanking(@RequestParam Map<String, String> query) {
+        return renderer.render("Escalated/Admin/Reports/AgentRanking", analytics.agentRanking(ReportsUiPages.days(query)));
+    }
+
+    @GetMapping("/cohorts")
+    public Object cohorts(@RequestParam Map<String, String> query) {
+        return renderer.render("Escalated/Admin/Reports/Cohorts", analytics.cohorts(ReportsUiPages.days(query)));
     }
 }
