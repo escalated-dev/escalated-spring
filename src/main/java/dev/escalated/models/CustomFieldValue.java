@@ -32,7 +32,11 @@ import jakarta.persistence.Table;
                                                 alias = "row",
                                                 table = "escalated_custom_field_values"))))
 @Entity
-@Table(name = "escalated_custom_field_values")
+@Table(
+        name = "escalated_custom_field_values",
+        uniqueConstraints = @jakarta.persistence.UniqueConstraint(
+                name = "uq_escalated_cfv_ticket_field",
+                columnNames = {"ticket_id", "custom_field_id"}))
 public class CustomFieldValue extends BaseEntity {
 
     @JsonIgnore

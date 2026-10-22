@@ -7,6 +7,7 @@ import dev.escalated.models.SatisfactionRating;
 import dev.escalated.models.Ticket;
 import dev.escalated.models.TicketPriority;
 import dev.escalated.repositories.TicketRepository;
+import dev.escalated.services.TicketCustomFieldValues;
 import jakarta.persistence.EntityNotFoundException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -42,7 +43,11 @@ public class CustomerUiPages {
     private final AgentUiPages agentPages;
     private final UiRoutes routes;
 
-    public CustomerUiPages(TicketRepository tickets, AgentUiPages agentPages, UiRoutes routes) {
+    private final TicketCustomFieldValues customFields;
+
+    public CustomerUiPages(TicketRepository tickets, AgentUiPages agentPages, UiRoutes routes,
+                           TicketCustomFieldValues customFields) {
+        this.customFields = customFields;
         this.tickets = tickets;
         this.agentPages = agentPages;
         this.routes = routes;
@@ -77,6 +82,7 @@ public class CustomerUiPages {
         Map<String, Object> props = new LinkedHashMap<>();
         props.put("departments", agentPages.activeDepartments());
         props.put("priorities", Arrays.stream(TicketPriority.values()).map(UiPresenter::priority).toList());
+        props.put("custom_fields", customFields.definitions());
         return props;
     }
 
@@ -94,7 +100,10 @@ public class CustomerUiPages {
     public Map<String, Object> show(String reference, String email) {
         Ticket ticket = tickets.findById(own(reference, email).getId())
                 .orElseThrow(() -> new EntityNotFoundException("Ticket not found"));
-        return Map.of("ticket", payload(ticket));
+        Map<String, Object> props = new LinkedHashMap<>();
+        props.put("ticket", payload(ticket));
+        props.put("custom_fields", customFields.forTicket(ticket.getId()));
+        return props;
     }
 
     @Transactional(transactionManager = EscalatedTransactionManagers.ESCALATED, readOnly = true)

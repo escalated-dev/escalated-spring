@@ -40,6 +40,9 @@ class AdminTicketControllerTest {
     @MockitoBean
     private TicketService ticketService;
 
+    @MockitoBean
+    private dev.escalated.services.TicketCustomFieldValues customFieldValues;
+
     @Test
     void index_shouldReturnTickets() throws Exception {
         Ticket ticket = new Ticket();

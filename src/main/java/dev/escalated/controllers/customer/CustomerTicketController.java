@@ -6,6 +6,7 @@ import dev.escalated.dto.GuestReplyDto;
 import dev.escalated.models.Reply;
 import dev.escalated.models.Ticket;
 import dev.escalated.models.TicketPriority;
+import dev.escalated.services.TicketCustomFieldValues;
 import dev.escalated.services.TicketService;
 import java.util.List;
 import java.util.Map;
@@ -43,9 +44,11 @@ import org.springframework.web.server.ResponseStatusException;
 public class CustomerTicketController {
 
     private final TicketService ticketService;
+    private final TicketCustomFieldValues customFields;
 
-    public CustomerTicketController(TicketService ticketService) {
+    public CustomerTicketController(TicketService ticketService, TicketCustomFieldValues customFields) {
         this.ticketService = ticketService;
+        this.customFields = customFields;
     }
 
     @GetMapping
@@ -56,13 +59,16 @@ public class CustomerTicketController {
 
     @GetMapping("/{id}")
     public ResponseEntity<CustomerTicketDto> show(@PathVariable Long id, Authentication authentication) {
-        return ResponseEntity.ok(ticketService.findCustomerView(id, customerEmail(authentication)));
+        CustomerTicketDto view = ticketService.findCustomerView(id, customerEmail(authentication));
+        return ResponseEntity.ok(view.withCustomFields(customFields.forTicket(view.id())));
     }
 
     @PostMapping
     public ResponseEntity<CustomerTicketDto> store(@RequestBody Map<String, Object> body,
                                                    Authentication authentication) {
         String email = customerEmail(authentication);
+        // Checked before anything is written: a failed create creates no ticket.
+        TicketCustomFieldValues.Changes values = customFields.validate(TicketCustomFieldValues.extract(body), true);
         Object name = body.get("name");
         Ticket ticket = ticketService.create(
                 (String) body.get("subject"),
@@ -71,7 +77,9 @@ public class CustomerTicketController {
                 email,
                 body.get("priority") != null ? TicketPriority.valueOf((String) body.get("priority")) : TicketPriority.MEDIUM,
                 null);
-        return ResponseEntity.status(201).body(ticketService.findCustomerView(ticket.getId(), email));
+        customFields.apply(ticket.getId(), values);
+        return ResponseEntity.status(201).body(ticketService.findCustomerView(ticket.getId(), email)
+                .withCustomFields(customFields.forTicket(ticket.getId())));
     }
 
     @PostMapping("/{id}/replies")

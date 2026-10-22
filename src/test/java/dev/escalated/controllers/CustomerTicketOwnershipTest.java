@@ -196,7 +196,7 @@ class CustomerTicketOwnershipTest {
         assertThat(fieldNames(json.readTree(raw))).containsExactlyInAnyOrder(
                 "id", "reference", "subject", "description", "status", "priority", "channel",
                 "department", "requester_name", "created_at", "updated_at", "resolved_at",
-                "closed_at", "attachments", "replies", "satisfaction_rating", "chat_messages");
+                "closed_at", "attachments", "replies", "satisfaction_rating", "chat_messages", "custom_fields");
     }
 
     @Test
@@ -281,7 +281,7 @@ class CustomerTicketOwnershipTest {
         assertThat(fieldNames(json.readTree(raw))).containsExactlyInAnyOrder(
                 "id", "reference", "subject", "description", "status", "priority", "channel",
                 "department", "requester_name", "created_at", "updated_at", "resolved_at",
-                "closed_at", "attachments", "replies", "satisfaction_rating", "chat_messages");
+                "closed_at", "attachments", "replies", "satisfaction_rating", "chat_messages", "custom_fields");
     }
 
     @Test

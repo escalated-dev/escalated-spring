@@ -7,6 +7,7 @@ import dev.escalated.models.TicketStatus;
 import dev.escalated.repositories.DepartmentRepository;
 import dev.escalated.services.SatisfactionRatingService;
 import dev.escalated.services.SettingsService;
+import dev.escalated.services.TicketCustomFieldValues;
 import dev.escalated.services.TicketService;
 import dev.escalated.ui.CustomerUiPages;
 import dev.escalated.ui.EscalatedUiRenderer;
@@ -52,6 +53,7 @@ public class CustomerUiController {
     private final SettingsService settings;
     private final SatisfactionRatingService ratings;
     private final UiRoutes routes;
+    private final TicketCustomFieldValues customFields;
 
     public CustomerUiController(
             EscalatedUiRenderer renderer,
@@ -61,7 +63,9 @@ public class CustomerUiController {
             DepartmentRepository departments,
             SettingsService settings,
             SatisfactionRatingService ratings,
-            UiRoutes routes) {
+            UiRoutes routes,
+            TicketCustomFieldValues customFields) {
+        this.customFields = customFields;
         this.renderer = renderer;
         this.inertia = inertia;
         this.pages = pages;
@@ -101,8 +105,11 @@ public class CustomerUiController {
         if (ticketType != null && !TICKET_TYPES.contains(ticketType)) {
             throw UiInput.invalid("ticket_type", "The selected ticket type is invalid.");
         }
+        // Checked before anything is written: a failed create creates no ticket.
+        TicketCustomFieldValues.Changes values = customFields.validate(TicketCustomFieldValues.extract(input.all()), true);
         String email = email(authentication);
         Ticket ticket = tickets.create(subject, description, email, email, priority, departmentId, ticketType);
+        customFields.apply(ticket.getId(), values);
         inertia.flash("success", "Ticket created.");
         return inertia.redirect(routes.url("escalated.customer.tickets.show", ticket.getTicketNumber()));
     }

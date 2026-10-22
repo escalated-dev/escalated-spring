@@ -1,5 +1,6 @@
 package dev.escalated.dto;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import dev.escalated.models.Attachment;
 import dev.escalated.models.SatisfactionRating;
@@ -36,7 +37,9 @@ public record CustomerTicketDto(
         List<Attachment> attachments,
         List<GuestReplyDto> replies,
         @JsonProperty("satisfaction_rating") Rating satisfactionRating,
-        @JsonProperty("chat_messages") List<GuestReplyDto> chatMessages) {
+        @JsonProperty("chat_messages") List<GuestReplyDto> chatMessages,
+        @JsonProperty("custom_fields") @JsonInclude(JsonInclude.Include.NON_NULL)
+        List<Map<String, Object>> customFields) {
 
     /** The customer's own rating of the ticket. */
     public record Rating(int rating, String comment, @JsonProperty("created_at") Instant createdAt) {
@@ -66,6 +69,14 @@ public record CustomerTicketDto(
                 guest.attachments(),
                 guest.replies(),
                 rating,
-                ticket.isLiveChat() ? guest.replies() : null);
+                ticket.isLiveChat() ? guest.replies() : null,
+                null);
+    }
+
+    /** This view with the ticket's custom fields, each carrying its {@code value}. */
+    public CustomerTicketDto withCustomFields(List<Map<String, Object>> fields) {
+        return new CustomerTicketDto(id, reference, subject, description, status, priority, channel, department,
+                requesterName, createdAt, updatedAt, resolvedAt, closedAt, attachments, replies, satisfactionRating,
+                chatMessages, fields);
     }
 }
