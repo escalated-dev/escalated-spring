@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.5] - 2026-10-22
+
+### Upgrading
+- Run migration `V22__business_schedule_default` (PostgreSQL and MySQL). It adds
+  `escalated_business_schedules.is_default`, false for existing rows. A business-hours SLA policy
+  without its own schedule now follows the default schedule when one is set, and the first active
+  schedule otherwise, as before.
+- Business hours may end at `24:00` (the schedule editor's midnight), read as the end of the day.
+
 ### Added
 - The Inertia UI renders `Escalated/Admin/Reports/AgentDetail` at
   `GET /escalated/admin/reports/agent/{id}/detail` (`escalated.admin.reports.agent-detail`, which
@@ -18,13 +27,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `Admin/Capacity/Index`, `Admin/BusinessHours/Index` and `Form`, and `Admin/AuditLog/Index`, with
   escalated-laravel's props and routes (`escalated.admin.skills.*`, `capacity.*`,
   `business-hours.*`, `audit-log`). See `docs/ui.md`.
-
-### Upgrading
-- Run migration `V22__business_schedule_default` (PostgreSQL and MySQL). It adds
-  `escalated_business_schedules.is_default`, false for existing rows. A business-hours SLA policy
-  without its own schedule now follows the default schedule when one is set, and the first active
-  schedule otherwise, as before.
-- Business hours may end at `24:00` (the schedule editor's midnight), read as the end of the day.
 
 ## [0.2.4] - 2026-10-22
 
