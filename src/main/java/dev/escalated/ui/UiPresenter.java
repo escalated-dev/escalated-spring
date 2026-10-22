@@ -12,6 +12,8 @@ import dev.escalated.models.Ticket;
 import dev.escalated.models.TicketActivity;
 import dev.escalated.models.TicketPriority;
 import dev.escalated.models.TicketStatus;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -259,26 +261,43 @@ public final class UiPresenter {
 
     /** Laravel's length-aware paginator, as Inertia receives it. */
     public static <T> Map<String, Object> paginator(Page<T> page, List<Map<String, Object>> rows, String path) {
+        return paginator(page, rows, path, Map.of());
+    }
+
+    /**
+     * The paginator with Laravel's {@code withQueryString()}: each page link keeps {@code query}
+     * (the page's filters).
+     */
+    public static <T> Map<String, Object> paginator(Page<T> page, List<Map<String, Object>> rows, String path,
+                                                    Map<String, String> query) {
+        StringBuilder kept = new StringBuilder();
+        query.forEach((key, value) -> kept.append(URLEncoder.encode(key, StandardCharsets.UTF_8))
+                .append('=').append(URLEncoder.encode(value, StandardCharsets.UTF_8)).append('&'));
+        return paginatorAt(page, rows, path, path + "?" + kept);
+    }
+
+    private static <T> Map<String, Object> paginatorAt(Page<T> page, List<Map<String, Object>> rows, String path,
+                                                       String pageUrl) {
         int current = page.getNumber() + 1;
         int last = Math.max(page.getTotalPages(), 1);
         Map<String, Object> map = new LinkedHashMap<>();
         map.put("current_page", current);
         map.put("data", rows);
-        map.put("first_page_url", path + "?page=1");
+        map.put("first_page_url", pageUrl + "page=1");
         map.put("from", rows.isEmpty() ? null : page.getNumber() * page.getSize() + 1);
         map.put("last_page", last);
-        map.put("last_page_url", path + "?page=" + last);
+        map.put("last_page_url", pageUrl + "page=" + last);
         List<Map<String, Object>> links = new ArrayList<>();
-        links.add(link(current > 1 ? path + "?page=" + (current - 1) : null, "&laquo; Previous", false));
+        links.add(link(current > 1 ? pageUrl + "page=" + (current - 1) : null, "&laquo; Previous", false));
         for (int number = 1; number <= last; number++) {
-            links.add(link(path + "?page=" + number, String.valueOf(number), number == current));
+            links.add(link(pageUrl + "page=" + number, String.valueOf(number), number == current));
         }
-        links.add(link(current < last ? path + "?page=" + (current + 1) : null, "Next &raquo;", false));
+        links.add(link(current < last ? pageUrl + "page=" + (current + 1) : null, "Next &raquo;", false));
         map.put("links", links);
-        map.put("next_page_url", current < last ? path + "?page=" + (current + 1) : null);
+        map.put("next_page_url", current < last ? pageUrl + "page=" + (current + 1) : null);
         map.put("path", path);
         map.put("per_page", page.getSize());
-        map.put("prev_page_url", current > 1 ? path + "?page=" + (current - 1) : null);
+        map.put("prev_page_url", current > 1 ? pageUrl + "page=" + (current - 1) : null);
         map.put("to", rows.isEmpty() ? null : page.getNumber() * page.getSize() + rows.size());
         map.put("total", page.getTotalElements());
         return map;

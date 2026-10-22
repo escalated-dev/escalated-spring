@@ -173,7 +173,13 @@ class PageNameParityTest {
           "Escalated/Admin/Settings/DataRetention",
           "Escalated/Admin/Settings/DatabaseConnection",
           "Escalated/Admin/Settings/EmailSettings",
-          "Escalated/Admin/Settings/PublicTickets");
+          "Escalated/Admin/Settings/PublicTickets",
+          "Escalated/Admin/Skills/Index",
+          "Escalated/Admin/Skills/Form",
+          "Escalated/Admin/Capacity/Index",
+          "Escalated/Admin/BusinessHours/Index",
+          "Escalated/Admin/BusinessHours/Form",
+          "Escalated/Admin/AuditLog/Index");
 
   @Test
   void theUiLayerRendersEveryPageItServes() throws IOException {

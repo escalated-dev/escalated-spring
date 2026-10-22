@@ -65,6 +65,10 @@ public class BusinessSchedule extends BaseEntity {
     @Column(name = "is_active", nullable = false)
     private boolean active = true;
 
+    /** The schedule a business-hours SLA policy without its own follows. At most one is the default. */
+    @Column(name = "is_default", nullable = false)
+    private boolean defaultSchedule = false;
+
     @OneToMany(mappedBy = "businessSchedule", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Holiday> holidays = new ArrayList<>();
 
@@ -202,6 +206,14 @@ public class BusinessSchedule extends BaseEntity {
 
     public void setActive(boolean active) {
         this.active = active;
+    }
+
+    public boolean isDefaultSchedule() {
+        return defaultSchedule;
+    }
+
+    public void setDefaultSchedule(boolean defaultSchedule) {
+        this.defaultSchedule = defaultSchedule;
     }
 
     public List<Holiday> getHolidays() {

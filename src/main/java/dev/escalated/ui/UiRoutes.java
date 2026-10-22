@@ -111,6 +111,11 @@ public class UiRoutes {
         register("escalated.admin.users.index", "/admin/users");
         register("escalated.admin.users.role", "/admin/users/{user}/role");
         resource("roles", "role", "/admin/roles/{role}/edit");
+        resource("skills", "skill", "/admin/skills/{skill}/edit");
+        register("escalated.admin.capacity.index", "/admin/capacity");
+        register("escalated.admin.capacity.update", "/admin/capacity/{capacity}");
+        resource("business-hours", "business_hour", "/admin/business-hours/{business_hour}/edit");
+        register("escalated.admin.audit-log", "/admin/audit-log");
         register("escalated.admin.api-tokens.index", "/admin/api-tokens");
         register("escalated.admin.api-tokens.store", "/admin/api-tokens");
         register("escalated.admin.api-tokens.update", "/admin/api-tokens/{id}");
