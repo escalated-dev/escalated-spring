@@ -1,7 +1,10 @@
 package dev.escalated.ui;
 
 import dev.escalated.config.EscalatedTransactionManagers;
+import dev.escalated.models.AgentProfile;
+import dev.escalated.repositories.AgentProfileRepository;
 import dev.escalated.repositories.TicketReportRepository;
+import jakarta.persistence.EntityNotFoundException;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDate;
@@ -57,9 +60,11 @@ public class ReportAnalyticsUiPages {
     private static final int TYPE = 9;
 
     private final TicketReportRepository reports;
+    private final AgentProfileRepository agents;
 
-    public ReportAnalyticsUiPages(TicketReportRepository reports) {
+    public ReportAnalyticsUiPages(TicketReportRepository reports, AgentProfileRepository agents) {
         this.reports = reports;
+        this.agents = agents;
     }
 
     /** {@code Escalated/Admin/Reports/SlaTrends}; {@code groupBy} is {@code day}, {@code week} or {@code month}. */
@@ -190,6 +195,92 @@ public class ReportAnalyticsUiPages {
         props.put("period_days", days);
         props.put("agents", agents);
         return props;
+    }
+
+    /**
+     * {@code Escalated/Admin/Reports/AgentDetail}: one agent's tickets created in the last
+     * {@code days} days against the {@code days} before, under the names the page declares.
+     * (Laravel's controller passes {@code agent_id}, {@code metrics} and {@code percentiles}, which
+     * the page does not read; these are the page's own props.)
+     */
+    @Transactional(transactionManager = EscalatedTransactionManagers.ESCALATED, readOnly = true)
+    public Map<String, Object> agentDetail(int days, Long agentId) {
+        AgentProfile agent = agents.findById(agentId).orElseThrow(() -> new EntityNotFoundException("Agent not found"));
+        Instant now = Instant.now();
+        Instant since = since(now, days);
+
+        Map<String, Object> props = new LinkedHashMap<>();
+        props.put("period_days", days);
+        Map<String, Object> shown = new LinkedHashMap<>();
+        shown.put("id", agent.getId());
+        shown.put("name", agent.getName() == null || agent.getName().isBlank() ? agent.getEmail() : agent.getName());
+        shown.put("email", agent.getEmail());
+        props.put("agent", shown);
+        props.putAll(agentFigures(agent, since, now, true));
+        Map<String, Object> previous = agentFigures(agent, since(since, days), since, false);
+        props.put("prev_total_tickets", previous.get("total_tickets"));
+        props.put("prev_resolved_tickets", previous.get("resolved_tickets"));
+        props.put("prev_avg_frt", previous.get("avg_frt"));
+        props.put("prev_avg_resolution", previous.get("avg_resolution"));
+        props.put("prev_csat_score", previous.get("csat_score"));
+        return props;
+    }
+
+    /** The agent's figures over [from, to); the charts too when {@code charts}. */
+    private Map<String, Object> agentFigures(AgentProfile agent, Instant from, Instant to, boolean charts) {
+        List<Object[]> theirs = reports.agentTickets(agent.getId(), from, to);
+        List<Integer> ratings = reports.agentRatingValues(agent.getId(), from, to);
+        List<Double> response = hours(theirs, RESPONDED);
+
+        Map<String, Object> figures = new LinkedHashMap<>();
+        figures.put("total_tickets", theirs.size());
+        figures.put("resolved_tickets", theirs.stream().filter(row -> row[RESOLVED] != null).count());
+        figures.put("avg_frt", round1(average(response)));
+        figures.put("avg_resolution", round1(average(hours(theirs, RESOLVED))));
+        figures.put("csat_score", ratings.isEmpty() ? null
+                : round1(ratings.stream().mapToInt(Integer::intValue).average().orElse(0)));
+        if (!charts) {
+            return figures;
+        }
+        Map<String, Object> percentiles = new LinkedHashMap<>();
+        for (int rank : new int[] {50, 75, 90, 95, 99}) {
+            percentiles.put("p" + rank, round1(percentile(response, rank)));
+        }
+        figures.put("response_percentiles", percentiles);
+
+        // Replies and notes written, and tickets resolved, per day.
+        Map<String, long[]> perDay = new TreeMap<>();
+        for (Instant written : reports.agentReplyTimes(agent.getEmail(), from, to)) {
+            perDay.computeIfAbsent(date(written), day -> new long[2])[0]++;
+        }
+        for (Object[] row : theirs) {
+            Instant resolved = (Instant) row[RESOLVED];
+            if (resolved != null && !resolved.isBefore(from) && resolved.isBefore(to)) {
+                perDay.computeIfAbsent(date(resolved), day -> new long[2])[1]++;
+            }
+        }
+        List<Map<String, Object>> productivity = new ArrayList<>();
+        perDay.forEach((day, counts) -> {
+            Map<String, Object> point = point(day, counts[0] + counts[1]);
+            point.put("values", List.of(counts[0], counts[1]));
+            productivity.add(point);
+        });
+        figures.put("productivity", productivity);
+
+        Map<String, Long> created = new TreeMap<>();
+        for (Object[] row : theirs) {
+            created.merge(date((Instant) row[CREATED]), 1L, Long::sum);
+        }
+        List<Map<String, Object>> workload = new ArrayList<>();
+        created.forEach((day, count) -> workload.add(point(day, count)));
+        figures.put("workload", workload);
+
+        Map<Integer, Long> stars = new TreeMap<>();
+        ratings.forEach(rating -> stars.merge(rating, 1L, Long::sum));
+        List<Map<String, Object>> breakdown = new ArrayList<>();
+        stars.forEach((rating, count) -> breakdown.add(point(rating + " stars", count)));
+        figures.put("csat_breakdown", breakdown);
+        return figures;
     }
 
     /** {@code Escalated/Admin/Reports/Cohorts}: volume, resolution hours, breach rate and CSAT per group. */

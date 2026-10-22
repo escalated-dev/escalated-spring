@@ -88,6 +88,23 @@ public interface TicketReportRepository extends Repository<Ticket, Long> {
             + " GROUP BY t.assignedAgent.id")
     List<Object[]> agentRatings(@Param("since") Instant since);
 
+    // ── One agent (Reports/AgentDetail) ─────────────────────────────────
+
+    /** {created at, first responded at, resolved at} of the agent's tickets created in [from, to). */
+    @Query("SELECT t.createdAt, t.firstRespondedAt, t.resolvedAt FROM Ticket t WHERE t.assignedAgent.id = :agentId"
+            + " AND t.createdAt >= :from AND t.createdAt < :to ORDER BY t.createdAt")
+    List<Object[]> agentTickets(@Param("agentId") Long agentId, @Param("from") Instant from, @Param("to") Instant to);
+
+    /** The ratings given in [from, to) on the agent's tickets. */
+    @Query("SELECT sr.rating FROM SatisfactionRating sr JOIN sr.ticket t WHERE t.assignedAgent.id = :agentId"
+            + " AND sr.createdAt >= :from AND sr.createdAt < :to AND sr.rating > 0")
+    List<Integer> agentRatingValues(@Param("agentId") Long agentId, @Param("from") Instant from,
+                                    @Param("to") Instant to);
+
+    /** When each reply or note the agent wrote in [from, to) was written. */
+    @Query("SELECT r.createdAt FROM Reply r WHERE r.authorEmail = :email AND r.createdAt >= :from AND r.createdAt < :to")
+    List<Instant> agentReplyTimes(@Param("email") String email, @Param("from") Instant from, @Param("to") Instant to);
+
     // ── Cohorts: {key, volume, breached, resolved} ──────────────────────
 
     @Query("SELECT tg.name, " + COHORT_FIGURES + " FROM Ticket t JOIN t.tags tg WHERE t.createdAt >= :since"

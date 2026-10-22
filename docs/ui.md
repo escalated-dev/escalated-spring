@@ -155,6 +155,7 @@ JSON `pageJson`, `routesScript` (the `route()` definition) and `csrfToken` (for 
 | `Escalated/Admin/Reports` | `GET /escalated/admin/reports` |
 | `Escalated/Admin/Reports/Dashboard`, `AgentMetrics`, `SlaReport`, `CsatReport`, `Comparison` | `GET /escalated/admin/reports/` `dashboard`, `agents`, `sla`, `csat`, `comparison` |
 | `Escalated/Admin/Reports/SlaTrends`, `ResponseTimes`, `ResolutionTimes`, `AgentRanking`, `Cohorts` | `GET /escalated/admin/reports/` `sla-trends`, `response-times` (or `frt`), `resolution-times` (or `resolution`), `agent-ranking`, `cohorts` |
+| `Escalated/Admin/Reports/AgentDetail` | `GET /escalated/admin/reports/agent/{id}/detail` (`days`; the agent against the period before; 404 for an unknown agent) |
 | `Escalated/Guest/Create` | `GET /escalated/guest/create` (no sign-in) |
 | `Escalated/Guest/Show` | `GET /escalated/guest/{token}` (no sign-in) |
 | `Escalated/Admin/Import/Index` | `GET /escalated/admin/import` |
