@@ -152,6 +152,11 @@ JSON `pageJson`, `routesScript` (the `route()` definition) and `csrfToken` (for 
 | `Escalated/Admin/Reports/SlaTrends`, `ResponseTimes`, `ResolutionTimes`, `AgentRanking`, `Cohorts` | `GET /escalated/admin/reports/` `sla-trends`, `response-times` (or `frt`), `resolution-times` (or `resolution`), `agent-ranking`, `cohorts` |
 | `Escalated/Guest/Create` | `GET /escalated/guest/create` (no sign-in) |
 | `Escalated/Guest/Show` | `GET /escalated/guest/{token}` (no sign-in) |
+| `Escalated/Admin/Import/Index` | `GET /escalated/admin/import` |
+| `Escalated/Admin/Import/Connect` | `GET /escalated/admin/import/{platform}/connect` (`POST .../test-connection` answers `{success[, error]}`) |
+| `Escalated/Admin/Import/Mapping` | `GET /escalated/admin/import/{platform}/mapping` |
+| `Escalated/Admin/Import/Review` | `POST /escalated/admin/import/{platform}/review` (writes nothing; `POST .../start` starts the import) |
+| `Escalated/Admin/Import/Progress` | `GET /escalated/admin/import/progress/{job}` (polled through `GET .../status/{job}`; `POST /escalated/admin/import/{pause,resume,cancel}/{job}`) |
 
 Customer writes: `POST /escalated` (`subject`, `description`, `priority`, `department_id`,
 `ticket_type`, `custom_fields` keyed by field slug; see `docs/custom-fields.md`), and `POST /escalated/{reference}/` `reply`, `close` (unless the `allow_customer_close`

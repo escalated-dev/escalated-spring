@@ -70,6 +70,10 @@ public class AutomationRunner {
 
     /** Evaluates every active automation. Returns the number of automation/ticket pairs acted on. */
     public synchronized int run() {
+        // Import mode (ImportContext): automations do not act on a run in progress.
+        if (ImportContext.isImporting()) {
+            return 0;
+        }
         int affected = 0;
         for (Automation automation : automations.findByActiveTrueOrderByPositionAscIdAsc()) {
             List<Ticket> due;

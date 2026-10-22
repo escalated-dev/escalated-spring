@@ -68,6 +68,10 @@ public class SlaScheduler {
 
     @Scheduled(fixedDelayString = "${escalated.sla.check-interval-seconds:60}000")
     public synchronized void checkSlaBreaches() {
+        // Import mode (ImportContext): imported history is not breached.
+        if (dev.escalated.services.ImportContext.isImporting()) {
+            return;
+        }
         log.debug("Checking for SLA breaches");
 
         List<Ticket> breaching = slaService.findBreachingSlaTickets();
