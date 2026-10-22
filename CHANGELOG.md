@@ -8,6 +8,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Upgrading
+- Run migration `V20` (PostgreSQL and MySQL). It adds `escalated_ticket_statuses`, seeded with one
+  system row per built-in status, and a nullable `escalated_tickets.ticket_status_id`
+  (`ON DELETE SET NULL`). Existing tickets have no custom status and behave exactly as before; the
+  built-in `status` column and its values are unchanged.
 - Run migration `V18` (PostgreSQL and MySQL). It converts SLA policies and escalation rules to
   escalated-laravel's shape, and existing ones keep doing what they did:
   - Each SLA policy's one `priority` with `first_response_minutes`/`resolution_minutes` becomes
@@ -28,6 +32,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   needs the new setters.
 
 ### Added
+- Custom ticket statuses, as the shared statuses spec: admin-defined sub-statuses of five categories
+  (`new`, `open`, `pending`, `on_hold`, `solved`), managed on `Escalated/Admin/Statuses/Index` and
+  `Form` (`/escalated/admin/statuses`, behind `escalated.ui.enabled`, admins only) with
+  escalated-laravel's props and validation; `is_default` is one per category; the built-in
+  statuses' system rows keep their slug and category and cannot be deleted. Every status input
+  (ticket pages, bulk action, admin API, macros, automations, workflows) takes a custom slug; the
+  ticket takes the category's built-in anchor through the normal status change (so a `solved`
+  status resolves, stops the SLA and is auto-closed), and setting any built-in status clears it.
+  Staff ticket JSON and props gain `custom_status` and `status_category`; customers never see the
+  custom label. Status-change webhooks that involve a custom status add `old_custom_status`,
+  `new_custom_status`, `old_category` and `new_category`; built-in-only changes are unchanged.
+  Changing a custom status's category does not rewrite tickets that already have it.
 - The SLA policy and escalation rule pages, behind `escalated.ui.enabled`, as escalated-laravel's:
   `Escalated/Admin/SlaPolicies/Index` and `Form` (`/escalated/admin/sla-policies`, with
   `tickets_count`, and the form's `priorities`, `targeted`, `departments` and `ticketTypes`) and

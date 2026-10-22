@@ -42,6 +42,9 @@ public final class UiPresenter {
         row.put("reference", ticket.getTicketNumber());
         row.put("subject", ticket.getSubject());
         row.put("status", status(ticket.getStatus()));
+        // Staff only: a custom status is an internal sub-status, never shown to the customer.
+        row.put("custom_status", ticket.getCustomStatusSummary());
+        row.put("status_category", ticket.getStatusCategory());
         row.put("priority", priority(ticket.getPriority()));
         row.put("ticket_type", ticket.getTicketType());
         row.put("channel", ticket.getChannel());

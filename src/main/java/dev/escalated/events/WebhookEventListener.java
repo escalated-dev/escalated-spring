@@ -71,6 +71,13 @@ public class WebhookEventListener {
             default -> {
             }
         }
+        if (event.hasStatusDetail()) {
+            // Added for custom statuses; the payload is an open map, so nothing existing changes.
+            data.put("old_custom_status", event.getOldCustomStatus());
+            data.put("new_custom_status", event.getNewCustomStatus());
+            data.put("old_category", event.getOldCategory());
+            data.put("new_category", event.getNewCategory());
+        }
         return data;
     }
 }

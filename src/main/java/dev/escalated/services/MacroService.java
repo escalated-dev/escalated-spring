@@ -8,7 +8,6 @@ import dev.escalated.models.Department;
 import dev.escalated.models.Macro;
 import dev.escalated.models.Ticket;
 import dev.escalated.models.TicketPriority;
-import dev.escalated.models.TicketStatus;
 import dev.escalated.repositories.AgentProfileRepository;
 import dev.escalated.repositories.DepartmentRepository;
 import dev.escalated.repositories.MacroRepository;
@@ -93,8 +92,7 @@ public class MacroService {
                 String value = action.get("value");
 
                 switch (type) {
-                    case "set_status" -> ticketService.changeStatus(
-                            ticketId, TicketStatus.valueOf(value), actorEmail);
+                    case "set_status" -> setStatus(ticketId, value, actorEmail);
                     case "set_priority" -> ticketService.update(
                             ticketId, null, null, TicketPriority.valueOf(value));
                     case "add_reply" -> ticketService.addReply(
@@ -104,7 +102,7 @@ public class MacroService {
                     case "add_tag" -> ticketService.addTag(ticketId, value);
                     case "assign" -> ticketService.assign(ticketId, agentId(value), actorEmail);
                     // The shared admin page's names, as escalated-laravel's MacroService.
-                    case "status" -> ticketService.changeStatus(ticketId, status(value), actorEmail);
+                    case "status" -> setStatus(ticketId, value, actorEmail);
                     case "priority" -> ticketService.update(
                             ticketId, null, null, TicketPriority.valueOf(value.trim().toUpperCase(Locale.ROOT)));
                     case "tags" -> {
@@ -130,13 +128,14 @@ public class MacroService {
     public static final List<String> PAGE_ACTION_TYPES =
             List.of("status", "priority", "assign", "tags", "department", "reply", "note");
 
-    /** A status as the pages name it; the frontend's waiting states are stored as pending. */
-    private static TicketStatus status(String value) {
-        String name = value.trim().toLowerCase(Locale.ROOT);
-        if ("waiting_on_customer".equals(name) || "waiting_on_agent".equals(name)) {
-            return TicketStatus.PENDING;
+    /** A built-in status (any case, or the frontend's waiting states) or a custom status slug. */
+    private void setStatus(Long ticketId, String value, String actorEmail) {
+        dev.escalated.models.TicketStatus builtIn = TicketStatuses.builtIn(value);
+        if (builtIn != null) {
+            ticketService.changeStatus(ticketId, builtIn, actorEmail);
+        } else {
+            ticketService.changeStatusByName(ticketId, value, actorEmail);
         }
-        return TicketStatus.valueOf(name.toUpperCase(Locale.ROOT));
     }
 
     /** An agent by id or, as the admin page allows, by email. */

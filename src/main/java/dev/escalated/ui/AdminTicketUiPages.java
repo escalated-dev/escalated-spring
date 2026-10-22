@@ -8,7 +8,6 @@ import dev.escalated.models.SavedView;
 import dev.escalated.models.Tag;
 import dev.escalated.models.Ticket;
 import dev.escalated.models.TicketPriority;
-import dev.escalated.models.TicketStatus;
 import dev.escalated.repositories.AgentProfileRepository;
 import dev.escalated.repositories.SavedViewRepository;
 import dev.escalated.repositories.TagRepository;
@@ -48,6 +47,9 @@ public class AdminTicketUiPages {
     private final TicketRepository ticketRepository;
     private final TagRepository tags;
     private final TicketService tickets;
+
+    @org.springframework.beans.factory.annotation.Autowired
+    private dev.escalated.services.TicketStatuses statuses;
 
     public AdminTicketUiPages(AgentUiPages agentPages, AgentProfileRepository agents, SavedViewRepository savedViews,
                               TicketRepository ticketRepository, TagRepository tags, TicketService tickets) {
@@ -138,11 +140,11 @@ public class AdminTicketUiPages {
     private boolean apply(Long id, String action, Object value, String actorEmail) {
         switch (action) {
             case "status" -> {
-                TicketStatus status = UiTicketFilters.parseStatus(String.valueOf(value));
-                if (status == null) {
+                // A built-in status, or a custom status slug.
+                if (value == null || !statuses.isKnown(String.valueOf(value))) {
                     return false;
                 }
-                tickets.changeStatus(id, status, actorEmail);
+                tickets.changeStatusByName(id, String.valueOf(value), actorEmail);
             }
             case "priority" -> {
                 TicketPriority priority = UiTicketFilters.parsePriority(String.valueOf(value));

@@ -85,6 +85,7 @@ public class UiRoutes {
         resource("webhooks", "webhook", "/admin/webhooks/{webhook}/edit");
         resource("sla-policies", "sla_policy", "/admin/sla-policies/{sla_policy}/edit");
         resource("escalation-rules", "escalation_rule", "/admin/escalation-rules/{escalation_rule}/edit");
+        resource("statuses", "status", "/admin/statuses/{status}/edit");
         register("escalated.admin.webhooks.deliveries", "/admin/webhooks/{webhook}/deliveries");
         register("escalated.admin.webhooks.retry", "/admin/webhooks/deliveries/{delivery}/retry");
         register("escalated.admin.users.index", "/admin/users");
