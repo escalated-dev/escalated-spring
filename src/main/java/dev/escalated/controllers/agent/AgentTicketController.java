@@ -11,6 +11,7 @@ import dev.escalated.repositories.AgentProfileRepository;
 import dev.escalated.services.MacroService;
 import dev.escalated.services.SideConversationService;
 import dev.escalated.services.TicketActionRegistry;
+import dev.escalated.services.TicketCustomFieldValues;
 import dev.escalated.services.TicketLinkService;
 import dev.escalated.services.TicketService;
 
@@ -43,6 +44,7 @@ public class AgentTicketController {
     private final TicketActionRegistry ticketActionRegistry;
     private final ApplicationEventPublisher eventPublisher;
     private final AgentProfileRepository agents;
+    private final TicketCustomFieldValues customFields;
 
     public AgentTicketController(TicketService ticketService,
                                  MacroService macroService,
@@ -50,8 +52,10 @@ public class AgentTicketController {
                                  TicketLinkService ticketLinkService,
                                  TicketActionRegistry ticketActionRegistry,
                                  ApplicationEventPublisher eventPublisher,
-                                 AgentProfileRepository agents) {
+                                 AgentProfileRepository agents,
+                                 TicketCustomFieldValues customFields) {
         this.agents = agents;
+        this.customFields = customFields;
         this.ticketService = ticketService;
         this.macroService = macroService;
         this.sideConversationService = sideConversationService;
@@ -110,6 +114,7 @@ public class AgentTicketController {
     public ResponseEntity<TicketDetailDto> show(@PathVariable Long id) {
         TicketDetailDto dto = ticketService.findByIdWithDetail(id);
         dto.setCustomActions(customActionsForTicket(id));
+        dto.setCustomFields(customFields.forTicket(id));
         return ResponseEntity.ok(dto);
     }
 

@@ -43,6 +43,21 @@ public class CustomField extends BaseEntity {
     @Column(name = "is_active", nullable = false)
     private boolean active = true;
 
+    /** Where the field applies: {@code ticket}, {@code user} or {@code organization}. */
+    @Column(nullable = false)
+    private String context = "ticket";
+
+    @Column
+    private String placeholder;
+
+    /** JSON, as escalated-laravel's {@code validation_rules}; stored and shown, not enforced. */
+    @Column(name = "validation_rules", columnDefinition = "TEXT")
+    private String validationRules;
+
+    /** JSON, as escalated-laravel's {@code conditions}; stored and shown, not enforced. */
+    @Column(columnDefinition = "TEXT")
+    private String conditions;
+
     @OneToMany(mappedBy = "customField", cascade = CascadeType.ALL, orphanRemoval = true)
     @org.hibernate.annotations.Filter(
             name = "escalatedTicketAccess",
@@ -66,6 +81,7 @@ public class CustomField extends BaseEntity {
                                             @org.hibernate.annotations.SqlFragmentAlias(
                                                     alias = "row",
                                                     table = "escalated_custom_field_values"))))
+    @com.fasterxml.jackson.annotation.JsonIgnore
     private List<CustomFieldValue> values = new ArrayList<>();
 
     public String getName() {
@@ -140,6 +156,39 @@ public class CustomField extends BaseEntity {
         this.active = active;
     }
 
+    public String getContext() {
+        return context;
+    }
+
+    public void setContext(String context) {
+        this.context = context;
+    }
+
+    public String getPlaceholder() {
+        return placeholder;
+    }
+
+    public void setPlaceholder(String placeholder) {
+        this.placeholder = placeholder;
+    }
+
+    public String getValidationRules() {
+        return validationRules;
+    }
+
+    public void setValidationRules(String validationRules) {
+        this.validationRules = validationRules;
+    }
+
+    public String getConditions() {
+        return conditions;
+    }
+
+    public void setConditions(String conditions) {
+        this.conditions = conditions;
+    }
+
+    @com.fasterxml.jackson.annotation.JsonIgnore
     public List<CustomFieldValue> getValues() {
         return values;
     }

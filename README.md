@@ -354,7 +354,8 @@ See the [inbound email docs](https://docs.escalated.dev/inbound-email) for provi
 | GET/PUT/DELETE | `/automations/{id}` | Show / update / delete an automation |
 | POST | `/automations/{id}/toggle` | Enable or disable |
 | GET/POST | `/roles` | CRUD roles |
-| GET/POST | `/custom-fields` | CRUD custom fields |
+| GET/POST | `/custom-fields` | CRUD custom fields; `POST /custom-fields/reorder` (see [docs/custom-fields.md](docs/custom-fields.md)) |
+| GET/POST | `/custom-objects` | CRUD custom objects; `/custom-objects/{id}/records` for their records |
 | GET/POST | `/settings` | Manage settings |
 | GET/PUT | `/settings/public-tickets` | Runtime guest-policy mode (unassigned / guest_user / prompt_signup). See [docs.escalated.dev/public-tickets](https://docs.escalated.dev/public-tickets). |
 | GET | `/audit-logs` | View audit logs |

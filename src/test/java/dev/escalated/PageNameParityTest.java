@@ -156,7 +156,12 @@ class PageNameParityTest {
           "Escalated/Admin/SlaPolicies/Index",
           "Escalated/Admin/SlaPolicies/Form",
           "Escalated/Admin/EscalationRules/Index",
-          "Escalated/Admin/EscalationRules/Form");
+          "Escalated/Admin/EscalationRules/Form",
+          "Escalated/Admin/CustomFields/Index",
+          "Escalated/Admin/CustomFields/Form",
+          "Escalated/Admin/CustomObjects/Index",
+          "Escalated/Admin/CustomObjects/Form",
+          "Escalated/Admin/CustomObjects/Records");
 
   @Test
   void theUiLayerRendersEveryPageItServes() throws IOException {
