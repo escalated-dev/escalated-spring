@@ -8,6 +8,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- The Inertia UI renders `Escalated/Admin/Reports/AgentDetail` at
+  `GET /escalated/admin/reports/agent/{id}/detail` (`escalated.admin.reports.agent-detail`, which
+  the agent ranking links to): one agent's tickets, response percentiles, productivity, workload
+  and CSAT breakdown over `days`, against the period before. The props are the ones the page
+  declares; escalated-laravel's controller passes `agent_id`, `metrics` and `percentiles`, which
+  the page does not read.
 - The Inertia UI (`escalated.ui.enabled`) renders `Escalated/Admin/Skills/Index` and `Form`,
   `Admin/Capacity/Index`, `Admin/BusinessHours/Index` and `Form`, and `Admin/AuditLog/Index`, with
   escalated-laravel's props and routes (`escalated.admin.skills.*`, `capacity.*`,

@@ -140,6 +140,7 @@ public class UiRoutes {
                 "response-times", "frt", "resolution-times", "resolution", "agent-ranking", "cohorts"}) {
             register("escalated.admin.reports." + report, "/admin/reports/" + report);
         }
+        register("escalated.admin.reports.agent-detail", "/admin/reports/agent/{id}/detail");
         register("escalated.attachments.download", "/attachments/{attachment}/download");
         // Import wizard (Laravel's escalated.admin.import.*)
         register("escalated.admin.import.index", "/admin/import");

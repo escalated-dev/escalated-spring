@@ -239,6 +239,57 @@ class ReportAnalyticsInertiaPagesTest {
         assertThat(props.get("by_channel").size()).isPositive();
     }
 
+    @Test
+    void theAgentDetailComparesTheAgentWithThePeriodBefore() throws Exception {
+        tickets.addReply(overdue.getId(), "Looking into it", agent.getName(), agent.getEmail(), "agent", true);
+
+        JsonNode page = inertia(get("/escalated/admin/reports/agent/" + agent.getId() + "/detail").param("days", "7"));
+        assertThat(page.get("component").asText()).isEqualTo("Escalated/Admin/Reports/AgentDetail");
+        JsonNode props = page.get("props");
+        assertThat(fieldNames(props)).contains("period_days", "agent", "total_tickets", "resolved_tickets", "avg_frt",
+                "avg_resolution", "csat_score", "response_percentiles", "productivity", "workload", "csat_breakdown",
+                "prev_total_tickets", "prev_resolved_tickets", "prev_avg_frt", "prev_avg_resolution",
+                "prev_csat_score");
+        assertThat(props.get("period_days").asInt()).isEqualTo(7);
+        assertThat(fieldNames(props.get("agent"))).containsExactly("id", "name", "email");
+        assertThat(props.get("agent").get("id").asLong()).isEqualTo(agent.getId());
+        assertThat(props.get("agent").get("name").asText()).isEqualTo(agent.getName());
+        assertThat(props.get("total_tickets").asLong()).isEqualTo(3);
+        assertThat(props.get("resolved_tickets").asLong()).isEqualTo(1);
+        assertThat(props.get("avg_frt").asDouble()).isEqualTo(4.0);
+        assertThat(props.get("avg_resolution").asDouble()).isEqualTo(10.0);
+        assertThat(props.get("csat_score").asDouble()).isEqualTo(4.0);
+        JsonNode percentiles = props.get("response_percentiles");
+        assertThat(fieldNames(percentiles)).containsExactly("p50", "p75", "p90", "p95", "p99");
+        assertThat(percentiles.get("p50").asDouble()).isEqualTo(4.0);
+        assertThat(percentiles.get("p90").asDouble()).isEqualTo(5.6);
+        assertThat(percentiles.get("p99").asDouble()).isEqualTo(6.0);
+
+        JsonNode workload = props.get("workload");
+        assertThat(workload.size()).isEqualTo(1);
+        assertThat(fieldNames(workload.get(0))).containsExactly("label", "value");
+        assertThat(workload.get(0).get("value").asLong()).isEqualTo(3);
+        // The note written today; the resolution is ten hours ahead, outside the period.
+        JsonNode productivity = props.get("productivity");
+        assertThat(productivity.size()).isEqualTo(1);
+        assertThat(fieldNames(productivity.get(0))).containsExactly("label", "value", "values");
+        assertThat(productivity.get(0).get("label").asText()).isEqualTo(workload.get(0).get("label").asText());
+        assertThat(productivity.get(0).get("values").toString()).isEqualTo("[1,0]");
+        assertThat(props.get("csat_breakdown").toString()).isEqualTo("[{\"label\":\"4 stars\",\"value\":1}]");
+
+        assertThat(props.get("prev_total_tickets").asLong()).isZero();
+        assertThat(props.get("prev_resolved_tickets").asLong()).isZero();
+        assertThat(props.get("prev_avg_frt").asDouble()).isZero();
+        assertThat(props.get("prev_avg_resolution").asDouble()).isZero();
+        assertThat(props.get("prev_csat_score").isNull()).isTrue();
+
+        mvc.perform(get("/escalated/admin/reports/agent/999999999/detail").with(user(admin.getEmail()))
+                        .header("X-Inertia", "true").header("X-Inertia-Version", "build-1"))
+                .andExpect(status().isNotFound());
+        mvc.perform(get("/escalated/admin/reports/agent/" + agent.getId() + "/detail").with(user(agent.getEmail())))
+                .andExpect(status().isForbidden());
+    }
+
     private Ticket ticket(String subject, Integer respondedAfterHours, Integer resolvedAfterHours,
                           Integer firstResponseDueHours, Instant resolutionDue) {
         Ticket ticket = tickets.create(subject + " " + unique, "b", "R", "r-" + unique + "@example.com",

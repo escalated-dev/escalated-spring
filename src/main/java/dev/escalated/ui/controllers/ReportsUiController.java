@@ -8,6 +8,7 @@ import java.util.Map;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
@@ -15,7 +16,7 @@ import org.springframework.web.bind.annotation.RequestParam;
  * The report screens, as escalated-laravel's {@code Admin\ReportController}:
  * {@code Escalated/Admin/Reports} and {@code Reports/Dashboard}, {@code AgentMetrics},
  * {@code SlaReport}, {@code CsatReport}, {@code Comparison}, {@code SlaTrends}, {@code ResponseTimes},
- * {@code ResolutionTimes}, {@code AgentRanking} and {@code Cohorts}. Each takes {@code days} (or
+ * {@code ResolutionTimes}, {@code AgentRanking}, {@code AgentDetail} and {@code Cohorts}. Each takes {@code days} (or
  * {@code period}), default 30. Admins only (the web security chain).
  */
 @Controller
@@ -84,6 +85,12 @@ public class ReportsUiController {
     @GetMapping("/agent-ranking")
     public Object agentRanking(@RequestParam Map<String, String> query) {
         return renderer.render("Escalated/Admin/Reports/AgentRanking", analytics.agentRanking(ReportsUiPages.days(query)));
+    }
+
+    @GetMapping("/agent/{id:\\d+}/detail")
+    public Object agentDetail(@PathVariable("id") Long id, @RequestParam Map<String, String> query) {
+        return renderer.render("Escalated/Admin/Reports/AgentDetail",
+                analytics.agentDetail(ReportsUiPages.days(query), id));
     }
 
     @GetMapping("/cohorts")

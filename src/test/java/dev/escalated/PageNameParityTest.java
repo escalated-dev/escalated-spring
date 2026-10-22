@@ -157,6 +157,7 @@ class PageNameParityTest {
           "Escalated/Admin/Reports/ResponseTimes",
           "Escalated/Admin/Reports/ResolutionTimes",
           "Escalated/Admin/Reports/AgentRanking",
+          "Escalated/Admin/Reports/AgentDetail",
           "Escalated/Admin/Reports/Cohorts",
           "Escalated/Admin/SlaPolicies/Index",
           "Escalated/Admin/SlaPolicies/Form",
