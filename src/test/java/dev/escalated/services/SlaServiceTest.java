@@ -5,6 +5,7 @@ import dev.escalated.models.Holiday;
 import dev.escalated.models.SlaPolicy;
 import dev.escalated.models.Ticket;
 import dev.escalated.models.TicketPriority;
+import dev.escalated.repositories.BusinessScheduleRepository;
 import dev.escalated.repositories.SlaPolicyRepository;
 import dev.escalated.repositories.TicketRepository;
 import java.time.Instant;
@@ -14,11 +15,13 @@ import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -123,6 +126,48 @@ class SlaServiceTest {
 
         assertNotNull(ticket.getSlaFirstResponseDueAt());
         assertNotNull(ticket.getSlaDueAt());
+    }
+
+    @Test
+    void aBusinessHoursPolicyWithoutAScheduleFollowsTheDefaultSchedule() {
+        BusinessSchedule allDay = new BusinessSchedule();
+        allDay.setTimezone("UTC");
+        allDay.setDefaultSchedule(true);
+        for (String day : new String[] {"Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"}) {
+            ReflectionTestUtils.setField(allDay, Character.toLowerCase(day.charAt(0)) + day.substring(1) + "Start", "00:00");
+            ReflectionTestUtils.setField(allDay, Character.toLowerCase(day.charAt(0)) + day.substring(1) + "End", "24:00");
+        }
+        BusinessScheduleRepository schedules = org.mockito.Mockito.mock(BusinessScheduleRepository.class);
+        when(schedules.findFirstByDefaultScheduleTrueAndActiveTrueOrderByIdAsc()).thenReturn(Optional.of(allDay));
+        ReflectionTestUtils.setField(slaService, "businessSchedules", schedules);
+
+        SlaPolicy policy = policy(1L, "high", 1, 2);
+        policy.setBusinessHoursOnly(true);
+        when(slaPolicyRepository.findByActiveTrueOrderByIdAsc()).thenReturn(List.of(policy));
+        Ticket ticket = new Ticket();
+        ticket.setPriority(TicketPriority.HIGH);
+        Instant before = Instant.now();
+
+        slaService.applySlaPolicy(ticket);
+
+        // Open around the clock: an hour of business time is an hour.
+        long minutes = java.time.Duration.between(before, ticket.getSlaFirstResponseDueAt()).toMinutes();
+        assertTrue(minutes >= 59 && minutes <= 61, "first response due in " + minutes + " minutes");
+    }
+
+    @Test
+    void addBusinessMinutes_readsTwentyFourHundredAsTheEndOfTheDay() {
+        BusinessSchedule schedule = new BusinessSchedule();
+        schedule.setTimezone("UTC");
+        schedule.setFridayEnd("24:00");
+        schedule.setHolidays(new ArrayList<>());
+
+        ZonedDateTime friday = ZonedDateTime.of(2024, 1, 5, 16, 0, 0, 0, ZoneId.of("UTC"));
+        Instant result = slaService.addBusinessMinutes(friday.toInstant(), 420, schedule);
+
+        assertEquals(friday.withHour(23).toInstant(), result);
+        assertEquals(friday.plusDays(3).withHour(9).plusMinutes(60).toInstant(),
+                slaService.addBusinessMinutes(friday.toInstant(), 540, schedule));
     }
 
     private static SlaPolicy policy(Long id, String priority, double firstResponse, double resolution) {

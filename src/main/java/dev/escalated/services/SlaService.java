@@ -109,12 +109,20 @@ public class SlaService {
                 : addBusinessMinutes(start, minutes, schedule);
     }
 
-    /** The policy's own schedule, else the first active one, else 09:00-17:00 Monday to Friday, UTC. */
+    /**
+     * The policy's own schedule, else the default one, else the first active one, else 09:00-17:00
+     * Monday to Friday, UTC.
+     */
     private BusinessSchedule scheduleFor(SlaPolicy policy) {
         if (policy.getBusinessSchedule() != null) {
             return policy.getBusinessSchedule();
         }
         if (businessSchedules != null) {
+            java.util.Optional<BusinessSchedule> chosen =
+                    businessSchedules.findFirstByDefaultScheduleTrueAndActiveTrueOrderByIdAsc();
+            if (chosen.isPresent()) {
+                return chosen.get();
+            }
             java.util.Optional<BusinessSchedule> first = businessSchedules.findFirstByActiveTrueOrderByIdAsc();
             if (first.isPresent()) {
                 return first.get();
@@ -155,8 +163,8 @@ public class SlaService {
                 continue;
             }
 
-            LocalTime startTime = LocalTime.parse(hours[0]);
-            LocalTime endTime = LocalTime.parse(hours[1]);
+            LocalTime startTime = time(hours[0]);
+            LocalTime endTime = time(hours[1]);
 
             if (current.toLocalTime().isBefore(startTime)) {
                 current = current.with(startTime);
@@ -167,7 +175,8 @@ public class SlaService {
                 continue;
             }
 
-            int availableMinutes = (int) java.time.Duration.between(current.toLocalTime(), endTime).toMinutes();
+            int availableMinutes = (int) java.time.Duration.between(current.toLocalTime(), endTime)
+                    .plusNanos(endTime.equals(LocalTime.MAX) ? 1 : 0).toMinutes();
             if (remainingMinutes <= availableMinutes) {
                 current = current.plusMinutes(remainingMinutes);
                 remainingMinutes = 0;
@@ -195,6 +204,11 @@ public class SlaService {
             }
         }
         return false;
+    }
+
+    /** An {@code HH:mm} time; the schedule editor's {@code 24:00} is the end of the day. */
+    private static LocalTime time(String value) {
+        return "24:00".equals(value) ? LocalTime.MAX : LocalTime.parse(value);
     }
 
     private String[] getBusinessHours(DayOfWeek day, BusinessSchedule schedule) {
