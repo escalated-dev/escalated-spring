@@ -26,6 +26,9 @@ public class SlaService {
     @org.springframework.beans.factory.annotation.Autowired
     private dev.escalated.config.EscalatedProperties properties;
 
+    @org.springframework.beans.factory.annotation.Autowired(required = false)
+    private dev.escalated.repositories.BusinessScheduleRepository businessSchedules;
+
     private static final Logger log = LoggerFactory.getLogger(SlaService.class);
 
     private final SlaPolicyRepository slaPolicyRepository;
@@ -36,65 +39,84 @@ public class SlaService {
         this.ticketRepository = ticketRepository;
     }
 
+    /**
+     * Selects the ticket's policy and sets its deadlines, as escalated-laravel's
+     * {@code SlaService::selectPolicy}: the oldest active default policy with a target for the
+     * ticket's priority or, with {@code escalated.targeted-slas}, the most specific active match
+     * (department and type, department, type, then a default). No match leaves the ticket alone.
+     * A deadline the policy has no figure for is cleared.
+     */
     @Transactional(transactionManager = EscalatedTransactionManagers.ESCALATED)
     public void applySlaPolicy(Ticket ticket) {
         dev.escalated.security.TicketAccess.assertVisible(ticket);
         boolean targeted = properties != null && properties.isTargetedSlas();
-        java.util.Optional<SlaPolicy> selected;
-        if (targeted) {
-            Long departmentId =
-                    ticket.getDepartment() == null ? null : ticket.getDepartment().getId();
-            selected =
-                    slaPolicyRepository.findAll().stream()
-                            .filter(p -> p.isActive() && p.getPriority() == ticket.getPriority())
-                            .filter(
-                                    p ->
-                                            p.getDepartmentId() == null
-                                                    || p.getDepartmentId().equals(departmentId))
-                            .filter(
-                                    p ->
-                                            p.getTicketType() == null
-                                                    || p.getTicketType()
-                                                            .equals(ticket.getTicketType()))
-                            .sorted(
-                                    java.util.Comparator.<SlaPolicy>comparingInt(
-                                                    p ->
-                                                            (p.getDepartmentId() == null ? 0 : 2)
-                                                                    + (p.getTicketType() == null
-                                                                            ? 0
-                                                                            : 1))
-                                            .reversed()
-                                            .thenComparing(SlaPolicy::getId))
-                            .findFirst();
-        } else {
-            selected =
-                    slaPolicyRepository
-                            .findByPriorityAndActiveTrue(ticket.getPriority())
-                            .filter(p -> p.getDepartmentId() == null && p.getTicketType() == null);
-        }
+        java.util.Optional<SlaPolicy> selected = selectPolicy(ticket, targeted);
         selected.ifPresent(
                 policy -> {
                     ticket.setSlaPolicy(policy);
-
-                    BusinessSchedule schedule = policy.getBusinessSchedule();
+                    BusinessSchedule schedule = policy.isBusinessHoursOnly() ? scheduleFor(policy) : null;
                     Instant now =
                             targeted && ticket.getCreatedAt() != null
                                     ? ticket.getCreatedAt()
                                     : Instant.now();
-
-                    if (schedule != null) {
-                        ticket.setSlaFirstResponseDueAt(
-                                addBusinessMinutes(
-                                        now, policy.getFirstResponseMinutes(), schedule));
-                        ticket.setSlaDueAt(
-                                addBusinessMinutes(now, policy.getResolutionMinutes(), schedule));
-                    } else {
-                        ticket.setSlaFirstResponseDueAt(
-                                now.plusSeconds((long) policy.getFirstResponseMinutes() * 60));
-                        ticket.setSlaDueAt(
-                                now.plusSeconds((long) policy.getResolutionMinutes() * 60));
-                    }
+                    ticket.setSlaFirstResponseDueAt(
+                            due(now, policy.firstResponseHoursFor(ticket.getPriority()), schedule));
+                    ticket.setSlaDueAt(due(now, policy.resolutionHoursFor(ticket.getPriority()), schedule));
                 });
+    }
+
+    /** The policy {@link #applySlaPolicy} would give the ticket. */
+    public java.util.Optional<SlaPolicy> selectPolicy(Ticket ticket, boolean targeted) {
+        List<SlaPolicy> candidates = slaPolicyRepository.findByActiveTrueOrderByIdAsc().stream()
+                .filter(policy -> policy.covers(ticket.getPriority()))
+                .toList();
+        if (!targeted) {
+            return candidates.stream()
+                    .filter(p -> p.isDefaultPolicy() && p.getDepartmentId() == null && p.getTicketType() == null)
+                    .findFirst();
+        }
+        Long departmentId = ticket.getDepartment() == null ? null : ticket.getDepartment().getId();
+        return candidates.stream()
+                .filter(p -> p.getDepartmentId() == null || p.getDepartmentId().equals(departmentId))
+                .filter(p -> p.getTicketType() == null || p.getTicketType().equals(ticket.getTicketType()))
+                .filter(p -> p.getDepartmentId() != null || p.getTicketType() != null || p.isDefaultPolicy())
+                .sorted(java.util.Comparator.<SlaPolicy>comparingInt(SlaService::specificity)
+                        .thenComparing(SlaPolicy::getId))
+                .findFirst();
+    }
+
+    private static int specificity(SlaPolicy policy) {
+        if (policy.getDepartmentId() != null && policy.getTicketType() != null) {
+            return 0;
+        }
+        if (policy.getDepartmentId() != null) {
+            return 1;
+        }
+        return policy.getTicketType() != null ? 2 : 3;
+    }
+
+    private Instant due(Instant start, Double hours, BusinessSchedule schedule) {
+        if (hours == null || hours <= 0) {
+            return null;
+        }
+        int minutes = (int) Math.round(hours * 60);
+        return schedule == null
+                ? start.plusSeconds((long) minutes * 60)
+                : addBusinessMinutes(start, minutes, schedule);
+    }
+
+    /** The policy's own schedule, else the first active one, else 09:00-17:00 Monday to Friday, UTC. */
+    private BusinessSchedule scheduleFor(SlaPolicy policy) {
+        if (policy.getBusinessSchedule() != null) {
+            return policy.getBusinessSchedule();
+        }
+        if (businessSchedules != null) {
+            java.util.Optional<BusinessSchedule> first = businessSchedules.findFirstByActiveTrueOrderByIdAsc();
+            if (first.isPresent()) {
+                return first.get();
+            }
+        }
+        return new BusinessSchedule();
     }
 
     @Transactional(transactionManager = EscalatedTransactionManagers.ESCALATED, readOnly = true)

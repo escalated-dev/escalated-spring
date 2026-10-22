@@ -5,17 +5,20 @@ import dev.escalated.events.TicketEvent;
 import dev.escalated.models.EscalationRule;
 import dev.escalated.models.RuleExecution;
 import dev.escalated.models.Ticket;
+import dev.escalated.models.TicketPriority;
 import dev.escalated.repositories.EscalationRuleRepository;
 import dev.escalated.repositories.TicketRepository;
+import dev.escalated.services.EscalationActions;
+import dev.escalated.services.EscalationConditions;
 import dev.escalated.services.RuleFireLog;
 import dev.escalated.services.SlaService;
-import dev.escalated.services.TicketRoutingConditions;
 import dev.escalated.services.TicketService;
 
 import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
-import java.util.Objects;
+import java.util.Locale;
+import java.util.Map;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -87,14 +90,18 @@ public class SlaScheduler {
                     TicketEvent.Type.SLA_WARNING, "resolution");
         }
 
-        for (EscalationRule rule : escalationRuleRepository.findByActiveTrueOrderByMinutesBeforeOrAfterAsc()) {
-            List<Ticket> matching = breaching.stream()
-                    .filter(ticket -> ticket.getSlaPolicy() != null
-                            && Objects.equals(ticket.getSlaPolicy().getId(), rule.getSlaPolicy().getId()))
-                    .filter(ticket -> TicketRoutingConditions.matches(rule.getConditions(), ticket))
-                    .toList();
+        List<EscalationRule> rules = escalationRuleRepository.findByActiveTrueOrderBySortOrderAscIdAsc();
+        if (rules.isEmpty()) {
+            return;
+        }
+        Instant now = Instant.now();
+        List<Ticket> open = ticketRepository.findOpenTickets();
+        for (EscalationRule rule : rules) {
             List<Ticket> due;
             try {
+                List<Ticket> matching = open.stream()
+                        .filter(ticket -> EscalationConditions.matches(rule.getConditions(), ticket, now))
+                        .toList();
                 due = fireLog.due(RuleExecution.ESCALATION_RULE, rule.getId(), rule.getRepeatAfterHours(), matching);
             } catch (RuntimeException ex) {
                 log.error("Escalation rule {} could not be evaluated: {}", rule.getId(), ex.getMessage());
@@ -126,41 +133,33 @@ public class SlaScheduler {
         }
     }
 
+    /**
+     * Performs the rule's actions in order, as escalated-laravel's {@code EscalationService}; a
+     * failing action is logged and the next one still runs. {@code escalate} changes nothing here
+     * (this port has no escalated status): every firing is announced as {@code ticket.escalated}.
+     */
     private void applyEscalationRule(Ticket ticket, EscalationRule rule) {
-        if (!TicketRoutingConditions.matches(rule.getConditions(), ticket)) {
-            return;
-        }
-        log.info(
-                "Applying escalation rule '{}' to ticket {}",
-                rule.getName(),
-                ticket.getTicketNumber());
-
-        switch (rule.getActionType()) {
-            case "change_department" ->
-                    ticketService.changeDepartment(
-                            ticket.getId(), Long.valueOf(rule.getActionTarget()), "system");
-            case "reassign" -> {
-                if (rule.getActionTarget() != null) {
-                    try {
-                        Long agentId = Long.parseLong(rule.getActionTarget());
-                        ticketService.assign(ticket.getId(), agentId, "system");
-                    } catch (NumberFormatException ex) {
-                        log.error(
-                                "Invalid agent ID in escalation rule: {}", rule.getActionTarget());
-                    }
+        log.info("Applying escalation rule '{}' to ticket {}", rule.getName(), ticket.getTicketNumber());
+        for (Map<String, Object> action : EscalationActions.read(rule.getActions())) {
+            String type = String.valueOf(action.getOrDefault("type", ""));
+            Object raw = action.get("value");
+            String value = raw == null ? "" : String.valueOf(raw).trim();
+            try {
+                switch (type) {
+                    case "escalate" -> { }
+                    case "change_priority" -> ticketService.update(ticket.getId(), null, null,
+                            TicketPriority.valueOf(value.toUpperCase(Locale.ROOT)));
+                    case "assign_to" -> ticketService.assign(ticket.getId(), Long.parseLong(value), "system");
+                    case "change_department" ->
+                            ticketService.changeDepartment(ticket.getId(), Long.valueOf(value), "system");
+                    case "notify" -> log.info("Notification escalation for ticket {}: {}",
+                            ticket.getTicketNumber(), value);
+                    default -> log.warn("Unknown escalation action type: {}", type);
                 }
+            } catch (RuntimeException ex) {
+                log.warn("Escalation rule {} action {} failed for ticket {}: {}",
+                        rule.getId(), type, ticket.getId(), ex.getMessage());
             }
-            case "notify" -> log.info("Notification escalation for ticket {}: {}",
-                    ticket.getTicketNumber(), rule.getNotifyEmails());
-            case "change_priority" -> {
-                try {
-                    ticketService.update(ticket.getId(), null, null,
-                            dev.escalated.models.TicketPriority.valueOf(rule.getActionTarget()));
-                } catch (Exception ex) {
-                    log.error("Failed to change priority for escalation: {}", ex.getMessage());
-                }
-            }
-            default -> log.warn("Unknown escalation action type: {}", rule.getActionType());
         }
     }
 }

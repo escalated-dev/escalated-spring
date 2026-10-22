@@ -7,7 +7,34 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Upgrading
+- Run migration `V18` (PostgreSQL and MySQL). It converts SLA policies and escalation rules to
+  escalated-laravel's shape, and existing ones keep doing what they did:
+  - Each SLA policy's one `priority` with `first_response_minutes`/`resolution_minutes` becomes
+    `first_response_hours`/`resolution_hours` maps (`{"high": 4}`) for that priority, and the
+    policy is marked `is_default`. A policy with a business schedule becomes
+    `business_hours_only` and keeps it. `department_id` and `ticket_type` are kept.
+  - Each escalation rule no longer hangs off a policy (`sla_policy_id` is dropped, and deleting a
+    policy no longer deletes its rules). Its policy and resolution breach become the conditions
+    `sla_policy_id` and `sla_breached: resolution`, its routing conditions a
+    `workflow_conditions` condition, its `action_type`/`action_target` a one-item `actions` list
+    (`reassign` is `assign_to`), and `minutes_before_or_after` its position (`sort_order`).
+- Java API: `SlaPolicy` loses `get/setPriority`, `get/setFirstResponseMinutes`,
+  `get/setResolutionMinutes` and `getEscalationRules`, and gains `get/setFirstResponseHours`,
+  `get/setResolutionHours` (per-priority maps), `is/setDefaultPolicy` and
+  `is/setBusinessHoursOnly`. `EscalationRule` loses `get/setSlaPolicy`, `minutesBeforeOrAfter`,
+  `actionType`, `actionTarget` and `notifyEmails`, and gains `actions`, `description`, `category`
+  and `sortOrder`; `conditions` is now a list of `{field, value}`. A host that builds these in code
+  needs the new setters.
+
 ### Added
+- The SLA policy and escalation rule pages, behind `escalated.ui.enabled`, as escalated-laravel's:
+  `Escalated/Admin/SlaPolicies/Index` and `Form` (`/escalated/admin/sla-policies`, with
+  `tickets_count`, and the form's `priorities`, `targeted`, `departments` and `ticketTypes`) and
+  `Escalated/Admin/EscalationRules/Index` and `Form` (`/escalated/admin/escalation-rules`), with
+  create, update and delete, validated as Laravel's `StoreSlaPolicyRequest` and
+  `StoreEscalationRuleRequest`. Deleting a policy leaves its tickets without one; deleting a rule
+  forgets its fire log.
 - The shared Inertia pages, behind `escalated.ui.enabled` (default `false`, so API-only hosts are
   unchanged; escalated-laravel defaults it to `true`). See `docs/ui.md`.
   - The Inertia protocol (`dev.escalated.ui.Inertia`): the first visit gets an HTML document with
@@ -98,15 +125,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   mentions) pass CSRF as on Laravel. A custom `escalated.ui.root-view` receives it as `csrfToken`.
 
 ### Changed
+- **SLA policy selection follows escalated-laravel**: a new ticket gets the oldest active
+  *default* policy with a target for its priority, or with `escalated.targeted-slas` the most
+  specific match (department and type, department, type, then a default). A deadline the policy
+  has no figure for is cleared. Business hours apply when `business_hours_only` is set, on the
+  policy's schedule, else the first active schedule, else 09:00-17:00 Monday to Friday UTC.
+- **Escalation rules are standalone, as on Laravel.** The SLA sweep runs the active rules in
+  `sort_order` against every open ticket matching all their conditions (`status`, `priority`,
+  `assigned`, `age_hours`, `no_response_hours`, `sla_breached`, `department_id`, `ticket_type`,
+  `account`, `account_type`, `account_id`, plus `sla_policy_id` and `workflow_conditions`), and
+  performs their actions in order (`escalate`, `change_priority`, `assign_to`,
+  `change_department`; `notify` is still only logged). Still once per ticket, with
+  `repeat_after_hours`, and every firing is announced as `ticket.escalated`. `escalate` changes no
+  status (this port has no escalated status).
 - With `escalated.ui.enabled=true` only: the `/escalated/**` web chain keeps its CSRF token in the
   `XSRF-TOKEN` cookie and accepts it in `X-XSRF-TOKEN` (what Inertia's client sends), and
   `/escalated/agent/**` and `/escalated/admin/**` take the agent and admin gates.
 
 ### Not rendered yet
-- `Escalated/Admin/SlaPolicies/*` and `Escalated/Admin/EscalationRules/*`: this port's SLA policy
-  is one priority per policy, and its escalation rules hang off an SLA policy; the shared pages edit
-  escalated-laravel's per-priority hour maps and standalone condition/action rules. Serving them
-  needs a schema change first.
 - `Escalated/Admin/Statuses/*`: this port has fixed statuses, no custom ones.
 - `Escalated/Admin/Reports/AgentDetail`: escalated-laravel passes it props the page does not read,
   so there is no contract to match yet; the ranking's agent links go nowhere. The report export is
