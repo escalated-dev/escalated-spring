@@ -8,6 +8,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Upgrading
+- `RetentionScheduler` runs the data retention purge daily (`escalated.retention.cron`, default
+  `0 30 3 * * *`). Every period defaults to `never`, so until an admin sets one on the Data
+  retention page it only deletes expired guest verification codes. A closed ticket past its period
+  is deleted outright with its replies, attachments, activities and the other rows that point at
+  it: tickets have no soft delete here, so there is no 30-day grace period.
+- Ticket numbers are still the ticket count plus one, but now step past a number that is still
+  taken, which the count alone repeats once tickets have been deleted.
 - Run the migrations: `V21__create_escalated_import_tables` adds `escalated_import_jobs` and `escalated_import_source_maps` (MySQL and PostgreSQL).
 - Run migration `V20` (PostgreSQL and MySQL). It adds `escalated_ticket_statuses`, seeded with one
   system row per built-in status, and a nullable `escalated_tickets.ticket_status_id`
@@ -43,6 +50,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   needs the new setters.
 
 ### Added
+- The admin Settings sub-pages, with escalated-laravel's routes, props, validation and flash
+  messages (UI on, admins only): `Escalated/Admin/Settings/CsatSettings`
+  (`/escalated/admin/settings/csat`), `DataRetention` (`/data-retention`, with `purgePreview`),
+  `EmailSettings` (`/email`: `email_addresses` normalised to `email`, `display_name`,
+  `department_id`, `dkim_status`, and `default_reply_address`; stored only, as in Laravel),
+  `PublicTickets` (`/public-tickets`, the guest-policy keys the widget reads, saved over `POST` or
+  `PUT`) and a read-only `DatabaseConnection` (`/database`, `POST /database/test`). The route names
+  are in `UiRoutes`.
+- `DataRetentionService` and `RetentionScheduler`: escalated-laravel's `escalated:purge-expired`
+  for closed tickets, attachments, audit logs and expired guest verification codes.
 - The admin Import wizard and the import framework behind it, as escalated-laravel's: the shared `Admin/Import/Index`, `Connect`, `Mapping`, `Review` and `Progress` pages on Laravel's paths and props under `/escalated/admin/import` (route names `escalated.admin.import.*`), admins only. `POST .../{platform}/test-connection` answers `{success[, error]}` (422 when the source throws); `review` writes nothing; `start` creates the job and queues it; `status/{job}` answers the Progress poll; `pause`, `resume` and `cancel` act on the job.
   - Sources are beans implementing `dev.escalated.contracts.ImportAdapter`; Escalated ships none, so a Zendesk or Freshdesk adapter is the host's or a plugin library's.
   - `ImportJob` and `ImportSourceMap` (migration `V21`), and `ImportJobService`, which resumes each entity type from its saved cursor, skips what is already mapped (so a paused, failed or interrupted run imports nothing twice), saves progress and an error log per batch, and stops between batches when the job is paused or cancelled. It imports agents (existing agent profiles, by email), contacts, tags, departments, tickets (status and priority falling back to open and medium, requester from the contact, assignee, department, tags, source creation time) and replies.

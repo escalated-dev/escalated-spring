@@ -860,14 +860,23 @@ public class TicketService {
         return saved;
     }
 
+    /**
+     * The next free {@code ESC-} number: the ticket count plus one, as before, stepping past numbers
+     * still taken once tickets have been deleted (the data retention purge deletes closed ones).
+     */
     private String generateTicketNumber() {
-        return "ESC-"
-                + String.format(
-                        "%06d",
-                        (access == null
-                                        ? ticketRepository.count()
-                                        : access.withoutRestriction(ticketRepository::count))
-                                + 1);
+        long next = unrestricted(ticketRepository::count) + 1;
+        while (true) {
+            String number = "ESC-" + String.format("%06d", next);
+            if (!unrestricted(() -> ticketRepository.findByTicketNumber(number).isPresent())) {
+                return number;
+            }
+            next++;
+        }
+    }
+
+    private <T> T unrestricted(java.util.function.Supplier<T> query) {
+        return access == null ? query.get() : access.withoutRestriction(query);
     }
 
     private void logActivity(Ticket ticket, String type, String description,

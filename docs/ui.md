@@ -112,6 +112,11 @@ JSON `pageJson`, `routesScript` (the `route()` definition) and `csrfToken` (for 
 | `Escalated/Customer/Create` | `GET /escalated/create` |
 | `Escalated/Customer/Show` | `GET /escalated/{reference}` |
 | `Escalated/Admin/Settings` | `GET`/`POST /escalated/admin/settings` |
+| `Escalated/Admin/Settings/CsatSettings` | `GET`/`POST /escalated/admin/settings/csat` |
+| `Escalated/Admin/Settings/DataRetention` | `GET`/`POST /escalated/admin/settings/data-retention` |
+| `Escalated/Admin/Settings/DatabaseConnection` | `GET /escalated/admin/settings/database` (read-only; `POST .../database/test`) |
+| `Escalated/Admin/Settings/EmailSettings` | `GET`/`POST /escalated/admin/settings/email` |
+| `Escalated/Admin/Settings/PublicTickets` | `GET /escalated/admin/settings/public-tickets` (`POST` or `PUT` saves) |
 | `Escalated/Admin/Workflows/Index` | `GET /escalated/admin/workflows` |
 | `Escalated/Admin/Workflows/Form` | `GET /escalated/admin/workflows/create`, `GET /escalated/admin/workflows/{id}` |
 | `Escalated/Admin/Workflows/Logs` | `GET /escalated/admin/workflows/logs` (`workflow` to filter; `/workflows/{id}/logs` redirects there) |
@@ -172,6 +177,21 @@ page's `supported_settings` lists only what this port stores and honours: `allow
 `show_powered_by`, `widget_color`, `widget_position`, `widget_greeting` and
 `widget_allowed_origins`; the page hides the rest, and the save ignores any other key. Deleting a
 department leaves its tickets and agents without one; deleting a tag takes it off its tickets.
+
+The Settings sub-pages save to the settings table under escalated-laravel's keys, each going back
+with a `success` flash. CSAT settings and email addresses (`email_addresses`,
+`default_reply_address`) are stored only, as in Laravel: survey sending and outbound mail do not
+read them yet. Public tickets saves the guest-policy keys the widget and the JSON API use. The data
+retention periods are applied daily by `RetentionScheduler` (`escalated.retention.cron`, 03:30 by
+default) through `DataRetentionService`: a closed ticket past `retention_closed_tickets` is deleted
+with every row that points at it (tickets have no soft delete here, so there is no 30-day grace
+period), attachment rows and audit logs past their periods are deleted (files stay in the
+`AttachmentStorage`, which has no delete), and so are expired guest verification codes. Every
+period defaults to `never`. The database page is read-only: it describes each `DataSource` bean
+(Escalated's tables are on `escalatedDataSource` when `escalated.datasource.url` is set, else on
+`dataSource`), `pinnedByConfig` is true, and a switch is refused with an `error` flash;
+`POST .../database/test` returns one connection's description as JSON (422 for an unknown name),
+or goes back with a flash for a page visit.
 
 Macros and canned responses take `POST` to the collection and `PUT`/`DELETE` on a member, and go
 back to their page. A macro saved from the page uses the page's action types (`status`,
