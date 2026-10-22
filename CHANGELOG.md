@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.4] - 2026-10-22
+
 ### Upgrading
 - Saving a webhook with the secret left blank keeps the stored secret, on the admin page (as
   before) and now also through `PUT /escalated/api/admin/webhooks/{id}`, which used to ignore
