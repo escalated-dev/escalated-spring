@@ -12,16 +12,24 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import dev.escalated.config.EscalatedTransactionManagers;
 import dev.escalated.contracts.ImportAdapter;
 import dev.escalated.models.AgentProfile;
+import dev.escalated.models.Attachment;
+import dev.escalated.models.CustomField;
+import dev.escalated.models.CustomFieldValue;
 import dev.escalated.models.ImportJob;
 import dev.escalated.models.ImportSourceMap;
+import dev.escalated.models.SatisfactionRating;
 import dev.escalated.models.SlaPolicy;
 import dev.escalated.models.Ticket;
 import dev.escalated.models.TicketPriority;
 import dev.escalated.models.TicketStatus;
 import dev.escalated.repositories.AgentProfileRepository;
+import dev.escalated.repositories.AttachmentRepository;
+import dev.escalated.repositories.CustomFieldRepository;
+import dev.escalated.repositories.CustomFieldValueRepository;
 import dev.escalated.repositories.ImportJobRepository;
 import dev.escalated.repositories.ImportSourceMapRepository;
 import dev.escalated.repositories.ReplyRepository;
+import dev.escalated.repositories.SatisfactionRatingRepository;
 import dev.escalated.repositories.SlaPolicyRepository;
 import dev.escalated.repositories.TicketRepository;
 import dev.escalated.services.AutomationRunner;
@@ -29,10 +37,17 @@ import dev.escalated.services.ImportContext;
 import dev.escalated.services.ImportCredentials;
 import dev.escalated.services.ImportRunner;
 import dev.escalated.services.SlaService;
+import dev.escalated.services.email.inbound.AttachmentStorage;
+import dev.escalated.services.email.inbound.LocalFileAttachmentStorage;
 import hostapp.HostApplication;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.time.Instant;
+import java.util.Base64;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -74,6 +89,7 @@ import org.springframework.transaction.support.TransactionTemplate;
     "escalated.ui.enabled=true",
     "escalated.ui.version=build-1",
     "escalated.ui.scripts[0]=/build/app.js",
+    "escalated.imports.attachment-max-kb=8",
 })
 class AdminImportInertiaPagesTest {
 
@@ -83,33 +99,54 @@ class AdminImportInertiaPagesTest {
     private static final Map<String, String> CREDENTIALS = Map.of("subdomain", "acme", "api_token", TOKEN);
     private static final String MAPPINGS = "{\"tickets\":{\"subject\":\"title\",\"state\":\"status\"}}";
 
+    /** A real PDF header and PNG signature. */
+    static final byte[] PDF = "%PDF-1.4\n1 0 obj << >> endobj\ntrailer << >>\n%%EOF\n".getBytes(StandardCharsets.US_ASCII);
+    static final byte[] PNG = {(byte) 0x89, 'P', 'N', 'G', '\r', '\n', 0x1A, '\n', 0, 0, 0, 0x0D, 'I', 'H', 'D', 'R'};
+
     @TestConfiguration
     static class Adapters {
         @Bean
         FakeImportAdapter fakeImportAdapter() {
             return new FakeImportAdapter();
         }
+
+        @Bean
+        LocalFileAttachmentStorage importAttachmentStorage() throws java.io.IOException {
+            return new LocalFileAttachmentStorage(Files.createTempDirectory("escalated-import-"));
+        }
     }
 
-    /** Two contacts, a tag, three tickets two to a page, and two replies. */
+    /**
+     * An agent, two contacts, a tag, two custom fields, three tickets two to a page, two replies,
+     * two attachments and a satisfaction rating. {@code overrides}, when set, replaces them.
+     */
     static class FakeImportAdapter implements ImportAdapter {
         final List<Object[]> calls = Collections.synchronizedList(new ArrayList<>());
         volatile BiConsumer<String, String> onExtract;
         volatile Map<String, String> sourceFieldCredentials;
+        volatile Map<String, List<Map<String, Object>>> overrides;
         String agentEmail;
+        String suffix;
 
         private Map<String, List<Map<String, Object>>> records() {
+            if (overrides != null) {
+                return overrides;
+            }
             Map<String, List<Map<String, Object>>> records = new LinkedHashMap<>();
             records.put("agents", List.of(Map.of("source_id", "a1", "email", agentEmail, "name", "Agent")));
             records.put("contacts", List.of(
                     Map.of("source_id", "c1", "email", "ada@customer.test", "name", "Ada Customer"),
                     Map.of("source_id", "c2", "email", "bob@customer.test", "name", "Bob Customer")));
             records.put("tags", List.of(Map.of("source_id", "t1", "name", "Billing " + agentEmail)));
+            records.put("custom_fields", List.of(
+                    Map.of("source_id", "f1", "name", "Plan " + suffix, "type", "select", "options", List.of("free", "pro")),
+                    Map.of("source_id", "f2", "name", "Seats " + suffix, "type", "number")));
+            Map<String, Object> refund = new HashMap<>(Map.of("source_id", "k1", "title", "Refund please",
+                    "description", "Charged twice.", "status", "open", "priority", "high", "requester_source_id", "c1",
+                    "assignee_source_id", "a1", "tag_source_ids", List.of("t1"), "created_at", "2024-01-02T03:04:05Z"));
+            refund.put("custom_fields", Map.of("f1", "pro", "f2", 12));
             records.put("tickets", List.of(
-                    Map.of("source_id", "k1", "title", "Refund please", "description", "Charged twice.",
-                            "status", "open", "priority", "high", "requester_source_id", "c1",
-                            "assignee_source_id", "a1", "tag_source_ids", List.of("t1"),
-                            "created_at", "2024-01-02T03:04:05Z"),
+                    refund,
                     Map.of("source_id", "k2", "title", "Login broken", "status", "resolved", "priority", "urgent",
                             "requester_source_id", "c2"),
                     Map.of("source_id", "k3", "title", "Feature idea", "status", "not-a-status",
@@ -119,6 +156,13 @@ class AdminImportInertiaPagesTest {
                             "author_source_id", "a1"),
                     Map.of("source_id", "r2", "ticket_source_id", "k2", "body", "Internal note",
                             "is_internal_note", true)));
+            records.put("attachments", List.of(
+                    Map.of("source_id", "a1", "parent_type", "ticket", "parent_source_id", "k1", "filename", "receipt.pdf",
+                            "mime_type", "application/pdf", "content", Base64.getEncoder().encodeToString(PDF)),
+                    Map.of("source_id", "a2", "parent_source_id", "r1", "filename", "screen.png", "content", PNG)));
+            records.put("satisfaction_ratings", List.of(
+                    Map.of("source_id", "s1", "ticket_source_id", "k2", "rating", 4, "comment", "Quick fix",
+                            "created_at", "2024-02-03T04:05:06Z")));
             return records;
         }
 
@@ -146,7 +190,8 @@ class AdminImportInertiaPagesTest {
         }
 
         @Override public List<String> entityTypes() {
-            return List.of("agents", "contacts", "tags", "tickets", "replies");
+            return List.of("agents", "contacts", "tags", "custom_fields", "tickets", "replies", "attachments",
+                    "satisfaction_ratings");
         }
 
         @Override
@@ -173,7 +218,7 @@ class AdminImportInertiaPagesTest {
             if (hook != null) {
                 hook.accept(entityType, cursor);
             }
-            List<Map<String, Object>> all = records().get(entityType);
+            List<Map<String, Object>> all = records().getOrDefault(entityType, List.of());
             int offset = cursor == null ? 0 : Integer.parseInt(cursor);
             int end = Math.min(offset + 2, all.size());
             return new ExtractResult(all.subList(offset, end), end < all.size() ? String.valueOf(end) : null, all.size());
@@ -190,6 +235,11 @@ class AdminImportInertiaPagesTest {
     @Autowired private ImportRunner runner;
     @Autowired private ImportCredentials sealer;
     @Autowired private FakeImportAdapter adapter;
+    @Autowired private CustomFieldRepository customFields;
+    @Autowired private CustomFieldValueRepository fieldValues;
+    @Autowired private AttachmentRepository attachments;
+    @Autowired private SatisfactionRatingRepository ratings;
+    @Autowired private AttachmentStorage storage;
     @Autowired private SlaService sla;
     @Autowired private AutomationRunner automations;
     @Autowired
@@ -219,6 +269,8 @@ class AdminImportInertiaPagesTest {
         importedAgent.setAgent(true);
         importedAgent = agents.save(importedAgent);
         adapter.agentEmail = importedAgent.getEmail();
+        adapter.suffix = unique;
+        adapter.overrides = null;
         adapter.onExtract = null;
         adapter.calls.clear();
         session = new MockHttpSession();
@@ -248,9 +300,13 @@ class AdminImportInertiaPagesTest {
     }
 
     private ImportJob start() throws Exception {
+        return start(MAPPINGS);
+    }
+
+    private ImportJob start(String mappings) throws Exception {
         assertThat(connect(CREDENTIALS).getResponse().getContentAsString()).isEqualTo("{\"success\":true}");
         MvcResult result = mvc.perform(as(post(BASE + "/fakedesk/start")).contentType(MediaType.APPLICATION_JSON)
-                .content("{\"field_mappings\":" + MAPPINGS + "}")).andExpect(status().is3xxRedirection()).andReturn();
+                .content("{\"field_mappings\":" + mappings + "}")).andExpect(status().is3xxRedirection()).andReturn();
         String location = result.getResponse().getHeader("Location");
         assertThat(location).startsWith(BASE + "/progress/");
         runner.awaitIdle();
@@ -320,7 +376,7 @@ class AdminImportInertiaPagesTest {
         JsonNode props = JSON.readTree(result.getResponse().getContentAsString()).get("props");
         // Laravel does not send the declared `credentials` either: they stay on the server.
         assertThat(own(props)).containsExactlyInAnyOrder("platform", "display_name", "entity_types", "mappings");
-        assertThat(props.get("entity_types").size()).isEqualTo(5);
+        assertThat(props.get("entity_types").size()).isEqualTo(8);
         JsonNode ticketMappings = props.get("mappings").get("tickets");
         assertThat(ticketMappings.get("defaults").get("subject").asText()).isEqualTo("title");
         assertThat(ticketMappings.get("source_fields").get(1).get("name").asText()).isEqualTo("state");
@@ -389,6 +445,7 @@ class AdminImportInertiaPagesTest {
                 .satisfies(r -> assertThat(r.getAuthorEmail()).isEqualTo(importedAgent.getEmail()));
         assertThat(replies.findByTicketIdOrderByCreatedAtAsc(rows.get(1).getId())).singleElement()
                 .satisfies(r -> assertThat(r.isInternal()).isTrue());
+        assertImportedRecords(job, rows);
 
         // Import mode held in the run, not outside it.
         assertThat(adapter.calls).isNotEmpty().allSatisfy(call -> assertThat(call[2]).isEqualTo(true));
@@ -499,5 +556,171 @@ class AdminImportInertiaPagesTest {
         assertThat(affected).isZero();
         assertThat(ticket.getSlaPolicy()).isNull();
         assertThat(ImportContext.isImporting()).isFalse();
+    }
+
+    // ── Custom fields, attachments and satisfaction ratings ─────────────
+
+    private String mapped(ImportJob job, String entityType, String sourceId) {
+        return maps.findByImportJobIdAndEntityTypeAndSourceId(job.getId(), entityType, sourceId)
+                .map(ImportSourceMap::getEscalatedId).orElse(null);
+    }
+
+    private Map<String, String> valuesOf(Long ticketId) {
+        return inTransaction(() -> {
+            Map<String, String> out = new java.util.TreeMap<>();
+            for (CustomFieldValue value : fieldValues.findByTicketId(ticketId)) {
+                out.put(value.getCustomField().getFieldKey(), value.getValue());
+            }
+            return out;
+        });
+    }
+
+    /** The job's error log as entity type -> source id -> messages. */
+    private static Map<String, Map<String, String>> errorsByType(ImportJob job) throws Exception {
+        Map<String, Map<String, String>> out = new LinkedHashMap<>();
+        for (JsonNode entry : JSON.readTree(job.getErrorLog())) {
+            out.computeIfAbsent(entry.get("entity_type").asText(), k -> new LinkedHashMap<>())
+                    .merge(entry.get("source_id").asText(), entry.get("error").asText(), (a, b) -> a + "; " + b);
+        }
+        return out;
+    }
+
+    private static String counts(ImportJob job, String type) throws Exception {
+        JsonNode p = JSON.readTree(job.getProgress()).get(type);
+        return p.get("processed").asInt() + " " + p.get("failed").asInt();
+    }
+
+    private Attachment attachment(ImportJob job, String sourceId) {
+        return inTransaction(() -> {
+            Attachment a = attachments.findById(Long.valueOf(mapped(job, "attachments", sourceId))).orElseThrow();
+            a.getTicket().getId();
+            if (a.getReply() != null) {
+                a.getReply().getId();
+            }
+            return a;
+        });
+    }
+
+    /** What the default fake records leave behind besides tickets and replies. */
+    private void assertImportedRecords(ImportJob job, List<Ticket> rows) throws Exception {
+        // Definitions, as Laravel's persistCustomField: created by slug with type and options.
+        CustomField plan = customFields.findByFieldKey("plan_" + adapter.suffix).orElseThrow();
+        assertThat(plan.getFieldType()).isEqualTo("select");
+        assertThat(plan.getOptions()).contains("free").contains("pro");
+        assertThat(mapped(job, "custom_fields", "f1")).isEqualTo(plan.getId().toString());
+        assertThat(customFields.findByFieldKey("seats_" + adapter.suffix).orElseThrow().getFieldType()).isEqualTo("number");
+
+        // Ticket values, keyed by the field's source id.
+        assertThat(valuesOf(rows.get(0).getId()))
+                .containsEntry("plan_" + adapter.suffix, "pro").containsEntry("seats_" + adapter.suffix, "12");
+
+        // Attachments: bytes through the attachment storage, on the ticket and on a reply.
+        Attachment a1 = attachment(job, "a1");
+        assertThat(a1.getTicket().getId()).isEqualTo(rows.get(0).getId());
+        assertThat(a1.getReply()).isNull();
+        assertThat(a1.getFileName()).isEqualTo("receipt.pdf");
+        assertThat(a1.getMimeType()).isEqualTo("application/pdf");
+        assertThat(a1.getFileSize()).isEqualTo((long) PDF.length);
+        assertThat(Files.readAllBytes(Path.of(a1.getFilePath()))).isEqualTo(PDF);
+        assertThat(Path.of(a1.getFilePath()).getParent())
+                .isEqualTo(((LocalFileAttachmentStorage) storage).getRoot());
+        Attachment a2 = attachment(job, "a2");
+        assertThat(a2.getReply().getId().toString()).isEqualTo(mapped(job, "replies", "r1"));
+        assertThat(a2.getTicket().getId()).isEqualTo(rows.get(0).getId());
+        assertThat(a2.getMimeType()).isEqualTo("image/png");
+        // Served by the authorised download route.
+        MvcResult download = mvc.perform(get("/escalated/api/attachments/" + a1.getId() + "/download")
+                .with(user(admin.getEmail()))).andExpect(status().isOk()).andReturn();
+        assertThat(download.getResponse().getContentAsByteArray()).isEqualTo(PDF);
+        assertThat(download.getResponse().getHeader("Content-Disposition")).startsWith("attachment");
+
+        // The rating, on its ticket, at the source's time, rated by the ticket's requester.
+        SatisfactionRating rating = ratings.findByTicketId(rows.get(1).getId()).get(0);
+        assertThat(rating.getRating()).isEqualTo(4);
+        assertThat(rating.getComment()).isEqualTo("Quick fix");
+        assertThat(rating.getRaterEmail()).isEqualTo("bob@customer.test");
+        assertThat(rating.getCreatedAt()).isEqualTo(Instant.parse("2024-02-03T04:05:06Z"));
+        for (String type : List.of("custom_fields", "attachments", "satisfaction_ratings")) {
+            assertThat(counts(job, type)).as(type).endsWith(" 0");
+        }
+    }
+
+    @Test
+    void importedRecordsAreHeldToTheLiveRules() throws Exception {
+        String s = adapter.suffix;
+        String pdf = Base64.getEncoder().encodeToString(PDF);
+        byte[] big = new byte[PDF.length + 11 * 1024];
+        System.arraycopy(PDF, 0, big, 0, PDF.length);
+        Map<String, Object> one = new HashMap<>(Map.of("source_id", "k1", "title", "One", "requester_source_id", "c1"));
+        one.put("custom_fields", Map.of("plan_code", "pro", "f2", "many", "skipped_src", "x", "nope", "y"));
+        Map<String, List<Map<String, Object>>> records = new LinkedHashMap<>();
+        records.put("contacts", List.of(Map.of("source_id", "c1", "email", "ada@customer.test")));
+        records.put("custom_fields", List.of(
+                Map.of("source_id", "f1", "name", "Plan " + s, "type", "select", "options", List.of("free", "pro")),
+                Map.of("source_id", "f2", "name", "Seats " + s, "type", "number"),
+                Map.of("source_id", "f8", "name", "Hologram " + s, "type", "hologram"),
+                Map.of("source_id", "f9", "name", "Broken " + s, "type", "select")));
+        records.put("tickets", List.of(one, Map.of("source_id", "k2", "title", "Two")));
+        records.put("replies", List.of(Map.of("source_id", "r1", "ticket_source_id", "k1", "body", "Hi")));
+        records.put("attachments", List.of(
+                Map.of("source_id", "a1", "parent_type", "ticket", "parent_source_id", "k1", "filename", "x.pdf",
+                        "path", "/etc/passwd"),
+                Map.of("source_id", "a2", "parent_type", "ticket", "parent_source_id", "k1", "filename", "big.pdf",
+                        "content", Base64.getEncoder().encodeToString(big)),
+                Map.of("source_id", "a3", "parent_type", "ticket", "parent_source_id", "k1", "filename", "run.exe",
+                        "content", Base64.getEncoder().encodeToString(new byte[] {'M', 'Z'})),
+                Map.of("source_id", "a4", "parent_type", "ticket", "parent_source_id", "k1", "filename", "notes.txt",
+                        "content", Base64.getEncoder().encodeToString(
+                                "<html><script>alert(1)</script></html>".getBytes(StandardCharsets.UTF_8))),
+                Map.of("source_id", "a5", "parent_type", "ticket", "parent_source_id", "zz", "filename", "y.pdf",
+                        "content", pdf),
+                Map.of("source_id", "a6", "parent_type", "ticket", "parent_source_id", "k1",
+                        "filename", "../../evil.pdf", "content", pdf),
+                Map.of("source_id", "a7", "parent_type", "ticket", "parent_source_id", "k1", "filename", "z.pdf",
+                        "content", "!!not base64!!")));
+        records.put("satisfaction_ratings", List.of(
+                Map.of("source_id", "s1", "ticket_source_id", "k1", "rating", 9),
+                Map.of("source_id", "s2", "ticket_source_id", "k1", "rating", "x"),
+                Map.of("source_id", "s3", "ticket_source_id", "zz", "rating", 3),
+                Map.of("source_id", "s4", "ticket_source_id", "k2", "score", 5),
+                Map.of("source_id", "s5", "ticket_source_id", "k2", "rating", 3),
+                Map.of("source_id", "s6", "ticket_source_id", "k1", "rating", 2.5)));
+        adapter.overrides = records;
+
+        ImportJob job = start("{\"tickets\":{\"plan_code\":\"custom_fields.plan_" + s + "\",\"skipped_src\":\"\"}}");
+
+        assertThat(job.getStatus()).isEqualTo("completed");
+        Map<String, Map<String, String>> errors = errorsByType(job);
+
+        // Definitions: an unknown type and an option-less select fail, as the admin form refuses them.
+        assertThat(counts(job, "custom_fields")).isEqualTo("2 2");
+        assertThat(errors.get("custom_fields")).containsKeys("f8", "f9");
+
+        // Values: mapped, skipped, invalid and unknown keys; the ticket is kept.
+        assertThat(counts(job, "tickets")).isEqualTo("2 0");
+        Long k1 = Long.valueOf(mapped(job, "tickets", "k1"));
+        assertThat(valuesOf(k1)).containsExactly(Map.entry("plan_" + s, "pro"));
+        assertThat(errors.get("custom_field_values").get("k1"))
+                .contains("custom_fields.seats_" + s).contains("nope").doesNotContain("skipped_src");
+
+        // Attachments: only the well-formed one under the limit is stored, under its base name.
+        assertThat(counts(job, "attachments")).isEqualTo("1 6");
+        Map<String, String> attachmentErrors = errors.get("attachments");
+        assertThat(attachmentErrors.get("a1")).contains("content");
+        assertThat(attachmentErrors.get("a2")).contains("the 8 KB");
+        assertThat(attachmentErrors.get("a3")).contains("not allowed");
+        assertThat(attachmentErrors.get("a4")).contains("not allowed");
+        assertThat(attachmentErrors.get("a5")).contains("Parent ticket not found");
+        assertThat(attachmentErrors.get("a7")).contains("base64");
+        Attachment a6 = attachment(job, "a6");
+        assertThat(a6.getFileName()).isEqualTo("evil.pdf");
+        assertThat(Path.of(a6.getFilePath()).getParent()).isEqualTo(((LocalFileAttachmentStorage) storage).getRoot());
+
+        // Ratings: 1-5 integers on an imported ticket, one per ticket.
+        assertThat(counts(job, "satisfaction_ratings")).isEqualTo("1 5");
+        assertThat(errors.get("satisfaction_ratings")).containsKeys("s1", "s2", "s3", "s5", "s6");
+        Long k2 = Long.valueOf(mapped(job, "tickets", "k2"));
+        assertThat(ratings.findByTicketId(k2)).singleElement().satisfies(r -> assertThat(r.getRating()).isEqualTo(5));
+        assertThat(ratings.findByTicketId(k1)).isEmpty();
     }
 }
