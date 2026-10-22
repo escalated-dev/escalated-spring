@@ -8,6 +8,35 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- The shared Inertia pages, behind `escalated.ui.enabled` (default `false`, so API-only hosts are
+  unchanged; escalated-laravel defaults it to `true`). See `docs/ui.md`.
+  - The Inertia protocol (`dev.escalated.ui.Inertia`): the first visit gets an HTML document with
+    the page object (`data-page`, both the Inertia 3 script element and the Inertia 1/2
+    attribute), `X-Inertia` visits get JSON, partial reloads, asset versioning with 409 and
+    `X-Inertia-Location` (`escalated.ui.version`), 303 after writes, and validation errors and flash
+    messages carried to the next page. The first-visit document is a replaceable
+    `InertiaRootTemplate` bean, or a Thymeleaf view named in `escalated.ui.root-view`; the host's
+    build is linked with `escalated.ui.scripts` and `escalated.ui.stylesheets`.
+  - Shared props as Laravel shares them: `auth.user` (`id`, `name`, `email` only), `flash`,
+    `errors` and `escalated` (`prefix`, `is_agent`, `is_admin`, `permissions`, `features`,
+    `broadcasting`, `agent_type`, knowledge base and guest ticket switches).
+  - A Ziggy-compatible `window.route()` built from `UiRoutes`, for hosts without Ziggy.
+  - The agent pages: `Escalated/Agent/Dashboard` (`GET /escalated/agent`), `TicketIndex`
+    (`GET /escalated/agent/tickets`, with Laravel's queue filters) and `TicketShow`
+    (`GET /escalated/agent/tickets/{reference}`), with the writes TicketShow posts: `reply`, `note`,
+    `assign`, `status`, `priority`, `tags`, `department`, `macro`, `follow` and `actions/{action}`.
+  - The customer pages: `Escalated/Customer/Index` (`GET /escalated`), `Create`
+    (`GET /escalated/create`, `POST /escalated`) and `Show` (`GET /escalated/{reference}`), with
+    `reply`, `close`, `reopen` and `rate`. A customer sees only tickets they requested (by email);
+    another's is a 404. Public replies only, staff by display name.
+  - The admin pages: `Escalated/Admin/Settings` (with `supported_settings`: `allow_customer_close`,
+    `show_powered_by` and the widget settings, the keys this port stores), `Workflows/Index` and
+    `Form` (on the workflow admin service from #117, with toggle and reorder), `Automations/Index`
+    and `Form` (on the automation admin service from #118), `Departments/Index` and `Form`, and
+    `Tags/Index`, with their create, update and delete writes.
+  - `GET /escalated/attachments/{id}/download`: the attachment download for a browser session, with
+    the API download's access rules.
+  - Page props are built field by field (`UiPresenter`), never by serialising entities.
 - The admin ticket pages, behind `escalated.ui.enabled`: `Escalated/Admin/Tickets/Index`
   (`GET /escalated/admin/tickets`, with the agent queue's filters, plus `agents` and `savedViews`)
   and `Escalated/Admin/Tickets/Show` (`GET /escalated/admin/tickets/{reference}`, plus `agents` and
@@ -60,6 +89,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   in `X-CSRF-TOKEN` as well as `X-XSRF-TOKEN`, so the pages' `fetch` calls (saved views, presence,
   mentions) pass CSRF as on Laravel. A custom `escalated.ui.root-view` receives it as `csrfToken`.
 
+### Changed
+- With `escalated.ui.enabled=true` only: the `/escalated/**` web chain keeps its CSRF token in the
+  `XSRF-TOKEN` cookie and accepts it in `X-XSRF-TOKEN` (what Inertia's client sends), and
+  `/escalated/agent/**` and `/escalated/admin/**` take the agent and admin gates.
+
 ### Not rendered yet
 - `Escalated/Admin/SlaPolicies/*` and `Escalated/Admin/EscalationRules/*`: this port's SLA policy
   is one priority per policy, and its escalation rules hang off an SLA policy; the shared pages edit
@@ -70,6 +104,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `AgentDetail` and `Cohorts`, and the report export; their links from the dashboard go nowhere yet.
 - Admin ticket presence, pinned notes, split, merge, links and side conversations from the ticket
   page: the routes are not served here yet, so those controls do nothing.
+- The newsletter screens still answer `{component, props}` JSON under
+  `/escalated/api/admin/newsletters`.
+- Attachments cannot be uploaded from the pages' writes yet (refused with an `attachments`
+  error rather than dropped).
 
 ## [0.2.3] - 2026-10-21
 
@@ -92,43 +130,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - A webhook subscription is now matched name by name instead of by substring.
 
 ### Added
-- The shared Inertia pages, behind `escalated.ui.enabled` (default `false`, so API-only hosts are
-  unchanged; escalated-laravel defaults it to `true`). See `docs/ui.md`.
-  - The Inertia protocol (`dev.escalated.ui.Inertia`): the first visit gets an HTML document with
-    the page object (`data-page`, both the Inertia 3 script element and the Inertia 1/2
-    attribute), `X-Inertia` visits get JSON, partial reloads, asset versioning with 409 and
-    `X-Inertia-Location` (`escalated.ui.version`), 303 after writes, and validation errors and flash
-    messages carried to the next page. The first-visit document is a replaceable
-    `InertiaRootTemplate` bean, or a Thymeleaf view named in `escalated.ui.root-view`; the host's
-    build is linked with `escalated.ui.scripts` and `escalated.ui.stylesheets`.
-  - Shared props as Laravel shares them: `auth.user` (`id`, `name`, `email` only), `flash`,
-    `errors` and `escalated` (`prefix`, `is_agent`, `is_admin`, `permissions`, `features`,
-    `broadcasting`, `agent_type`, knowledge base and guest ticket switches).
-  - A Ziggy-compatible `window.route()` built from `UiRoutes`, for hosts without Ziggy.
-  - The agent pages: `Escalated/Agent/Dashboard` (`GET /escalated/agent`), `TicketIndex`
-    (`GET /escalated/agent/tickets`, with Laravel's queue filters) and `TicketShow`
-    (`GET /escalated/agent/tickets/{reference}`), with the writes TicketShow posts: `reply`, `note`,
-    `assign`, `status`, `priority`, `tags`, `department`, `macro`, `follow` and `actions/{action}`.
-  - The customer pages: `Escalated/Customer/Index` (`GET /escalated`), `Create`
-    (`GET /escalated/create`, `POST /escalated`) and `Show` (`GET /escalated/{reference}`), with
-    `reply`, `close`, `reopen` and `rate`. A customer sees only tickets they requested (by email);
-    another's is a 404. Public replies only, staff by display name.
-  - The admin pages: `Escalated/Admin/Settings` (with `supported_settings`: `allow_customer_close`,
-    `show_powered_by` and the widget settings, the keys this port stores), `Workflows/Index` and
-    `Form` (on the workflow admin service from #117, with toggle and reorder), `Automations/Index`
-    and `Form` (on the automation admin service from #118), `Departments/Index` and `Form`, and
-    `Tags/Index`, with their create, update and delete writes.
-  - `GET /escalated/attachments/{id}/download`: the attachment download for a browser session, with
-    the API download's access rules.
-  - Page props are built field by field (`UiPresenter`), never by serialising entities.
-- Not rendered yet (remaining pages of `pages.json`): Admin ApiTokens, AuditLog, BusinessHours,
-  CannedResponses, Capacity, CustomFields, CustomObjects, EscalationRules, Import, KnowledgeBase,
-  Macros, Plugins, Reports (all), Roles, the Settings sub-pages, Skills, SlaPolicies, Statuses,
-  Tickets, Users, Webhooks, Workflows Builder and Logs;
-  Auth/TwoFactorChallenge; Customer KnowledgeBase; Error; Guest Create and
-  Show; Plugin/Page. The newsletter screens still answer `{component, props}` JSON under
-  `/escalated/api/admin/newsletters`. Attachments cannot be uploaded from the pages' writes yet
-  (refused with an `attachments` error rather than dropped).
 - `GET`/`POST /escalated/api/admin/tokens`, `PUT`/`DELETE /tokens/{id}`, which the README already
   documented and nothing mapped. They issue API tokens from `name`, `agent_id` (or `user_id`),
   `abilities` (`agent`, `admin`, `*`; default `*`) and `expires_in_days` (1-365). The plain-text
@@ -183,9 +184,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   nullable `repeat_after_hours`.
 
 ### Changed
-- With `escalated.ui.enabled=true` only: the `/escalated/**` web chain keeps its CSRF token in the
-  `XSRF-TOKEN` cookie and accepts it in `X-XSRF-TOKEN` (what Inertia's client sends), and
-  `/escalated/agent/**` and `/escalated/admin/**` take the agent and admin gates.
 - **API token abilities are enforced**, as in Laravel's `AuthenticateApiToken`. The agent API needs
   a token with `agent` or `*`, the admin API one with `admin` or `*`, and the owner must still pass
   the gate. A token request is no longer let through by its owner's profile alone. Tokens issued
