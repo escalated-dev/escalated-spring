@@ -54,6 +54,17 @@ public class UiRoutes {
         // Admin
         register("escalated.admin.settings", "/admin/settings");
         register("escalated.admin.settings.update", "/admin/settings");
+        register("escalated.admin.settings.csat", "/admin/settings/csat");
+        register("escalated.admin.settings.csat.update", "/admin/settings/csat");
+        register("escalated.admin.settings.data-retention", "/admin/settings/data-retention");
+        register("escalated.admin.settings.data-retention.update", "/admin/settings/data-retention");
+        register("escalated.admin.settings.database", "/admin/settings/database");
+        register("escalated.admin.settings.database.test", "/admin/settings/database/test");
+        register("escalated.admin.settings.database.update", "/admin/settings/database");
+        register("escalated.admin.settings.email", "/admin/settings/email");
+        register("escalated.admin.settings.email.update", "/admin/settings/email");
+        register("escalated.admin.settings.public-tickets", "/admin/settings/public-tickets");
+        register("escalated.admin.settings.public-tickets.update", "/admin/settings/public-tickets");
         resource("workflows", "workflow", "/admin/workflows/{workflow}");
         register("escalated.admin.workflows.toggle", "/admin/workflows/{workflow}/toggle");
         register("escalated.admin.workflows.reorder", "/admin/workflows/reorder");
