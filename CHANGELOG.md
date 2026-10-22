@@ -106,6 +106,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `Escalated/Admin/Reports` (`GET /escalated/admin/reports`) and `Reports/Dashboard`,
   `AgentMetrics`, `SlaReport`, `CsatReport` and `Comparison` (`/reports/dashboard`, `/agents`,
   `/sla`, `/csat`, `/comparison`), each for the last `days` (default 30).
+- The analytics report screens, behind `escalated.ui.enabled`, as escalated-laravel's
+  `ReportController`: `Escalated/Admin/Reports/SlaTrends` (`/reports/sla-trends`, `group_by`
+  `day`, `week` or `month`), `ResponseTimes` (`/reports/response-times`, also `/reports/frt`),
+  `ResolutionTimes` (`/reports/resolution-times`, also `/reports/resolution`), `AgentRanking`
+  (`/reports/agent-ranking`, Laravel's composite score) and `Cohorts` (`/reports/cohorts`: by tag,
+  department, channel, type and priority). Counts and rates are grouped in SQL; hours, medians
+  and 90th percentiles are worked out from the timestamps the queries return. Cohort CSAT is the
+  average rating given on the cohort's tickets (Laravel's screen always shows 0 there).
 - `MacroService` also applies the action types the shared Macros page saves (`status`, `priority`,
   `assign`, `tags`, `department`, `reply`, `note`), alongside the existing `set_status`,
   `set_priority`, `add_tag`, `add_reply`, `add_internal_note` and `assign`.
@@ -136,8 +144,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Not rendered yet
 - `Escalated/Admin/Statuses/*`: this port has fixed statuses, no custom ones.
-- `Escalated/Admin/Reports/` `SlaTrends`, `ResponseTimes`, `ResolutionTimes`, `AgentRanking`,
-  `AgentDetail` and `Cohorts`, and the report export; their links from the dashboard go nowhere yet.
+- `Escalated/Admin/Reports/AgentDetail`: escalated-laravel passes it props the page does not read,
+  so there is no contract to match yet; the ranking's agent links go nowhere. The report export is
+  not served either.
 - Admin ticket presence, pinned notes, split, merge, links and side conversations from the ticket
   page: the routes are not served here yet, so those controls do nothing.
 - The newsletter screens still answer `{component, props}` JSON under
