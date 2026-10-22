@@ -37,6 +37,8 @@ public class Webhook extends BaseEntity {
     @Column(name = "max_retries", nullable = false)
     private int maxRetries = 3;
 
+    /** Not serialised: each delivery points back here, and {@code /deliveries} lists them. */
+    @com.fasterxml.jackson.annotation.JsonIgnore
     @OneToMany(mappedBy = "webhook", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<WebhookDelivery> deliveries = new ArrayList<>();
 
@@ -55,6 +57,13 @@ public class Webhook extends BaseEntity {
 
     public void setSecret(String secret) {
         this.secret = secret;
+    }
+
+    /** Whether a signing secret is stored: what pages and JSON show in place of the secret. */
+    @com.fasterxml.jackson.annotation.JsonProperty(value = "has_secret",
+            access = com.fasterxml.jackson.annotation.JsonProperty.Access.READ_ONLY)
+    public boolean hasSecret() {
+        return secret != null && !secret.isEmpty();
     }
 
     public String getEvents() {
@@ -97,6 +106,7 @@ public class Webhook extends BaseEntity {
         this.maxRetries = maxRetries;
     }
 
+    @com.fasterxml.jackson.annotation.JsonIgnore
     public List<WebhookDelivery> getDeliveries() {
         return deliveries;
     }

@@ -245,7 +245,9 @@ public class AdminConfigUiPages {
                 }
             } else {
                 Webhook existing = findWebhook(id);
-                webhookService.update(id, url, String.join(",", events), existing.getDescription(), active, secret);
+                // The form never receives the stored secret: blank keeps it, clear_secret removes it.
+                webhookService.update(id, url, String.join(",", events), existing.getDescription(), active, secret,
+                        input.bool("clear_secret", false));
             }
         } catch (IllegalArgumentException refused) {
             throw UiInput.invalid("url", PUBLIC_URL);
@@ -289,7 +291,7 @@ public class AdminConfigUiPages {
         map.put("events", EventNames.namesIn(webhook.getEvents()));
         map.put("active", webhook.isActive());
         map.put("description", webhook.getDescription());
-        map.put("has_secret", webhook.getSecret() != null && !webhook.getSecret().isEmpty());
+        map.put("has_secret", webhook.hasSecret());
         map.put("failure_count", webhook.getFailureCount());
         map.put("created_at", UiPresenter.iso(webhook.getCreatedAt()));
         map.put("updated_at", UiPresenter.iso(webhook.getUpdatedAt()));

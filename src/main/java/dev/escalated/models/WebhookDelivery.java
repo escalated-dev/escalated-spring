@@ -11,6 +11,8 @@ import jakarta.persistence.Table;
 @Table(name = "escalated_webhook_deliveries")
 public class WebhookDelivery extends BaseEntity {
 
+    /** Serialised as {@code webhookId}: the webhook itself lists its deliveries. */
+    @com.fasterxml.jackson.annotation.JsonIgnore
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "webhook_id", nullable = false)
     private Webhook webhook;
@@ -36,8 +38,19 @@ public class WebhookDelivery extends BaseEntity {
     @Column(name = "error_message", columnDefinition = "TEXT")
     private String errorMessage;
 
+    @com.fasterxml.jackson.annotation.JsonIgnore
     public Webhook getWebhook() {
         return webhook;
+    }
+
+    /**
+     * Not a bean getter, so Spring Data's derived {@code findByWebhookId} queries keep resolving
+     * {@code webhook.id}.
+     */
+    @com.fasterxml.jackson.annotation.JsonProperty(value = "webhookId",
+            access = com.fasterxml.jackson.annotation.JsonProperty.Access.READ_ONLY)
+    public Long webhookIdForJson() {
+        return webhook == null ? null : webhook.getId();
     }
 
     public void setWebhook(Webhook webhook) {
