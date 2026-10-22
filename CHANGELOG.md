@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- The Inertia UI (`escalated.ui.enabled`) renders `Escalated/Admin/Skills/Index` and `Form`,
+  `Admin/Capacity/Index`, `Admin/BusinessHours/Index` and `Form`, and `Admin/AuditLog/Index`, with
+  escalated-laravel's props and routes (`escalated.admin.skills.*`, `capacity.*`,
+  `business-hours.*`, `audit-log`). See `docs/ui.md`.
+
+### Upgrading
+- Run migration `V22__business_schedule_default` (PostgreSQL and MySQL). It adds
+  `escalated_business_schedules.is_default`, false for existing rows. A business-hours SLA policy
+  without its own schedule now follows the default schedule when one is set, and the first active
+  schedule otherwise, as before.
+- Business hours may end at `24:00` (the schedule editor's midnight), read as the end of the day.
+
 ## [0.2.4] - 2026-10-22
 
 ### Upgrading

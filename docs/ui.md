@@ -152,6 +152,12 @@ JSON `pageJson`, `routesScript` (the `route()` definition) and `csrfToken` (for 
 | `Escalated/Admin/CustomObjects/Index` | `GET /escalated/admin/custom-objects` |
 | `Escalated/Admin/CustomObjects/Form` | `GET /escalated/admin/custom-objects/create`, `.../{id}/edit` |
 | `Escalated/Admin/CustomObjects/Records` | `GET /escalated/admin/custom-objects/{id}/records` |
+| `Escalated/Admin/Skills/Index` | `GET /escalated/admin/skills` |
+| `Escalated/Admin/Skills/Form` | `GET /escalated/admin/skills/create`, `.../{id}/edit` |
+| `Escalated/Admin/Capacity/Index` | `GET /escalated/admin/capacity` (`PUT .../capacity/{id}` sets `max_concurrent`, 1-999) |
+| `Escalated/Admin/BusinessHours/Index` | `GET /escalated/admin/business-hours` |
+| `Escalated/Admin/BusinessHours/Form` | `GET /escalated/admin/business-hours/create`, `.../{id}/edit` |
+| `Escalated/Admin/AuditLog/Index` | `GET /escalated/admin/audit-log` (`user_id`, `action`, `auditable_type`, `date_from`, `date_to`; 50 a page) |
 | `Escalated/Admin/Reports` | `GET /escalated/admin/reports` |
 | `Escalated/Admin/Reports/Dashboard`, `AgentMetrics`, `SlaReport`, `CsatReport`, `Comparison` | `GET /escalated/admin/reports/` `dashboard`, `agents`, `sla`, `csat`, `comparison` |
 | `Escalated/Admin/Reports/SlaTrends`, `ResponseTimes`, `ResolutionTimes`, `AgentRanking`, `Cohorts` | `GET /escalated/admin/reports/` `sla-trends`, `response-times` (or `frt`), `resolution-times` (or `resolution`), `agent-ranking`, `cohorts` |
@@ -192,6 +198,17 @@ period defaults to `never`. The database page is read-only: it describes each `D
 `dataSource`), `pinnedByConfig` is true, and a switch is refused with an `error` flash;
 `POST .../database/test` returns one connection's description as JSON (422 for an unknown name),
 or goes back with a flash for a page visit.
+
+Skills and business hours are resources as on Laravel. A skill's agents are `{user_id,
+proficiency}` (agent profiles with the agent flag, proficiency 1-5) and its routing tags and
+departments are id lists; it is saved through `SkillService`, as the JSON API saves it. A business
+schedule's `schedule` is `{monday: {start, end}, ...}` (`HH:mm`, `24:00` for midnight, empty for a
+closed day), stored in the per-day columns; its `holidays` (`name`, `date`, `recurring`) are
+replaced on each save. `is_default` marks the schedule a business-hours SLA policy without its own
+follows (before this, the first active one; it still is when none is the default), and setting it
+clears it on the others. Deleting a schedule points its policies back at the default. Capacity has
+one limit per agent here, shown under the channel `default`. The audit log's actor is recorded by
+email: `user` is the agent profile with that email, and `actions` lists the actions recorded so far.
 
 Macros and canned responses take `POST` to the collection and `PUT`/`DELETE` on a member, and go
 back to their page. A macro saved from the page uses the page's action types (`status`,
