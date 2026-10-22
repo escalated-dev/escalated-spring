@@ -16,6 +16,11 @@ public class TicketEvent extends ApplicationEvent {
     private final String actorEmail;
     private final String oldValue;
     private final String newValue;
+    private boolean statusDetail;
+    private String oldCustomStatus;
+    private String newCustomStatus;
+    private String oldCategory;
+    private String newCategory;
 
     public TicketEvent(Object source, Ticket ticket, Type type, String actorEmail) {
         this(source, ticket, type, actorEmail, null, null);
@@ -48,5 +53,38 @@ public class TicketEvent extends ApplicationEvent {
 
     public String getNewValue() {
         return newValue;
+    }
+
+    /**
+     * For a status change: the custom status slugs (null when none) and the categories either side.
+     * The built-in old and new status stay in {@link #getOldValue()} and {@link #getNewValue()}.
+     */
+    public TicketEvent withCustomStatuses(String oldCustom, String newCustom, String oldCat, String newCat) {
+        this.statusDetail = true;
+        this.oldCustomStatus = oldCustom;
+        this.newCustomStatus = newCustom;
+        this.oldCategory = oldCat;
+        this.newCategory = newCat;
+        return this;
+    }
+
+    public boolean hasStatusDetail() {
+        return statusDetail;
+    }
+
+    public String getOldCustomStatus() {
+        return oldCustomStatus;
+    }
+
+    public String getNewCustomStatus() {
+        return newCustomStatus;
+    }
+
+    public String getOldCategory() {
+        return oldCategory;
+    }
+
+    public String getNewCategory() {
+        return newCategory;
     }
 }

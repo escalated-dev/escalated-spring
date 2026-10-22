@@ -9,6 +9,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import dev.escalated.models.AgentProfile;
+import dev.escalated.models.CustomTicketStatus;
 import dev.escalated.models.DeferredWorkflowJob;
 import dev.escalated.models.Department;
 import dev.escalated.models.Reply;
@@ -114,6 +115,27 @@ class WorkflowExecutorServiceTest {
 
         assertThat(ticket.getStatus()).isEqualTo(TicketStatus.RESOLVED);
         verify(ticketRepository).save(ticket);
+    }
+
+    @Test
+    void execute_changeStatus_takesACustomStatusSlugAndABuiltInClearsIt() {
+        CustomTicketStatus parts = new CustomTicketStatus();
+        parts.setSlug("waiting_on_parts");
+        parts.setCategory("on_hold");
+        TicketStatuses statuses = org.mockito.Mockito.mock(TicketStatuses.class);
+        when(statuses.custom("waiting_on_parts")).thenReturn(Optional.of(parts));
+        org.springframework.test.util.ReflectionTestUtils.setField(executor, "statuses", statuses);
+        Ticket ticket = newTicket();
+
+        executor.execute(ticket, "[{\"type\":\"change_status\",\"value\":\"waiting_on_parts\"}]");
+
+        assertThat(ticket.getStatus()).isEqualTo(TicketStatus.IN_PROGRESS);
+        assertThat(ticket.getCustomStatus()).isSameAs(parts);
+
+        executor.execute(ticket, "[{\"type\":\"change_status\",\"value\":\"open\"}]");
+
+        assertThat(ticket.getStatus()).isEqualTo(TicketStatus.OPEN);
+        assertThat(ticket.getCustomStatus()).isNull();
     }
 
     @Test

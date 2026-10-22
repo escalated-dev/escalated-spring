@@ -134,18 +134,7 @@ public final class UiTicketFilters {
      * {@code pending}. Anything else is null.
      */
     public static TicketStatus parseStatus(String value) {
-        if (value == null || value.isBlank()) {
-            return null;
-        }
-        String normalised = value.trim().toLowerCase(Locale.ROOT);
-        if ("waiting_on_customer".equals(normalised) || "waiting_on_agent".equals(normalised)) {
-            return TicketStatus.PENDING;
-        }
-        try {
-            return TicketStatus.valueOf(normalised.toUpperCase(Locale.ROOT));
-        } catch (IllegalArgumentException unknown) {
-            return null;
-        }
+        return dev.escalated.services.TicketStatuses.builtIn(value);
     }
 
     public static TicketPriority parsePriority(String value) {

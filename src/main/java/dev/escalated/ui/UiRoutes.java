@@ -85,6 +85,7 @@ public class UiRoutes {
         resource("webhooks", "webhook", "/admin/webhooks/{webhook}/edit");
         resource("sla-policies", "sla_policy", "/admin/sla-policies/{sla_policy}/edit");
         resource("escalation-rules", "escalation_rule", "/admin/escalation-rules/{escalation_rule}/edit");
+        resource("statuses", "status", "/admin/statuses/{status}/edit");
         resource("custom-fields", "custom_field", "/admin/custom-fields/{custom_field}/edit");
         register("escalated.admin.custom-fields.reorder", "/admin/custom-fields/reorder");
         resource("custom-objects", "custom_object", "/admin/custom-objects/{custom_object}/edit");

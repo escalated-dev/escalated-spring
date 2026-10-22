@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import dev.escalated.models.AgentProfile;
 import dev.escalated.models.DeferredWorkflowJob;
+import dev.escalated.models.CustomTicketStatus;
 import dev.escalated.models.Department;
 import dev.escalated.models.Reply;
 import dev.escalated.models.Tag;
@@ -58,6 +59,9 @@ import java.util.Optional;
 public class WorkflowExecutorService {
     @org.springframework.beans.factory.annotation.Autowired
     private dev.escalated.security.TicketAccess access;
+
+    @org.springframework.beans.factory.annotation.Autowired(required = false)
+    private TicketStatuses statuses;
 
     private static final Logger log = LoggerFactory.getLogger(WorkflowExecutorService.class);
     private static final ObjectMapper MAPPER = new ObjectMapper();
@@ -173,13 +177,24 @@ public class WorkflowExecutorService {
         }
     }
 
+    /**
+     * Writes the status directly, as before, so a workflow's own change does not run workflows
+     * again. A custom status slug sets the custom status and its category's built-in anchor; a
+     * built-in value clears any custom status.
+     */
     private void changeStatus(Ticket ticket, String value) {
-        try {
-            ticket.setStatus(TicketStatus.valueOf(value.toUpperCase()));
-            ticketRepository.save(ticket);
-        } catch (IllegalArgumentException ex) {
-            log.warn("[WorkflowExecutor] change_status: invalid status '{}'", value);
+        TicketStatus builtIn = TicketStatuses.builtIn(value);
+        if (builtIn != null) {
+            ticket.setStatus(builtIn);
+        } else {
+            CustomTicketStatus custom = statuses == null ? null : statuses.custom(value).orElse(null);
+            if (custom == null) {
+                log.warn("[WorkflowExecutor] change_status: invalid status '{}'", value);
+                return;
+            }
+            ticket.setCustomStatus(custom, TicketStatuses.anchorOf(custom.getCategory()));
         }
+        ticketRepository.save(ticket);
     }
 
     private void assignAgent(Ticket ticket, String value) {

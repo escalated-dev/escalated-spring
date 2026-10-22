@@ -140,6 +140,8 @@ JSON `pageJson`, `routesScript` (the `route()` definition) and `csrfToken` (for 
 | `Escalated/Admin/SlaPolicies/Form` | `GET /escalated/admin/sla-policies/create`, `.../{id}/edit` |
 | `Escalated/Admin/EscalationRules/Index` | `GET /escalated/admin/escalation-rules` |
 | `Escalated/Admin/EscalationRules/Form` | `GET /escalated/admin/escalation-rules/create`, `.../{id}/edit` |
+| `Escalated/Admin/Statuses/Index` | `GET /escalated/admin/statuses` |
+| `Escalated/Admin/Statuses/Form` | `GET /escalated/admin/statuses/create`, `.../{id}/edit` |
 | `Escalated/Admin/CustomFields/Index` | `GET /escalated/admin/custom-fields` |
 | `Escalated/Admin/CustomFields/Form` | `GET /escalated/admin/custom-fields/create`, `.../{id}/edit` |
 | `Escalated/Admin/CustomObjects/Index` | `GET /escalated/admin/custom-objects` |
@@ -252,6 +254,23 @@ account scope are a 404.
 Statuses are the lower-cased constants (`open`, `pending`, `in_progress`, `resolved`, `closed`,
 `snoozed`, `merged`). The shared frontend's `waiting_on_customer` and `waiting_on_agent` are stored
 as `pending`; its `escalated` status and `critical` priority do not exist here and are refused.
+
+Custom statuses (`/escalated/admin/statuses`) are sub-statuses of five categories: `new`, `open`,
+`pending`, `on_hold`, `solved`. A status input (the ticket pages' status action, the bulk action,
+`POST /escalated/api/admin/tickets/{id}/status`, macros, automations and workflows) takes a
+built-in value or a custom status slug. A custom status gives the ticket its category's built-in
+anchor (`new`/`open` -> `open`, `pending` -> `pending`, `on_hold` -> `in_progress`, `solved` ->
+`resolved`) through the normal status change, so resolving stamps `resolved_at`, stops the SLA,
+raises `ticket.resolved` and is auto-closed like a built-in resolve; the ticket's
+`ticket_status_id` points at the custom status. Setting a built-in status (snooze, merge,
+auto-close and reopen included) clears it, and deleting a custom status leaves its tickets on
+their built-in status. Changing a custom status's category does not move tickets that already
+have it. Staff ticket JSON and page props carry `custom_status` (`{id, label, slug, color,
+category}` or null) and `status_category`; customer and guest views show the built-in status
+only. The built-in statuses have system rows (slug = the status, category as above) whose slug and
+category cannot change and which cannot be deleted. Workflow `change_status` still writes the
+status directly (so a workflow's own change does not run workflows again), now resolving custom
+slugs too.
 
 The newsletter screens predate this layer and still answer `{component, props}` JSON under
 `/escalated/api/admin/newsletters`.

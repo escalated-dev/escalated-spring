@@ -4,7 +4,6 @@ import dev.escalated.models.AgentProfile;
 import dev.escalated.models.Tag;
 import dev.escalated.models.Ticket;
 import dev.escalated.models.TicketPriority;
-import dev.escalated.models.TicketStatus;
 import dev.escalated.repositories.AgentProfileRepository;
 import dev.escalated.repositories.TagRepository;
 import dev.escalated.services.MacroService;
@@ -39,6 +38,9 @@ public abstract class TicketWritesController {
     protected final AgentProfileRepository agents;
     protected final TagRepository tags;
     protected final UiRoutes routes;
+
+    @org.springframework.beans.factory.annotation.Autowired
+    protected dev.escalated.services.TicketStatuses statuses;
 
     protected TicketWritesController(Inertia inertia, AgentUiPages pages, TicketService tickets, MacroService macros,
                                      AgentProfileRepository agents, TagRepository tags, UiRoutes routes) {
@@ -83,11 +85,11 @@ public abstract class TicketWritesController {
                                        Authentication authentication) {
         Ticket ticket = pages.resolve(reference);
         String given = UiInput.of(request).string("status");
-        TicketStatus status = UiTicketFilters.parseStatus(given);
-        if (status == null) {
+        // A built-in status, or a custom status slug.
+        if (given == null || !statuses.isKnown(given)) {
             throw UiInput.invalid("status", given == null ? "The status field is required." : "The selected status is invalid.");
         }
-        tickets.changeStatus(ticket.getId(), status, authentication.getName());
+        tickets.changeStatusByName(ticket.getId(), given, authentication.getName());
         return done(ticket, "Status updated.");
     }
 

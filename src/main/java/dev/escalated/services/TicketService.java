@@ -11,6 +11,7 @@ import dev.escalated.events.TicketEvent;
 import dev.escalated.models.AgentProfile;
 import dev.escalated.models.ChatSession;
 import dev.escalated.models.Contact;
+import dev.escalated.models.CustomTicketStatus;
 import dev.escalated.models.Reply;
 import dev.escalated.models.Tag;
 import dev.escalated.models.Ticket;
@@ -49,6 +50,7 @@ public class TicketService {
 
     @org.springframework.beans.factory.annotation.Autowired private TicketAccounts accounts;
     @org.springframework.beans.factory.annotation.Autowired private TicketSearch search;
+    @org.springframework.beans.factory.annotation.Autowired(required = false) private TicketStatuses statuses;
 
     @Transactional(transactionManager = EscalatedTransactionManagers.ESCALATED, readOnly = true)
     public Page<Ticket> search(
@@ -384,19 +386,59 @@ public class TicketService {
 
     @Transactional(transactionManager = EscalatedTransactionManagers.ESCALATED)
     public Ticket changeStatus(Long id, TicketStatus newStatus, String actorEmail) {
-        Ticket ticket = findById(id);
-        TicketStatus oldStatus = ticket.getStatus();
+        return transition(findById(id), newStatus, null, actorEmail);
+    }
 
-        if (oldStatus == newStatus) {
+    /**
+     * Gives the ticket a custom status: its category's built-in anchor becomes the status, through
+     * the same path as a built-in change, so resolving stamps {@code resolved_at}, stops the SLA and
+     * raises {@code ticket.resolved} as a built-in resolve does.
+     */
+    @Transactional(transactionManager = EscalatedTransactionManagers.ESCALATED)
+    public Ticket changeCustomStatus(Long id, CustomTicketStatus customStatus, String actorEmail) {
+        return transition(
+                findById(id), TicketStatuses.anchorOf(customStatus.getCategory()), customStatus, actorEmail);
+    }
+
+    /**
+     * A status as an input names it: a built-in value (see {@link TicketStatuses#builtIn}) or a
+     * custom status slug. Anything else is an {@link IllegalArgumentException}, as before.
+     */
+    @Transactional(transactionManager = EscalatedTransactionManagers.ESCALATED)
+    public Ticket changeStatusByName(Long id, String status, String actorEmail) {
+        TicketStatus builtIn = TicketStatuses.builtIn(status);
+        if (builtIn != null) {
+            return changeStatus(id, builtIn, actorEmail);
+        }
+        CustomTicketStatus custom = statuses == null ? null : statuses.custom(status).orElse(null);
+        if (custom == null) {
+            throw new IllegalArgumentException("Unknown ticket status: " + status);
+        }
+        return changeCustomStatus(id, custom, actorEmail);
+    }
+
+    private Ticket transition(Ticket ticket, TicketStatus newStatus, CustomTicketStatus newCustom, String actorEmail) {
+        TicketStatus oldStatus = ticket.getStatus();
+        CustomTicketStatus oldCustom = ticket.getCustomStatus();
+        boolean sameCustom = oldCustom == null ? newCustom == null
+                : newCustom != null && java.util.Objects.equals(oldCustom.getId(), newCustom.getId());
+
+        if (oldStatus == newStatus && sameCustom) {
             return ticket;
         }
 
-        ticket.setStatus(newStatus);
+        if (newCustom == null) {
+            ticket.setStatus(newStatus);
+        } else {
+            ticket.setCustomStatus(newCustom, newStatus);
+        }
 
-        if (newStatus == TicketStatus.RESOLVED) {
-            ticket.setResolvedAt(Instant.now());
-        } else if (newStatus == TicketStatus.CLOSED) {
-            ticket.setClosedAt(Instant.now());
+        if (oldStatus != newStatus) {
+            if (newStatus == TicketStatus.RESOLVED) {
+                ticket.setResolvedAt(Instant.now());
+            } else if (newStatus == TicketStatus.CLOSED) {
+                ticket.setClosedAt(Instant.now());
+            }
         }
 
         logActivity(
@@ -404,18 +446,28 @@ public class TicketService {
                 "status_changed",
                 "Status changed",
                 actorEmail,
-                oldStatus.name(),
-                newStatus.name());
+                oldCustom != null ? oldCustom.getSlug() : oldStatus.name(),
+                newCustom != null ? newCustom.getSlug() : newStatus.name());
         Ticket saved = ticketRepository.save(ticket);
 
-        TicketEvent.Type eventType = switch (newStatus) {
+        // A move between sub-statuses of one built-in status is a status change and nothing more.
+        TicketEvent.Type eventType = oldStatus == newStatus ? TicketEvent.Type.STATUS_CHANGED : switch (newStatus) {
             case CLOSED -> TicketEvent.Type.CLOSED;
             case RESOLVED -> TicketEvent.Type.RESOLVED;
             case OPEN -> oldStatus == TicketStatus.CLOSED || oldStatus == TicketStatus.RESOLVED
                     ? TicketEvent.Type.REOPENED : TicketEvent.Type.STATUS_CHANGED;
             default -> TicketEvent.Type.STATUS_CHANGED;
         };
-        eventPublisher.publishEvent(new TicketEvent(this, saved, eventType, actorEmail, oldStatus.name(), newStatus.name()));
+        TicketEvent event = new TicketEvent(this, saved, eventType, actorEmail, oldStatus.name(), newStatus.name());
+        if (oldCustom != null || newCustom != null) {
+            // Only when a custom status is involved, so a built-in change's payload is as it was.
+            event.withCustomStatuses(
+                    oldCustom == null ? null : oldCustom.getSlug(),
+                    newCustom == null ? null : newCustom.getSlug(),
+                    oldCustom != null ? oldCustom.getCategory() : TicketStatuses.categoryOf(oldStatus),
+                    newCustom != null ? newCustom.getCategory() : TicketStatuses.categoryOf(newStatus));
+        }
+        eventPublisher.publishEvent(event);
         return saved;
     }
 

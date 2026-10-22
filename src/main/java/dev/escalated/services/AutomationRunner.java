@@ -6,7 +6,6 @@ import dev.escalated.models.Automation;
 import dev.escalated.models.RuleExecution;
 import dev.escalated.models.Ticket;
 import dev.escalated.models.TicketPriority;
-import dev.escalated.models.TicketStatus;
 import dev.escalated.repositories.AutomationRepository;
 import dev.escalated.repositories.TagRepository;
 import dev.escalated.repositories.TicketRepository;
@@ -196,7 +195,7 @@ public class AutomationRunner {
             try {
                 switch (type) {
                     case "change_status" ->
-                            ticketService.changeStatus(ticket.getId(), TicketStatus.valueOf(value.toUpperCase()), actor);
+                            ticketService.changeStatusByName(ticket.getId(), value, actor); // built-in or custom slug
                     case "change_priority" ->
                             ticketService.update(ticket.getId(), null, null, TicketPriority.valueOf(value.toUpperCase()));
                     case "assign" -> ticketService.assign(ticket.getId(), Long.valueOf(value), actor);

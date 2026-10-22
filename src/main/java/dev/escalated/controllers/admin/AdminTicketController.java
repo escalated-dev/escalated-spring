@@ -140,8 +140,12 @@ public class AdminTicketController {
     @PostMapping("/{id}/status")
     public ResponseEntity<Ticket> changeStatus(@PathVariable Long id, @RequestBody Map<String, String> body,
                                                Authentication authentication) {
-        return ResponseEntity.ok(ticketService.changeStatus(
-                id, TicketStatus.valueOf(body.get("status")), actor(authentication)));
+        // A built-in value, or a custom status slug; anything else is refused as before.
+        String given = body.get("status");
+        TicketStatus builtIn = dev.escalated.services.TicketStatuses.builtIn(given);
+        return ResponseEntity.ok(builtIn != null
+                ? ticketService.changeStatus(id, builtIn, actor(authentication))
+                : ticketService.changeStatusByName(id, given, actor(authentication)));
     }
 
     @PostMapping("/{id}/snooze")

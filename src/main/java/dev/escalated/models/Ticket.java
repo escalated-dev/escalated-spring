@@ -134,6 +134,16 @@ public class Ticket extends BaseEntity {
     @Column(nullable = false)
     private TicketStatus status = TicketStatus.OPEN;
 
+    /**
+     * The custom status, if any: a sub-status of {@link #status}'s category. Setting a built-in
+     * status clears it. Eager: the admin rows are few and every staff view of a ticket shows it.
+     */
+    @com.fasterxml.jackson.annotation.JsonIgnore
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "ticket_status_id")
+    @org.hibernate.annotations.OnDelete(action = org.hibernate.annotations.OnDeleteAction.SET_NULL)
+    private CustomTicketStatus customStatus;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private TicketPriority priority = TicketPriority.MEDIUM;
@@ -469,8 +479,41 @@ public class Ticket extends BaseEntity {
         return status;
     }
 
+    /** Sets a built-in status, which clears any custom status. */
     public void setStatus(TicketStatus status) {
         this.status = status;
+        this.customStatus = null;
+    }
+
+    public CustomTicketStatus getCustomStatus() {
+        return customStatus;
+    }
+
+    /** Gives the ticket a custom status, with {@code anchor} (its category's built-in status) as its status. */
+    public void setCustomStatus(CustomTicketStatus customStatus, TicketStatus anchor) {
+        this.status = anchor;
+        this.customStatus = customStatus;
+    }
+
+    /** {@code {id, label, slug, color, category}} of the custom status, or null. Staff JSON only. */
+    @JsonProperty("custom_status")
+    public java.util.Map<String, Object> getCustomStatusSummary() {
+        if (customStatus == null) {
+            return null;
+        }
+        java.util.Map<String, Object> summary = new java.util.LinkedHashMap<>();
+        summary.put("id", customStatus.getId());
+        summary.put("label", customStatus.getLabel());
+        summary.put("slug", customStatus.getSlug());
+        summary.put("color", customStatus.getColor());
+        summary.put("category", customStatus.getCategory());
+        return summary;
+    }
+
+    /** The category of the effective status: the custom status's, else the built-in one's. */
+    @JsonProperty("status_category")
+    public String getStatusCategory() {
+        return dev.escalated.services.TicketStatuses.categoryOf(this);
     }
 
     public TicketPriority getPriority() {

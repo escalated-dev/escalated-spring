@@ -157,6 +157,8 @@ class PageNameParityTest {
           "Escalated/Admin/SlaPolicies/Form",
           "Escalated/Admin/EscalationRules/Index",
           "Escalated/Admin/EscalationRules/Form",
+          "Escalated/Admin/Statuses/Index",
+          "Escalated/Admin/Statuses/Form",
           "Escalated/Admin/CustomFields/Index",
           "Escalated/Admin/CustomFields/Form",
           "Escalated/Admin/CustomObjects/Index",
