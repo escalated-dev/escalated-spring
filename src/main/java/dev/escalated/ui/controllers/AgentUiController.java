@@ -5,6 +5,7 @@ import dev.escalated.events.CustomActionTriggeredEvent;
 import dev.escalated.models.Ticket;
 import dev.escalated.repositories.AgentProfileRepository;
 import dev.escalated.repositories.TagRepository;
+import dev.escalated.services.ChatSessionService;
 import dev.escalated.services.MacroService;
 import dev.escalated.services.TicketActionRegistry;
 import dev.escalated.services.TicketService;
@@ -16,6 +17,7 @@ import dev.escalated.ui.UiRoutes;
 import jakarta.servlet.http.HttpServletRequest;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.http.ResponseEntity;
@@ -41,6 +43,9 @@ public class AgentUiController extends TicketWritesController {
     private final EscalatedUiRenderer renderer;
     private final TicketActionRegistry ticketActions;
     private final ApplicationEventPublisher events;
+
+    @Autowired
+    private ChatSessionService chats;
 
     public AgentUiController(
             EscalatedUiRenderer renderer,
@@ -73,6 +78,21 @@ public class AgentUiController extends TicketWritesController {
     public Object show(@PathVariable("ticket") String reference, Authentication authentication) {
         Ticket ticket = pages.resolve(reference);
         return renderer.render("Escalated/Agent/TicketShow", pages.show(ticket.getId(), agentId(authentication)));
+    }
+
+    /**
+     * End Chat on TicketShow ({@code escalated.admin.chat.end}): the chat session named by id, from
+     * the agent's browser session. The {@code /escalated/api/agent/chat/{id}/end} endpoint is on the
+     * stateless API chain and does not see that session. Takes no body fields. 200 with a message,
+     * 422 when the chat has already ended (as escalated-laravel), 404 for an unknown session.
+     */
+    @PostMapping("/chat/{session}/end")
+    public ResponseEntity<Map<String, String>> endChat(@PathVariable("session") Long sessionId) {
+        if ("ended".equals(chats.findById(sessionId).getStatus())) {
+            return ResponseEntity.unprocessableEntity().body(Map.of("message", "Chat is already ended."));
+        }
+        chats.end(sessionId);
+        return ResponseEntity.ok(Map.of("message", "Chat ended."));
     }
 
     @PostMapping("/tickets/{ticket}/actions/{action}")

@@ -42,6 +42,8 @@ public class UiRoutes {
         register("escalated.agent.tickets.macro", "/agent/tickets/{ticket}/macro");
         register("escalated.agent.tickets.follow", "/agent/tickets/{ticket}/follow");
         register("escalated.agent.tickets.custom-action", "/agent/tickets/{ticket}/actions/{action}");
+        // End Chat on the agent ticket page; Laravel serves it at /admin/chat/{session}/end under this name.
+        register("escalated.admin.chat.end", "/agent/chat/{session}/end");
         // Customer
         register("escalated.customer.tickets.index", "");
         register("escalated.customer.tickets.create", "/create");
