@@ -116,7 +116,7 @@ dependencies {
         add("checkstyle", "commons-beanutils:commons-beanutils:1.11.0") {
             because("GHSA-wxr5-93ph-8wr9")
         }
-        add("checkstyle", "org.codehaus.plexus:plexus-utils:3.6.2") {
+        add("checkstyle", "org.codehaus.plexus:plexus-utils:4.1.0") {
             because("GHSA-6fmv-xxpf-w3cw")
         }
     }
