@@ -74,6 +74,70 @@ public class AgentChatController {
         return ResponseEntity.ok(chatSessionService.end(sessionId));
     }
 
+    /**
+     * Transfer a chat to another agent and/or department (escalated-laravel
+     * {@code escalated.admin.chat.transfer}). The body is
+     * {@code {agent_id, department_id}} (either or both); the shared
+     * ChatActionBar's {@code {type: "agent"|"department", id}} is read too.
+     */
+    @PostMapping("/{sessionId}/transfer")
+    public ResponseEntity<Map<String, Object>> transfer(@PathVariable Long sessionId,
+                                                        @RequestBody(required = false) Map<String, Object> body) {
+        chatSessionService.findById(sessionId);
+        Map<String, Object> in = body == null ? Map.of() : body;
+        Object agent = in.get("agent_id");
+        Object department = in.get("department_id");
+        Object type = in.get("type");
+        if ("agent".equals(type) && blank(agent)) {
+            agent = in.get("id");
+        } else if ("department".equals(type) && blank(department)) {
+            department = in.get("id");
+        }
+
+        Long agentId;
+        Long departmentId;
+        try {
+            agentId = id(agent, "agent_id");
+            departmentId = id(department, "department_id");
+        } catch (IllegalArgumentException invalid) {
+            return unprocessable(invalid.getMessage());
+        }
+        if (agentId == null && departmentId == null) {
+            return unprocessable("Provide an agent_id or department_id.");
+        }
+
+        try {
+            ChatSession session = chatSessionService.transfer(sessionId, agentId, departmentId);
+            Map<String, Object> response = new java.util.LinkedHashMap<>();
+            response.put("message", "Chat transferred.");
+            response.put("session", session);
+            return ResponseEntity.ok(response);
+        } catch (IllegalArgumentException refused) {
+            return unprocessable(refused.getMessage());
+        }
+    }
+
+    private static boolean blank(Object value) {
+        return value == null || (value instanceof String text && text.isBlank());
+    }
+
+    private static Long id(Object value, String field) {
+        if (blank(value)) {
+            return null;
+        }
+        if (value instanceof Number number && number.doubleValue() == number.longValue() && number.longValue() > 0) {
+            return number.longValue();
+        }
+        if (value instanceof String text && text.trim().matches("[1-9][0-9]{0,17}")) {
+            return Long.valueOf(text.trim());
+        }
+        throw new IllegalArgumentException("The " + field + " must be an integer.");
+    }
+
+    private static ResponseEntity<Map<String, Object>> unprocessable(String message) {
+        return ResponseEntity.status(422).body(Map.of("message", message));
+    }
+
     @GetMapping("/{sessionId}")
     public ResponseEntity<ChatSession> show(@PathVariable Long sessionId) {
         return ResponseEntity.ok(chatSessionService.findById(sessionId));

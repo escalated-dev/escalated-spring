@@ -48,14 +48,8 @@ public final class EventNames {
             TICKET_DEPARTMENT_CHANGED, TICKET_TAG_ADDED, TICKET_TAG_REMOVED, REPLY_CREATED, NOTE_CREATED,
             SLA_WARNING, SLA_BREACHED, CHAT_STARTED, CHAT_ASSIGNED, CHAT_TRANSFERRED, CHAT_MESSAGE, CHAT_ENDED);
 
-    /**
-     * The canonical names this package emits, and so offers as workflow
-     * triggers. {@code chat.transferred} is canonical but this port has no
-     * chat transfer yet.
-     */
-    public static final List<String> EMITTED = CANONICAL.stream()
-            .filter(name -> !CHAT_TRANSFERRED.equals(name))
-            .toList();
+    /** The canonical names this package emits, and so offers as workflow triggers. */
+    public static final List<String> EMITTED = CANONICAL;
 
     /** Legacy name to canonical name. Read, never emitted. */
     public static final Map<String, String> LEGACY;

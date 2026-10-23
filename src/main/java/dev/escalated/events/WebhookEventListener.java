@@ -54,6 +54,11 @@ public class WebhookEventListener {
         if (event.getAgentId() != null) {
             data.put("agent_id", event.getAgentId());
         }
+        if (event.getTransfer() != null) {
+            data.put("from_agent_id", event.getTransfer().fromAgentId());
+            data.put("to_agent_id", event.getTransfer().toAgentId());
+            data.put("to_department_id", event.getTransfer().toDepartmentId());
+        }
         webhookService.dispatchEvent(event.getType().eventName(), event.getTicketId(), data);
     }
 

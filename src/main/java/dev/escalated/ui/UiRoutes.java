@@ -42,6 +42,9 @@ public class UiRoutes {
         register("escalated.agent.tickets.macro", "/agent/tickets/{ticket}/macro");
         register("escalated.agent.tickets.follow", "/agent/tickets/{ticket}/follow");
         register("escalated.agent.tickets.custom-action", "/agent/tickets/{ticket}/actions/{action}");
+        // Live chat transfer from Agent/TicketShow's action bar. The name is
+        // escalated-laravel's; the endpoint is the agent chat API's.
+        register("escalated.admin.chat.transfer", "/api/agent/chat/{session}/transfer");
         // Customer
         register("escalated.customer.tickets.index", "");
         register("escalated.customer.tickets.create", "/create");

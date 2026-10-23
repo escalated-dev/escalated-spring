@@ -5,14 +5,16 @@ import org.springframework.context.ApplicationEvent;
 
 /**
  * A live-chat lifecycle event, announced to webhooks and workflows as
- * {@code chat.started}, {@code chat.assigned}, {@code chat.message} or
- * {@code chat.ended}. Carries ids only: never the visitor's widget token.
+ * {@code chat.started}, {@code chat.assigned}, {@code chat.transferred},
+ * {@code chat.message} or {@code chat.ended}. Carries ids only: never the
+ * visitor's widget token.
  */
 public class ChatEvent extends ApplicationEvent {
 
     public enum Type {
         STARTED(EventNames.CHAT_STARTED),
         ASSIGNED(EventNames.CHAT_ASSIGNED),
+        TRANSFERRED(EventNames.CHAT_TRANSFERRED),
         MESSAGE(EventNames.CHAT_MESSAGE),
         ENDED(EventNames.CHAT_ENDED);
 
@@ -31,13 +33,28 @@ public class ChatEvent extends ApplicationEvent {
     private final Long sessionId;
     private final Long ticketId;
     private final Long agentId;
+    private final Transfer transfer;
+
+    /** Who a chat was transferred from and to (escalated-laravel's ChatTransferred). */
+    public record Transfer(Long fromAgentId, Long toAgentId, Long toDepartmentId) {
+    }
 
     public ChatEvent(Object source, Type type, ChatSession session) {
+        this(source, type, session, null);
+    }
+
+    public ChatEvent(Object source, Type type, ChatSession session, Transfer transfer) {
         super(source);
         this.type = type;
         this.sessionId = session.getId();
         this.ticketId = session.getTicketId();
         this.agentId = session.getAgentId();
+        this.transfer = transfer;
+    }
+
+    /** The transfer details of a {@code chat.transferred} event; null otherwise. */
+    public Transfer getTransfer() {
+        return transfer;
     }
 
     public Type getType() {
