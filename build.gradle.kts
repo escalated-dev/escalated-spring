@@ -19,7 +19,7 @@ plugins {
 }
 
 group = "dev.escalated"
-version = "0.2.5"
+version = "0.2.6"
 
 // Security patches within the release lines managed by Boot 4.1.1. Keep each
 // Jackson family aligned rather than overriding only core or databind.
