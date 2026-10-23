@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- End Chat on the agent ticket page works from the Inertia UI: `POST /escalated/agent/chat/{session}/end`
+  (`escalated.admin.chat.end`, the name the shared TicketShow asks for, taking the chat session id)
+  ends the session from the agent's signed-in browser session with the page's CSRF token. It reads
+  no body and answers `200 {"message":"Chat ended."}`, `422 {"message":"Chat is already ended."}`
+  when the chat has already ended (as escalated-laravel), and 404 for an unknown session. The
+  existing `POST /escalated/api/agent/chat/{sessionId}/end` is unchanged; it is on the stateless
+  API chain, so the page's browser session could not reach it.
+
 ## [0.2.5] - 2026-10-22
 
 ### Upgrading
