@@ -57,6 +57,15 @@ public class ChatSessionService {
         this.messagingTemplate = messagingTemplate;
     }
 
+    @org.springframework.beans.factory.annotation.Autowired
+    private dev.escalated.repositories.AgentProfileRepository agentProfiles;
+
+    @org.springframework.beans.factory.annotation.Autowired
+    private dev.escalated.repositories.DepartmentRepository departments;
+
+    @org.springframework.beans.factory.annotation.Autowired
+    private dev.escalated.repositories.TicketRepository tickets;
+
     private void announce(ChatEvent.Type type, ChatSession session) {
         if (eventPublisher != null && session != null) {
             eventPublisher.publishEvent(new ChatEvent(this, type, session));
@@ -210,6 +219,97 @@ public class ChatSessionService {
 
         broadcast("/topic/chat/" + sessionId, session);
         announce(ChatEvent.Type.ASSIGNED, session);
+
+        return session;
+    }
+
+    /**
+     * Hand a chat to another agent and/or department, as escalated-laravel's
+     * ChatSessionService::transferChat. With an agent, the session and its
+     * ticket are reassigned to that agent. With a department, the ticket
+     * moves there; without an agent too, the chat goes back to the queue
+     * (unassigned, waiting) and routing picks an agent for its new
+     * department. Announces {@code chat.transferred} with the previous agent,
+     * the new agent and the new department.
+     *
+     * @throws EntityNotFoundException for an unknown session
+     * @throws IllegalArgumentException when neither target is given, the chat
+     *         has ended, the department does not exist, or the agent is not
+     *         active staff who can be assigned the ticket
+     */
+    @Transactional(transactionManager = EscalatedTransactionManagers.ESCALATED)
+    public ChatSession transfer(Long sessionId, Long toAgentId, Long toDepartmentId) {
+        ChatSession session = findById(sessionId);
+
+        if ("ended".equals(session.getStatus())) {
+            throw new IllegalArgumentException("Chat session has already ended.");
+        }
+        if (toAgentId == null && toDepartmentId == null) {
+            throw new IllegalArgumentException("Provide an agent_id or department_id.");
+        }
+
+        dev.escalated.models.Department department = null;
+        if (toDepartmentId != null) {
+            department = departments.findById(toDepartmentId)
+                    .orElseThrow(() -> new IllegalArgumentException("The selected department_id is invalid."));
+        }
+        dev.escalated.models.AgentProfile agent = null;
+        if (toAgentId != null) {
+            agent = agentProfiles.findById(toAgentId)
+                    .filter(candidate -> candidate.isActive() && (candidate.isAgent() || candidate.isAdmin()))
+                    .orElseThrow(() -> new IllegalArgumentException("Agent cannot access this ticket."));
+        }
+
+        Ticket ticket = ticketService.findById(session.getTicketId());
+        Long fromAgentId = session.getAgentId();
+        final dev.escalated.models.Department targetDepartment = department;
+        final dev.escalated.models.AgentProfile targetAgent = agent;
+        java.util.function.Supplier<Ticket> move = () -> {
+            if (targetDepartment != null) {
+                ticket.setDepartment(targetDepartment);
+            }
+            // Checked against the ticket in its new department.
+            if (targetAgent != null && access != null && !access.canAssign(ticket, targetAgent)) {
+                throw new IllegalArgumentException("Agent cannot access this ticket.");
+            }
+            ticket.setAssignedAgent(targetAgent);
+            return tickets.save(ticket);
+        };
+        // A refusal rolls the department change back with the transaction.
+        if (access == null) {
+            move.get();
+        } else {
+            access.withoutRestriction(move);
+        }
+
+        if (toDepartmentId != null) {
+            session.setDepartmentId(toDepartmentId);
+        }
+        if (toAgentId != null) {
+            session.setAgentId(toAgentId);
+        } else {
+            session.setAgentId(null);
+            session.setStatus("waiting");
+            session.setAcceptedAt(null);
+        }
+        session = chatSessionRepository.save(session);
+
+        broadcast("/topic/chat/" + sessionId, session);
+        if (eventPublisher != null) {
+            eventPublisher.publishEvent(new ChatEvent(this, ChatEvent.Type.TRANSFERRED, session,
+                    new ChatEvent.Transfer(fromAgentId, toAgentId, toDepartmentId)));
+        }
+
+        if (toAgentId == null) {
+            ChatRoutingService.RouteResult route = chatRoutingService.resolve(toDepartmentId);
+            boolean eligible = route.agentId() != null
+                    && agentProfiles.findById(route.agentId())
+                            .filter(candidate -> access == null || access.canAssign(ticket, candidate))
+                            .isPresent();
+            if (eligible) {
+                session = accept(sessionId, route.agentId());
+            }
+        }
 
         return session;
     }

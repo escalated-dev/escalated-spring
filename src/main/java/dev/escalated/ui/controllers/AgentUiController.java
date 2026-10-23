@@ -95,6 +95,18 @@ public class AgentUiController extends TicketWritesController {
         return ResponseEntity.ok(Map.of("message", "Chat ended."));
     }
 
+    /**
+     * Transfer from TicketShow's action bar ({@code escalated.admin.chat.transfer}): the chat
+     * session named by id, from the agent's browser session, as the API's
+     * {@code POST /escalated/api/agent/chat/{id}/transfer} does. 200, 422 or 404.
+     */
+    @PostMapping("/chat/{session}/transfer")
+    public ResponseEntity<Map<String, Object>> transferChat(
+            @PathVariable("session") Long sessionId,
+            @org.springframework.web.bind.annotation.RequestBody(required = false) Map<String, Object> body) {
+        return dev.escalated.controllers.agent.AgentChatController.transfer(chats, sessionId, body);
+    }
+
     @PostMapping("/tickets/{ticket}/actions/{action}")
     public ResponseEntity<Void> customAction(@PathVariable("ticket") String reference, @PathVariable String action,
                                              HttpServletRequest request, Authentication authentication) {
