@@ -42,9 +42,10 @@ public class UiRoutes {
         register("escalated.agent.tickets.macro", "/agent/tickets/{ticket}/macro");
         register("escalated.agent.tickets.follow", "/agent/tickets/{ticket}/follow");
         register("escalated.agent.tickets.custom-action", "/agent/tickets/{ticket}/actions/{action}");
-        // Live chat transfer from Agent/TicketShow's action bar. The name is
-        // escalated-laravel's; the endpoint is the agent chat API's.
-        register("escalated.admin.chat.transfer", "/api/agent/chat/{session}/transfer");
+        // End Chat on the agent ticket page; Laravel serves it at /admin/chat/{session}/end under this name.
+        register("escalated.admin.chat.end", "/agent/chat/{session}/end");
+        // Live chat transfer from TicketShow's action bar, from the agent's browser session like End Chat.
+        register("escalated.admin.chat.transfer", "/agent/chat/{session}/transfer");
         // Customer
         register("escalated.customer.tickets.index", "");
         register("escalated.customer.tickets.create", "/create");

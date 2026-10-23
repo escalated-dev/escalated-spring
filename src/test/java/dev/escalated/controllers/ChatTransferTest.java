@@ -118,7 +118,7 @@ class ChatTransferTest {
     @Test
     void theRouteHasLaravelsName() {
         assertThat(new UiRoutes().all())
-                .containsEntry("escalated.admin.chat.transfer", "/escalated/api/agent/chat/{session}/transfer");
+                .containsEntry("escalated.admin.chat.transfer", "/escalated/agent/chat/{session}/transfer");
     }
 
     @Test

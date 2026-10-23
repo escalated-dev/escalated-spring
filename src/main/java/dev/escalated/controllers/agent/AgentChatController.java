@@ -83,6 +83,15 @@ public class AgentChatController {
     @PostMapping("/{sessionId}/transfer")
     public ResponseEntity<Map<String, Object>> transfer(@PathVariable Long sessionId,
                                                         @RequestBody(required = false) Map<String, Object> body) {
+        return transfer(chatSessionService, sessionId, body);
+    }
+
+    /**
+     * The transfer itself, shared with the agent UI route that TicketShow posts to from the
+     * browser session. An unknown session throws {@code EntityNotFoundException} (404).
+     */
+    public static ResponseEntity<Map<String, Object>> transfer(ChatSessionService chatSessionService,
+                                                               Long sessionId, Map<String, Object> body) {
         chatSessionService.findById(sessionId);
         Map<String, Object> in = body == null ? Map.of() : body;
         Object agent = in.get("agent_id");

@@ -8,8 +8,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
-- Live chat transfer (escalated-laravel `ChatController::transfer`): `POST /escalated/api/agent/chat/{sessionId}/transfer`, behind the agent check like the rest of the agent chat API, and registered in `UiRoutes` as `escalated.admin.chat.transfer` (Laravel's name), so the shared `Agent/TicketShow` transfer menu reaches it. The body is `{agent_id, department_id}` (either or both); the shared `ChatActionBar`'s `{type: "agent"|"department", id}` is accepted too. With an agent, the session and ticket are reassigned to them. With only a department, the ticket moves there and the chat goes back to the queue (unassigned, waiting), then chat routing runs again for the new department. A missing or non-integer target, an unknown department, an ended chat, or an agent who is not active staff or cannot be assigned the ticket is a 422; an unknown session is a 404. New `ChatSessionService.transfer(...)`.
+- Live chat transfer (escalated-laravel `ChatController::transfer`): `POST /escalated/api/agent/chat/{sessionId}/transfer`, behind the agent check like the rest of the agent chat API, and, for the shared `Agent/TicketShow` transfer menu, `POST /escalated/agent/chat/{session}/transfer` from the agent's browser session (CSRF-checked, like End Chat), registered as `escalated.admin.chat.transfer` (Laravel's name). The body is `{agent_id, department_id}` (either or both); the shared `ChatActionBar`'s `{type: "agent"|"department", id}` is accepted too. With an agent, the session and ticket are reassigned to them. With only a department, the ticket moves there and the chat goes back to the queue (unassigned, waiting), then chat routing runs again for the new department. A missing or non-integer target, an unknown department, an ended chat, or an agent who is not active staff or cannot be assigned the ticket is a 422; an unknown session is a 404. New `ChatSessionService.transfer(...)`.
 - `chat.transferred` is sent to outbound webhooks, runs workflows and is now in `EventNames.EMITTED`, so the webhook form and workflow builder offer it. The webhook data adds `from_agent_id`, `to_agent_id` and `to_department_id` to the chat fields (no widget token). `ChatEvent` has a `TRANSFERRED` type and `getTransfer()`.
+- End Chat on the agent ticket page works from the Inertia UI: `POST /escalated/agent/chat/{session}/end`
+  (`escalated.admin.chat.end`, the name the shared TicketShow asks for, taking the chat session id)
+  ends the session from the agent's signed-in browser session with the page's CSRF token. It reads
+  no body and answers `200 {"message":"Chat ended."}`, `422 {"message":"Chat is already ended."}`
+  when the chat has already ended (as escalated-laravel), and 404 for an unknown session. The
+  existing `POST /escalated/api/agent/chat/{sessionId}/end` is unchanged; it is on the stateless
+  API chain, so the page's browser session could not reach it.
 
 ## [0.2.5] - 2026-10-22
 
