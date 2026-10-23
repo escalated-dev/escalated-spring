@@ -50,7 +50,7 @@ repositories {
 
 dependencies {
     // Export patched families to Gradle consumers as well as the generated POM.
-    api(platform("com.fasterxml.jackson:jackson-bom:2.21.8"))
+    api(platform("com.fasterxml.jackson:jackson-bom:2.22.4"))
     api(platform("tools.jackson:jackson-bom:3.1.8"))
     // These types occur in public controllers, repository interfaces,
     // constructors and annotations, so hosts need them on the compile classpath.
