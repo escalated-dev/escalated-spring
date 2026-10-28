@@ -139,8 +139,12 @@ sends.
 
 A chat's `id` is a random 256-bit token returned once by `/chat/start`. Only
 its SHA-256 hash is stored (`escalated_chat_sessions.widget_token_hash`,
-migration `V14`). The numeric session id is not accepted by any widget route:
-an unknown token, a number included, is a 404. An unknown or inactive
+migration `V14`). It expires `escalated.guest-access.ttl-minutes` after the
+chat starts (`expires_at` in the start answer, default 24 hours; migration
+`V23`). The numeric session id is not accepted by any widget route: an
+unknown or expired token, a number included, is a 404. An ended chat answers
+422 to messages, typing and a second end, and `rate` answers 422 until the
+chat has ended. An unknown or inactive
 `department_id` is ignored. `typing` is always `null` for now: agents have no
 typing signal in this backend.
 

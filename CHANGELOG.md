@@ -7,6 +7,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Upgrading
+- Flyway migration `V23` adds a nullable `widget_token_expires_at` to
+  `escalated_chat_sessions`. Chats already in progress keep working: the next
+  widget request with their token gives it a full lifetime.
+- Widget chat tokens now expire `escalated.guest-access.ttl-minutes` after the
+  chat starts (default 1440, clamped to 5 minutes .. 7 days), as in
+  escalated-laravel. After that every `/widget/chat/{token}/...` route answers
+  404, a STOMP `SUBSCRIBE` with it as `chat-token` is refused, and the visitor
+  starts a new chat.
+
+### Security
+- Checkstyle's Guava is pinned to 33.7.2-jre (GHSA-xxph-c9ww-hj94). Build
+  tooling only; nothing in the published library depends on Guava.
+
+### Changed
+- `POST /widget/chat/start` also returns `expires_at`. Only the token's SHA-256
+  is stored, as before.
+- An ended chat answers 422 to `typing` (was 200) and to a second `end` (was
+  200), and `rate` answers 422 until the chat has ended (it rated open chats),
+  as in escalated-laravel. A message to an ended chat is refused before its
+  body is checked. The transcript (`ended: true`) and rating stay available
+  until the token expires.
+
 ## [0.2.6] - 2026-10-22
 
 ### Added

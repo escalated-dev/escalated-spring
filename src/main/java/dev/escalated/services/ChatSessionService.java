@@ -60,6 +60,10 @@ public class ChatSessionService {
     @org.springframework.beans.factory.annotation.Autowired
     private dev.escalated.repositories.AgentProfileRepository agentProfiles;
 
+    /** Optional so the service can be built by hand; the chat token lifetime then defaults to a day. */
+    @org.springframework.beans.factory.annotation.Autowired(required = false)
+    private dev.escalated.config.EscalatedProperties properties;
+
     @org.springframework.beans.factory.annotation.Autowired
     private dev.escalated.repositories.DepartmentRepository departments;
 
@@ -118,7 +122,19 @@ public class ChatSessionService {
         String token = WidgetChatTokens.generate();
         ChatSession session = start(visitorName, visitorEmail, initialMessage, departmentId,
                 metadata, WidgetChatTokens.hash(token));
+        session.setWidgetTokenExpiresAt(widgetTokenExpiry());
+        session = chatSessionRepository.save(session);
         return new WidgetChat(session, token);
+    }
+
+    /**
+     * Widget chat tokens live as long as guest grants
+     * ({@code escalated.guest-access.ttl-minutes}, 5 minutes .. 7 days), as in escalated-laravel.
+     */
+    private java.time.Instant widgetTokenExpiry() {
+        int minutes = properties == null ? 1440 : properties.getGuestAccess().getTtlMinutes();
+        return java.time.Instant.now().truncatedTo(java.time.temporal.ChronoUnit.SECONDS)
+                .plus(java.time.Duration.ofMinutes(Math.max(5, Math.min(minutes, 7 * 24 * 60))));
     }
 
     /** A chat started from the widget, with the token the widget uses for it. */
@@ -126,17 +142,26 @@ public class ChatSessionService {
     }
 
     /**
-     * The chat a widget token belongs to.
+     * The chat an unexpired widget token belongs to. A chat started before
+     * tokens expired has no expiry yet; this request gives it a full lifetime,
+     * so chats in progress during an upgrade keep working.
      *
-     * @throws EntityNotFoundException for a blank or unknown token
+     * @throws EntityNotFoundException for a blank, unknown or expired token (404, as in escalated-laravel)
      */
-    @Transactional(transactionManager = EscalatedTransactionManagers.ESCALATED, readOnly = true)
+    @Transactional(transactionManager = EscalatedTransactionManagers.ESCALATED)
     public ChatSession findByWidgetToken(String token) {
         if (token == null || token.isBlank()) {
             throw new EntityNotFoundException("Chat session not found");
         }
-        return chatSessionRepository.findByWidgetTokenHash(WidgetChatTokens.hash(token))
+        ChatSession session = chatSessionRepository.findByWidgetTokenHash(WidgetChatTokens.hash(token))
                 .orElseThrow(() -> new EntityNotFoundException("Chat session not found"));
+        if (session.getWidgetTokenExpiresAt() == null) {
+            session.setWidgetTokenExpiresAt(widgetTokenExpiry());
+            session = chatSessionRepository.save(session);
+        } else if (!session.getWidgetTokenExpiresAt().isAfter(java.time.Instant.now())) {
+            throw new EntityNotFoundException("Chat session not found");
+        }
+        return session;
     }
 
     /** Tell the agents' side that the visitor is typing. Nothing is stored. */

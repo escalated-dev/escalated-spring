@@ -78,8 +78,9 @@ aged out. Then only grants open tickets, as in Laravel.
 
 - There is no browser guest portal or mobile API in this package. The
   `/verification` and `/lookup` routes live on the widget and guest prefixes.
-- Chats keep their server-issued session token rather than an expiring chat
-  grant.
+- The chat token is a random token rather than a sealed grant. Like Laravel's
+  chat grant it expires `escalated.guest-access.ttl-minutes` after the chat
+  starts and only its SHA-256 is stored; a ticket link does not rotate it.
 - Lookup matches the ticket reference only; there is no `external_reference`.
 - Claim-and-release replaces Laravel's single transaction around the code and
   the ticket.

@@ -104,6 +104,9 @@ public class StompAuthorization implements ChannelInterceptor {
         byte[] presented = WidgetChatTokens.hash(token).getBytes(StandardCharsets.UTF_8);
         boolean owns = chats.getObject().findById(Long.valueOf(chat.group(1)))
                 .map(session -> session.getWidgetTokenHash() != null
+                        // An expired chat token opens nothing (escalated-laravel's expiring chat grant).
+                        && (session.getWidgetTokenExpiresAt() == null
+                            || session.getWidgetTokenExpiresAt().isAfter(java.time.Instant.now()))
                         && MessageDigest.isEqual(session.getWidgetTokenHash().getBytes(StandardCharsets.UTF_8), presented))
                 .orElse(false);
         if (!owns) {

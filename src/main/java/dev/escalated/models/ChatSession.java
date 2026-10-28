@@ -70,6 +70,11 @@ public class ChatSession extends BaseEntity {
     @Column(name = "widget_token_hash", length = 64)
     private String widgetTokenHash;
 
+    /** When the widget's chat token stops working; null only for chats started before it expired. */
+    @com.fasterxml.jackson.annotation.JsonIgnore
+    @Column(name = "widget_token_expires_at")
+    private Instant widgetTokenExpiresAt;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "ticket_id", insertable = false, updatable = false)
     private Ticket ticket;
@@ -157,6 +162,14 @@ public class ChatSession extends BaseEntity {
 
     public void setWidgetTokenHash(String widgetTokenHash) {
         this.widgetTokenHash = widgetTokenHash;
+    }
+
+    public Instant getWidgetTokenExpiresAt() {
+        return widgetTokenExpiresAt;
+    }
+
+    public void setWidgetTokenExpiresAt(Instant widgetTokenExpiresAt) {
+        this.widgetTokenExpiresAt = widgetTokenExpiresAt;
     }
 
     public Ticket getTicket() {
