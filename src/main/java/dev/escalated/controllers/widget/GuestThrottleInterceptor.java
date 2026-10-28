@@ -64,18 +64,24 @@ public class GuestThrottleInterceptor implements HandlerInterceptor {
             return true;
         }
 
-        GuestThrottle.Scope scope = throttle.value();
-        int limit = Math.max(1, scope == GuestThrottle.Scope.TICKET
-                ? config.getTicketsPerMinute()
-                : config.getRepliesPerMinute());
         String ip = request.getRemoteAddr() == null ? "unknown" : request.getRemoteAddr();
-        String key = "escalated:guest:" + scope.name().toLowerCase(Locale.ROOT) + ":" + ip;
-
-        GuestRateLimitStore.Hit hit = store.increment(key, WINDOW);
-        if (hit.count() <= limit) {
-            return true;
+        for (GuestThrottle.Scope scope : throttle.value()) {
+            int limit = Math.max(1, switch (scope) {
+                case TICKET -> config.getTicketsPerMinute();
+                case REPLY -> config.getRepliesPerMinute();
+                case REQUEST -> config.getRequestsPerMinute();
+            });
+            String key = "escalated:guest:" + scope.name().toLowerCase(Locale.ROOT) + ":" + ip;
+            GuestRateLimitStore.Hit hit = store.increment(key, WINDOW);
+            if (hit.count() > limit) {
+                return refuse(response, hit);
+            }
         }
+        return true;
+    }
 
+    private static boolean refuse(HttpServletResponse response, GuestRateLimitStore.Hit hit)
+            throws java.io.IOException {
         long retryAfter = Math.max(1, (hit.resetsIn().toMillis() + 999) / 1000);
         response.setStatus(HttpStatus.TOO_MANY_REQUESTS.value());
         response.setHeader(HttpHeaders.RETRY_AFTER, Long.toString(retryAfter));

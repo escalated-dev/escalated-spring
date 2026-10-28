@@ -668,6 +668,16 @@ public class EscalatedProperties {
         private int ticketsPerMinute = 5;
         /** Guest replies per IP per minute. */
         private int repliesPerMinute = 10;
+        /** Requests of any kind per IP per minute on the mobile guest routes. */
+        private int requestsPerMinute = 60;
+
+        public int getRequestsPerMinute() {
+            return requestsPerMinute;
+        }
+
+        public void setRequestsPerMinute(int requestsPerMinute) {
+            this.requestsPerMinute = requestsPerMinute;
+        }
 
         public boolean isEnabled() {
             return enabled;
