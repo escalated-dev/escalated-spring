@@ -7,18 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-### Added
-- The mobile guest API under `/escalated/api/v1/mobile/guest`, per the canonical
-  contract (escalated-developer-context `domain-model/mobile-guest-api.md`):
-  `POST verification`, `POST lookup`, `POST tickets`, `GET tickets/{token}` and
-  `POST tickets/{token}/replies`, where `{token}` is the guest grant. They reuse
-  the widget/guest verification and lookup handlers, the same emailed codes and
-  expiring grants (a grant from any surface opens the others), and the same
-  per-IP guest budgets; a bad, expired, rotated or chat grant is a 404. Every
-  answer carries `Cache-Control: private, no-store` and
-  `Referrer-Policy: no-referrer`. See `docs/guest-access.md`.
-- `escalated.guest-rate-limit.requests-per-minute` (default 60): a per-IP budget
-  counted on every mobile guest request.
+## [0.2.7] - 2026-10-28
 
 ### Upgrading
 - The mobile guest routes are always mounted (this package has no REST API
@@ -39,6 +28,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   escalated-laravel. After that every `/widget/chat/{token}/...` route answers
   404, a STOMP `SUBSCRIBE` with it as `chat-token` is refused, and the visitor
   starts a new chat.
+
+### Added
+- The mobile guest API under `/escalated/api/v1/mobile/guest`, per the canonical
+  contract (escalated-developer-context `domain-model/mobile-guest-api.md`):
+  `POST verification`, `POST lookup`, `POST tickets`, `GET tickets/{token}` and
+  `POST tickets/{token}/replies`, where `{token}` is the guest grant. They reuse
+  the widget/guest verification and lookup handlers, the same emailed codes and
+  expiring grants (a grant from any surface opens the others), and the same
+  per-IP guest budgets; a bad, expired, rotated or chat grant is a 404. Every
+  answer carries `Cache-Control: private, no-store` and
+  `Referrer-Policy: no-referrer`. See `docs/guest-access.md`.
+- `escalated.guest-rate-limit.requests-per-minute` (default 60): a per-IP budget
+  counted on every mobile guest request.
 
 ### Security
 - Checkstyle's Guava is pinned to 33.7.2-jre (GHSA-xxph-c9ww-hj94). Build
