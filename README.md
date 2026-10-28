@@ -129,6 +129,8 @@ escalated.guest-access.legacy-tokens=true
 escalated.guest-rate-limit.enabled=true
 escalated.guest-rate-limit.tickets-per-minute=5
 escalated.guest-rate-limit.replies-per-minute=10
+# Every request on the mobile guest routes (/escalated/api/v1/mobile/guest/*).
+escalated.guest-rate-limit.requests-per-minute=60
 
 # SLA checking interval
 escalated.sla.check-interval-seconds=60

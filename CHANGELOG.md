@@ -7,7 +7,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- The mobile guest API under `/escalated/api/v1/mobile/guest`, per the canonical
+  contract (escalated-developer-context `domain-model/mobile-guest-api.md`):
+  `POST verification`, `POST lookup`, `POST tickets`, `GET tickets/{token}` and
+  `POST tickets/{token}/replies`, where `{token}` is the guest grant. They reuse
+  the widget/guest verification and lookup handlers, the same emailed codes and
+  expiring grants (a grant from any surface opens the others), and the same
+  per-IP guest budgets; a bad, expired, rotated or chat grant is a 404. Every
+  answer carries `Cache-Control: private, no-store` and
+  `Referrer-Policy: no-referrer`. See `docs/guest-access.md`.
+- `escalated.guest-rate-limit.requests-per-minute` (default 60): a per-IP budget
+  counted on every mobile guest request.
+
 ### Upgrading
+- The mobile guest routes are always mounted (this package has no REST API
+  on/off switch) and permitted without a token. They honour the
+  `guest_tickets_enabled` setting (default on): off, ticket creation, lookup and
+  `ticket`/`lookup` codes there answer 403.
 - `POST /escalated/api/widget/chat/start` now answers exactly as
   escalated-laravel: `201 {id, session_id, expires_at, ticket_reference,
   status, agent_name}`, where `id` and `session_id` are both the chat token,

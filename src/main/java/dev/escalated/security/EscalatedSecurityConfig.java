@@ -80,6 +80,9 @@ public class EscalatedSecurityConfig {
                                         // EscalatedApiAuthenticator, answering 401 themselves.
                                         .requestMatchers("/escalated/api/v1/auth/**")
                                         .permitAll()
+                                        // Mobile guests hold a grant or an emailed code, never a principal.
+                                        .requestMatchers("/escalated/api/v1/mobile/guest/**")
+                                        .permitAll()
                                         // Being logged in is not being staff. The same two
                                         // gates as every other Escalated host: admin, and
                                         // agent-or-admin.

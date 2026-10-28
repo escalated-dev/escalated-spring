@@ -290,7 +290,29 @@ public class TicketService {
             Long departmentId,
             String ticketType,
             java.util.Map<String, Object> metadata) {
+        return create(subject, body, requesterName, requesterEmail, priority, departmentId, ticketType, metadata,
+                null);
+    }
+
+    /**
+     * As above, filed on {@code channel} ({@code null} keeps the default,
+     * {@code email}); the ticket-created event already carries it.
+     */
+    @Transactional(transactionManager = EscalatedTransactionManagers.ESCALATED)
+    public Ticket create(
+            String subject,
+            String body,
+            String requesterName,
+            String requesterEmail,
+            TicketPriority priority,
+            Long departmentId,
+            String ticketType,
+            java.util.Map<String, Object> metadata,
+            String channel) {
         Ticket ticket = new Ticket();
+        if (channel != null) {
+            ticket.setChannel(channel);
+        }
         ticket.setMetadata(metadata);
         ticket.setSubject(subject);
         ticket.setBody(body);
