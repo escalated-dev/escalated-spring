@@ -17,6 +17,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   404, a STOMP `SUBSCRIBE` with it as `chat-token` is refused, and the visitor
   starts a new chat.
 
+### Security
+- Checkstyle's Guava is pinned to 33.7.2-jre (GHSA-xxph-c9ww-hj94). Build
+  tooling only; nothing in the published library depends on Guava.
+
 ### Changed
 - `POST /widget/chat/start` also returns `expires_at`. Only the token's SHA-256
   is stored, as before.

@@ -119,6 +119,9 @@ dependencies {
         add("checkstyle", "org.codehaus.plexus:plexus-utils:3.6.2") {
             because("GHSA-6fmv-xxpf-w3cw")
         }
+        add("checkstyle", "com.google.guava:guava:33.7.2-jre") {
+            because("GHSA-xxph-c9ww-hj94")
+        }
     }
 }
 
