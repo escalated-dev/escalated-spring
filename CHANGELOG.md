@@ -8,6 +8,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Upgrading
+- `POST /escalated/api/widget/chat/start` now answers exactly as
+  escalated-laravel: `201 {id, session_id, expires_at, ticket_reference,
+  status, agent_name}`, where `id` and `session_id` are both the chat token,
+  plus the widget's `messages` and `agent` and the existing camelCase session
+  fields. `ticketId` is no longer returned; use `ticket_reference` to name the
+  ticket.
 - Flyway migration `V23` adds a nullable `widget_token_expires_at` to
   `escalated_chat_sessions`. Chats already in progress keep working: the next
   widget request with their token gives it a full lifetime.

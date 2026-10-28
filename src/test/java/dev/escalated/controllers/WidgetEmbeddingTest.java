@@ -265,7 +265,10 @@ class WidgetEmbeddingTest {
                 .andExpect(header().string("Access-Control-Allow-Origin", SHOP))
                 .andReturn().getResponse();
 
-        long ticketId = json.readTree(response.getContentAsString()).get("ticketId").asLong();
+        String token = json.readTree(response.getContentAsString()).get("id").asText();
+        long ticketId = jdbc.queryForObject(
+                "SELECT ticket_id FROM escalated_chat_sessions WHERE widget_token_hash = ?",
+                Long.class, dev.escalated.services.WidgetChatTokens.hash(token));
         assertThat(storedMetadata("id = ?", ticketId))
                 .isEqualTo(Map.of("cart_total", 59.9, "embedded_on", SHOP));
     }
