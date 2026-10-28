@@ -104,6 +104,8 @@ public class WidgetChatController {
 
         Map<String, Object> answer = new LinkedHashMap<>();
         answer.put("id", chat.token());
+        // The token stops working after this; the visitor starts a new chat.
+        answer.put("expires_at", session.getWidgetTokenExpiresAt());
         answer.put("status", session.getStatus());
         answer.put("messages", message == null || message.isBlank()
                 ? List.of()
@@ -156,12 +158,12 @@ public class WidgetChatController {
     @PostMapping("/{token}/messages")
     public ResponseEntity<?> sendMessage(@PathVariable String token, @RequestBody Map<String, Object> body) {
         ChatSession session = chatSessionService.findByWidgetToken(token);
+        if ("ended".equals(session.getStatus())) {
+            return WidgetRequestBodies.invalid("body", "This chat has ended.");
+        }
         String text = WidgetRequestBodies.text(body, "body");
         if (text == null || text.isBlank()) {
             return WidgetRequestBodies.invalid("body", "The message is required.");
-        }
-        if ("ended".equals(session.getStatus())) {
-            return WidgetRequestBodies.invalid("body", "This chat has ended.");
         }
         // The token belongs to the visitor, so the message is theirs; any
         // name or email in the body is ignored.
@@ -174,23 +176,31 @@ public class WidgetChatController {
     }
 
     @PostMapping("/{token}/typing")
-    public ResponseEntity<Map<String, Object>> typing(@PathVariable String token) {
-        chatSessionService.visitorTyping(chatSessionService.findByWidgetToken(token));
+    public ResponseEntity<?> typing(@PathVariable String token) {
+        ChatSession session = chatSessionService.findByWidgetToken(token);
+        if ("ended".equals(session.getStatus())) {
+            return WidgetRequestBodies.invalid("chat", "This chat has ended.");
+        }
+        chatSessionService.visitorTyping(session);
         return ResponseEntity.ok(Map.of("ok", true));
     }
 
     @PostMapping("/{token}/end")
-    public ResponseEntity<Map<String, Object>> end(@PathVariable String token) {
+    public ResponseEntity<?> end(@PathVariable String token) {
         ChatSession session = chatSessionService.findByWidgetToken(token);
-        if (!"ended".equals(session.getStatus())) {
-            session = chatSessionService.end(session.getId());
+        if ("ended".equals(session.getStatus())) {
+            return WidgetRequestBodies.invalid("chat", "Chat has already ended.");
         }
+        session = chatSessionService.end(session.getId());
         return ResponseEntity.ok(Map.of("ended", true, "status", session.getStatus()));
     }
 
     @PostMapping("/{token}/rate")
     public ResponseEntity<?> rate(@PathVariable String token, @RequestBody Map<String, Object> body) {
         ChatSession session = chatSessionService.findByWidgetToken(token);
+        if (!"ended".equals(session.getStatus())) {
+            return WidgetRequestBodies.invalid("rating", "Chat must be ended before rating.");
+        }
         Integer rating = WidgetRequestBodies.integer(body.get("rating"));
         if (rating == null || rating < 1 || rating > 5) {
             return WidgetRequestBodies.invalid("rating", "The rating must be a whole number from 1 to 5.");

@@ -55,6 +55,7 @@ class WidgetApiContractTest {
     @Autowired private DepartmentService departments;
     @Autowired private KnowledgeBaseService knowledgeBase;
     @Autowired private ChatSessionService chats;
+    @Autowired private dev.escalated.repositories.ChatSessionRepository chatSessions;
     @Autowired private dev.escalated.services.TicketService tickets;
     @Autowired private dev.escalated.services.GuestVerificationService verification;
     @Autowired private dev.escalated.repositories.KnowledgeBaseCategoryRepository categories;
@@ -262,11 +263,81 @@ class WidgetApiContractTest {
     @Test
     void aRatingOutsideOneToFiveIsAValidationError() throws Exception {
         String id = startChat(null).get("id").asText();
+        mockMvc.perform(post(WIDGET + "/chat/" + id + "/end")).andExpect(status().isOk());
         mockMvc.perform(post(WIDGET + "/chat/" + id + "/rate")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"rating\":9}"))
                 .andExpect(status().is(422))
                 .andExpect(jsonPath("$.errors.rating[0]").isString());
+    }
+
+    // --- Chat tokens expire, as in escalated-laravel ---
+
+    @Test
+    void theChatTokenExpiresWithTheGuestAccessLifetime() throws Exception {
+        java.time.Instant before = java.time.Instant.now().truncatedTo(java.time.temporal.ChronoUnit.SECONDS);
+        JsonNode session = startChat(null);
+
+        java.time.Instant expires = java.time.Instant.parse(session.get("expires_at").asText());
+        assertThat(expires).isBetween(before.plus(java.time.Duration.ofMinutes(1440)),
+                java.time.Instant.now().plus(java.time.Duration.ofMinutes(1440)));
+        assertThat(chatSessions.findById(sessionIdOf(session)).orElseThrow().getWidgetTokenExpiresAt())
+                .isEqualTo(expires);
+    }
+
+    @Test
+    void everyChatRouteIsNotFoundOnceTheTokenHasExpired() throws Exception {
+        JsonNode session = startChat("Hello");
+        String id = session.get("id").asText();
+        dev.escalated.models.ChatSession stored = chatSessions.findById(sessionIdOf(session)).orElseThrow();
+        stored.setWidgetTokenExpiresAt(java.time.Instant.now().minusSeconds(60));
+        chatSessions.save(stored);
+
+        mockMvc.perform(get(WIDGET + "/chat/" + id + "/messages")).andExpect(status().isNotFound());
+        mockMvc.perform(post(WIDGET + "/chat/" + id + "/messages")
+                        .contentType(MediaType.APPLICATION_JSON).content("{\"body\":\"Hi\"}"))
+                .andExpect(status().isNotFound());
+        mockMvc.perform(post(WIDGET + "/chat/" + id + "/typing")).andExpect(status().isNotFound());
+        mockMvc.perform(post(WIDGET + "/chat/" + id + "/end")).andExpect(status().isNotFound());
+        mockMvc.perform(post(WIDGET + "/chat/" + id + "/rate")
+                        .contentType(MediaType.APPLICATION_JSON).content("{\"rating\":5}"))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void aChatStartedBeforeTokensExpiredKeepsWorkingWithAFullLifetime() throws Exception {
+        JsonNode session = startChat("Hello");
+        String id = session.get("id").asText();
+        long sessionId = sessionIdOf(session);
+        jdbc.update("UPDATE escalated_chat_sessions SET widget_token_expires_at = NULL WHERE id = ?", sessionId);
+        java.time.Instant before = java.time.Instant.now().truncatedTo(java.time.temporal.ChronoUnit.SECONDS);
+
+        mockMvc.perform(get(WIDGET + "/chat/" + id + "/messages")).andExpect(status().isOk());
+        mockMvc.perform(post(WIDGET + "/chat/" + id + "/messages")
+                        .contentType(MediaType.APPLICATION_JSON).content("{\"body\":\"Still here\"}"))
+                .andExpect(status().isCreated());
+
+        assertThat(chatSessions.findById(sessionId).orElseThrow().getWidgetTokenExpiresAt())
+                .isAfterOrEqualTo(before.plus(java.time.Duration.ofMinutes(1440)));
+    }
+
+    @Test
+    void anEndedChatRefusesTypingAndASecondEndButStaysReadableAndRateable() throws Exception {
+        String id = startChat(null).get("id").asText();
+
+        mockMvc.perform(post(WIDGET + "/chat/" + id + "/rate")
+                        .contentType(MediaType.APPLICATION_JSON).content("{\"rating\":5}"))
+                .andExpect(status().is(422));
+        mockMvc.perform(post(WIDGET + "/chat/" + id + "/end")).andExpect(status().isOk());
+        mockMvc.perform(post(WIDGET + "/chat/" + id + "/messages")
+                        .contentType(MediaType.APPLICATION_JSON).content("{\"body\":\"Late\"}"))
+                .andExpect(status().is(422));
+        mockMvc.perform(post(WIDGET + "/chat/" + id + "/typing")).andExpect(status().is(422));
+        mockMvc.perform(post(WIDGET + "/chat/" + id + "/end")).andExpect(status().is(422));
+        mockMvc.perform(get(WIDGET + "/chat/" + id + "/messages")).andExpect(jsonPath("$.ended").value(true));
+        mockMvc.perform(post(WIDGET + "/chat/" + id + "/rate")
+                        .contentType(MediaType.APPLICATION_JSON).content("{\"rating\":4}"))
+                .andExpect(status().isOk());
     }
 
     // --- Security: chat routes are keyed by the token only ---
