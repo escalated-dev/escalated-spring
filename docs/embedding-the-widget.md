@@ -131,7 +131,7 @@ sends.
 | `POST /tickets` | `name`, `email`, `subject`, `description` (or `body`), `department_id`, `metadata`, `verification_id`, `verification_code` | 201 `{message, reference, guest_access_token, expires_at}`; the token is an expiring grant. Missing fields or a bad code are a 422 `{message, errors}` |
 | `POST /lookup` | `email`, `reference`, `verification_id`, `verification_code` | `{data: [{reference, subject, guest_access_token, expires_at}]}` |
 | `GET /tickets/{reference}` | `Authorization: Bearer <grant>` | `{reference, subject, status, status_label, status_color, created_at, department, replies}` |
-| `POST /chat/start` | `name`, `email`, `message`, `department_id`, `metadata`, `verification_id`, `verification_code` | 201 `{id, status, messages, agent, ticketId, ...}` |
+| `POST /chat/start` | `name`, `email`, `message`, `department_id`, `metadata`, `verification_id`, `verification_code` | 201 `{id, session_id, expires_at, ticket_reference, status, agent_name, messages, agent, ...}`; `id` and `session_id` are both the chat token, as in escalated-laravel |
 | `GET /chat/{id}/messages` | | `{messages: [{id, body, is_agent, author: {name}, created_at}], typing, agent, ended}` (internal notes left out) |
 | `POST /chat/{id}/messages` | `{body}` | 201; filed as the visitor, whatever name the body carries |
 | `POST /chat/{id}/typing`, `POST /chat/{id}/end` | | 200 |

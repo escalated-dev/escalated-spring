@@ -219,6 +219,25 @@ class WidgetApiContractTest {
     }
 
     @Test
+    void chatStartAnswersWithTheSameFieldsAsLaravel() throws Exception {
+        JsonNode session = startChat("Hello there");
+
+        String id = session.get("id").asText();
+        // id and session_id are both the chat token, as in escalated-laravel.
+        assertThat(session.get("session_id").asText()).isEqualTo(id);
+        assertThat(java.time.Instant.parse(session.get("expires_at").asText())).isAfter(java.time.Instant.now());
+        String reference = jdbc.queryForObject("SELECT ticket_number FROM escalated_tickets WHERE id = ?",
+                String.class, ticketIdOf(session));
+        assertThat(session.get("ticket_reference").asText()).isEqualTo(reference);
+        assertThat(session.get("status").asText()).isEqualTo("waiting");
+        assertThat(session.has("agent_name")).isTrue();
+        assertThat(session.get("agent_name").isNull()).isTrue();
+        // The internal ticket id the token replaced is not exposed.
+        assertThat(session.has("ticketId")).isFalse();
+        assertThat(session.has("ticket_id")).isFalse();
+    }
+
+    @Test
     void theWidgetFollowsAConversationByItsToken() throws Exception {
         JsonNode session = startChat("My order is late");
         String id = session.get("id").asText();
@@ -256,7 +275,7 @@ class WidgetApiContractTest {
                 .andExpect(status().is2xxSuccessful());
         Integer rating = jdbc.queryForObject(
                 "SELECT rating FROM escalated_satisfaction_ratings WHERE ticket_id = ?",
-                Integer.class, session.get("ticketId").asLong());
+                Integer.class, ticketIdOf(session));
         assertThat(rating).isEqualTo(5);
     }
 
@@ -386,9 +405,15 @@ class WidgetApiContractTest {
                 .andReturn().getResponse().getContentAsString());
     }
 
+    /** The start response carries only the token (as id and session_id, like escalated-laravel). */
     private long sessionIdOf(JsonNode session) {
-        return jdbc.queryForObject("SELECT id FROM escalated_chat_sessions WHERE ticket_id = ?",
-                Long.class, session.get("ticketId").asLong());
+        return jdbc.queryForObject("SELECT id FROM escalated_chat_sessions WHERE widget_token_hash = ?",
+                Long.class, dev.escalated.services.WidgetChatTokens.hash(session.get("id").asText()));
+    }
+
+    private long ticketIdOf(JsonNode session) {
+        return jdbc.queryForObject("SELECT ticket_id FROM escalated_chat_sessions WHERE id = ?",
+                Long.class, sessionIdOf(session));
     }
 
     /** Each ticket-creating request comes from its own address, clear of the rate limit. */

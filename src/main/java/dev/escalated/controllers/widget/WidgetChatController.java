@@ -102,16 +102,22 @@ public class WidgetChatController {
         }
         ChatSession session = chat.session();
 
+        Map<String, Object> agent = agentOf(session);
+
+        // The same answer as escalated-laravel: id and session_id are both the
+        // chat token; the numeric ticket id stays internal.
         Map<String, Object> answer = new LinkedHashMap<>();
         answer.put("id", chat.token());
+        answer.put("session_id", chat.token());
         // The token stops working after this; the visitor starts a new chat.
         answer.put("expires_at", session.getWidgetTokenExpiresAt());
+        answer.put("ticket_reference", ticketService.findById(session.getTicketId()).getTicketNumber());
         answer.put("status", session.getStatus());
+        answer.put("agent_name", agent == null ? null : agent.get("name"));
         answer.put("messages", message == null || message.isBlank()
                 ? List.of()
                 : List.of(initialMessage(session, message, session.getCreatedAt())));
-        answer.put("agent", agentOf(session));
-        answer.put("ticketId", session.getTicketId());
+        answer.put("agent", agent);
         answer.put("visitorName", session.getVisitorName());
         answer.put("visitorEmail", session.getVisitorEmail());
         answer.put("departmentId", session.getDepartmentId());
