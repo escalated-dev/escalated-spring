@@ -51,4 +51,24 @@ public interface EscalatedPlugin {
     default List<PluginRoute> webhooks() {
         return List.of();
     }
+
+    /**
+     * Cron schedules: five-field expressions ({@code minute hour day-of-month month day-of-week},
+     * UTC, or {@code @hourly}-style shorthands) to the task to run. While the plugin is active,
+     * {@link dev.escalated.scheduling.PluginCronScheduler} runs each schedule in the minutes it is
+     * due, as no user, within 30 s. An expression that cannot be read is logged and skipped.
+     */
+    default Map<String, PluginCronTask> cron() {
+        return Map.of();
+    }
+
+    /**
+     * Badges for this plugin's widgets, by the widget's {@code component}. Each is asked as the
+     * viewer while {@code escalated.plugins.dashboardWidgets} is built, and its answer is that
+     * widget's {@code badge} ({@code null} when it throws or takes longer than 5 s). A widget with no
+     * badge here carries no {@code badge} key.
+     */
+    default Map<String, PluginBadge> badges() {
+        return Map.of();
+    }
 }

@@ -592,7 +592,7 @@ public class PluginRegistry implements DisposableBean {
                 item.put("plugin", entry.slug);
                 item.put("position", widget.order() == null ? 100 : widget.order());
                 item.put("width", isBlank(widget.size()) ? "half" : widget.size());
-                if (entry.sdk && entry.badges.contains(widget.component())) {
+                if (entry.badges.contains(widget.component())) {
                     item.put("badge", badge(entry, widget.component(), viewer));
                 }
                 dashboardWidgets.add(item);
@@ -605,8 +605,21 @@ public class PluginRegistry implements DisposableBean {
         return out;
     }
 
-    /** A widget's badge from the runtime, asked as the viewer within 5 s; null when that fails. */
+    /**
+     * A widget's badge, from the native plugin's badge function or from the runtime, asked as the
+     * viewer within 5 s; null when that fails.
+     */
     private Object badge(PluginEntry entry, String component, Authentication viewer) {
+        if (!entry.sdk) {
+            PluginBadge badge = entry.nativeBadges.get(component);
+            try {
+                Object answer = runNative(FILTER_TIMEOUT, () -> badge.count(new PluginContext(this, entry, viewer)));
+                return answer instanceof Number || answer instanceof String ? answer : null;
+            } catch (Exception ex) {
+                LOG.warn("Escalated plugin {} badge {} failed: {}", entry.name, component, describe(ex));
+                return null;
+            }
+        }
         Map<String, Object> params = new LinkedHashMap<>();
         params.put("plugin", entry.name);
         params.put("component", component);
@@ -624,12 +637,13 @@ public class PluginRegistry implements DisposableBean {
     }
 
     /**
-     * Runs, side by side, every cron schedule of every active SDK plugin that is due in the minute of
-     * {@code now} (UTC), through the runtime's {@code cron} call, as no user and within 30 s each. A
-     * failing or unreadable schedule is logged and never stops the others.
+     * Runs, side by side, every cron schedule of every active plugin that is due in the minute of
+     * {@code now} (UTC), as no user and within 30 s each: a native plugin's task in process, an SDK
+     * plugin's through the runtime's {@code cron} call. A failing or unreadable schedule is logged
+     * and never stops the others.
      */
     public void runDueCron(Instant now) {
-        if (bridge == null) {
+        if (!hasPlugins()) {
             return;
         }
         List<PluginEntry> active;
@@ -641,9 +655,6 @@ public class PluginRegistry implements DisposableBean {
         }
         List<Future<?>> running = new ArrayList<>();
         for (PluginEntry entry : active) {
-            if (!entry.sdk) {
-                continue;
-            }
             for (String schedule : entry.cron) {
                 boolean due;
                 try {
@@ -653,6 +664,20 @@ public class PluginRegistry implements DisposableBean {
                     continue;
                 }
                 if (!due) {
+                    continue;
+                }
+                if (!entry.sdk) {
+                    PluginCronTask task = entry.cronTasks.get(schedule);
+                    running.add(executor.submit(() -> {
+                        try {
+                            runNative(ACTION_TIMEOUT, () -> {
+                                task.run(new PluginContext(this, entry, null));
+                                return null;
+                            });
+                        } catch (Exception ex) {
+                            LOG.warn("Escalated plugin {} cron \"{}\" failed: {}", entry.name, schedule, describe(ex));
+                        }
+                    }));
                     continue;
                 }
                 running.add(executor.submit(() -> {

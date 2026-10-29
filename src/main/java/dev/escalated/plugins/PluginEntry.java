@@ -28,6 +28,9 @@ final class PluginEntry {
     /** SDK plugins: the cron schedules, and the widget components that have a badge function. */
     final List<String> cron = new ArrayList<>();
     final Set<String> badges = new LinkedHashSet<>();
+    /** Native plugins: the cron tasks by schedule, and the badge functions by widget component. */
+    final Map<String, PluginCronTask> cronTasks = new LinkedHashMap<>();
+    final Map<String, PluginBadge> nativeBadges = new LinkedHashMap<>();
 
     private PluginEntry(String name, String source, PluginManifest manifest, EscalatedPlugin plugin, boolean sdk) {
         this.name = name;
@@ -64,6 +67,18 @@ final class PluginEntry {
         plugin.actions().forEach((hook, action) -> {
             if (action != null) {
                 entry.actions.put(hook, action);
+            }
+        });
+        plugin.cron().forEach((schedule, task) -> {
+            if (schedule != null && task != null) {
+                entry.cron.add(schedule);
+                entry.cronTasks.put(schedule, task);
+            }
+        });
+        plugin.badges().forEach((component, badge) -> {
+            if (component != null && badge != null) {
+                entry.badges.add(component);
+                entry.nativeBadges.put(component, badge);
             }
         });
         return entry;

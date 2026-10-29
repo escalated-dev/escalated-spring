@@ -57,6 +57,9 @@ public class BillingPlugin implements EscalatedPlugin {
 
 - `onActivate(ctx)` and `onDeactivate(ctx)` run on activation and deactivation.
 - `actions()`, `filters()`, `endpoints()` and `webhooks()` add hooks and routes.
+- `cron()` maps cron expressions to `PluginCronTask`s and `badges()` maps widget
+  components to `PluginBadge`s: the native forms of an SDK plugin's `cron` and
+  widget `badge` functions (see [Cron](#cron) and the shared props below).
 - A slug is the manifest name with a leading `@` removed and `/` as `--`
   (`acme/billing` is `acme--billing`). Two plugins with one slug, a route that is
   not `METHOD /path`, or a manifest without a name fail at startup, naming the
@@ -131,19 +134,36 @@ A page renders `Escalated/Plugin/Page` with `plugin` (the name), `component`,
 Every page also gets `escalated.plugins`: active plugins' `menuItems`,
 `pageComponents` and `dashboardWidgets`, without items whose capability the
 viewer lacks and without `admin` menu items for anyone but an admin. It is `{}`
-when no plugin is active. Plugin config is never shared. An SDK plugin's widget
-with a `badge` function also carries `badge`: the runtime is asked for it while
-the page is built, as the viewer, within 5 s; `null` when that fails.
+when no plugin is active. Plugin config is never shared. A widget with a badge
+function (an SDK widget's `badge`, or a native plugin's `badges()` entry for its
+component) also carries `badge`: the function is asked while the page is built,
+as the viewer (`ctx.currentUser()`), within 5 s; the answer is a number, a
+string or `null`, and `null` when it throws or times out. Widgets without one
+carry no `badge` key.
 
 ## Cron
 
-An SDK plugin's `cron` keys are five-field cron expressions (`minute hour
-day-of-month month day-of-week`, or `@hourly`, `@daily`, ...), evaluated in
-UTC. At the start of every minute `PluginCronScheduler` (Spring scheduling,
-which the auto-configuration enables) sends each due schedule of each active
-SDK plugin to the runtime as `cron`, side by side, as no user, within 30 s. A
-failing or unreadable schedule is logged and skipped; inactive plugins'
-schedules never run. Native plugins schedule their own work.
+An SDK plugin's `cron` keys, and the keys of a native plugin's `cron()`, are
+five-field cron expressions (`minute hour day-of-month month day-of-week`, or
+`@hourly`, `@daily`, ...), evaluated in UTC. At the start of every minute
+`PluginCronScheduler` (Spring scheduling, which the auto-configuration enables)
+runs each due schedule of each active plugin, side by side, as no user
+(`ctx.currentUser()` is `null`), within 30 s: a native plugin's `PluginCronTask`
+in process, an SDK plugin's through the runtime as `cron`. A failing or
+unreadable schedule is logged and skipped and never stops the others; inactive
+plugins' schedules never run.
+
+```java
+@Override
+public Map<String, PluginCronTask> cron() {
+    return Map.of("0 * * * *", ctx -> ctx.log().info("hourly sync", null));
+}
+
+@Override
+public Map<String, PluginBadge> badges() {
+    return Map.of("RevenueWidget", ctx -> ctx.store().query("invoices", Map.of(), Map.of()).size());
+}
+```
 
 ## Endpoints and webhooks
 

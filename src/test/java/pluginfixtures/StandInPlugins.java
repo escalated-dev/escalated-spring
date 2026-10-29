@@ -2,8 +2,10 @@ package pluginfixtures;
 
 import dev.escalated.plugins.EscalatedPlugin;
 import dev.escalated.plugins.PluginAction;
+import dev.escalated.plugins.PluginBadge;
 import dev.escalated.plugins.PluginCapabilities;
 import dev.escalated.plugins.PluginContext;
+import dev.escalated.plugins.PluginCronTask;
 import dev.escalated.plugins.PluginFilter;
 import dev.escalated.plugins.PluginManifest;
 import dev.escalated.plugins.PluginRequest;
@@ -87,7 +89,38 @@ public class StandInPlugins {
                                 new PluginManifest.Page("plain", "Plain", null, null, null))
                         .withComponents(new PluginManifest.SlotComponent("ticket.show", "sidebar", "InvoiceCard",
                                 Map.of("compact", true), null, null))
-                        .withWidgets(new PluginManifest.Widget("RevenueWidget", "Revenue", null, 5, null));
+                        .withWidgets(
+                                new PluginManifest.Widget("RevenueWidget", "Revenue", null, 5, null),
+                                new PluginManifest.Widget("InboxWidget", "Inbox", null, 6, null),
+                                new PluginManifest.Widget("CountWidget", "Count", null, 7, null),
+                                new PluginManifest.Widget("BrokenWidget", "Broken", null, 8, null));
+            }
+
+            @Override
+            public Map<String, PluginCronTask> cron() {
+                Map<String, PluginCronTask> cron = new LinkedHashMap<>();
+                cron.put("* * * * *", ctx -> CALLS.add("acme/billing cron * * * * * as " + ctx.currentUser()));
+                cron.put("0 9 * * *", ctx -> CALLS.add("acme/billing cron 0 9 * * * as " + ctx.currentUser()));
+                cron.put("30 9 * * *", ctx -> CALLS.add("acme/billing cron 30 9 * * *"));
+                cron.put("*/5 * * * *", ctx -> {
+                    throw new IllegalStateException("cron failed");
+                });
+                cron.put("not a schedule", ctx -> CALLS.add("acme/billing cron unreadable"));
+                return cron;
+            }
+
+            @Override
+            public Map<String, PluginBadge> badges() {
+                Map<String, PluginBadge> badges = new LinkedHashMap<>();
+                badges.put("InboxWidget", ctx -> {
+                    Map<String, Object> user = ctx.currentUser();
+                    return "for " + (user == null ? "nobody" : user.get("email"));
+                });
+                badges.put("CountWidget", ctx -> 7);
+                badges.put("BrokenWidget", ctx -> {
+                    throw new IllegalStateException("badge failed");
+                });
+                return badges;
             }
 
             @Override
@@ -141,6 +174,11 @@ public class StandInPlugins {
             @Override
             public PluginManifest manifest() {
                 return PluginManifest.of("acme/second", "1.0.0");
+            }
+
+            @Override
+            public Map<String, PluginCronTask> cron() {
+                return Map.of("* * * * *", ctx -> CALLS.add("acme/second cron * * * * *"));
             }
 
             @Override
