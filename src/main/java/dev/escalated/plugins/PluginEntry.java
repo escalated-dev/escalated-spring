@@ -25,6 +25,9 @@ final class PluginEntry {
     /** SDK plugins: the hooks the runtime's manifest declares. */
     final Set<String> actionHooks = new LinkedHashSet<>();
     final Map<String, Integer> sdkFilters = new LinkedHashMap<>();
+    /** SDK plugins: the cron schedules, and the widget components that have a badge function. */
+    final List<String> cron = new ArrayList<>();
+    final Set<String> badges = new LinkedHashSet<>();
 
     private PluginEntry(String name, String source, PluginManifest manifest, EscalatedPlugin plugin, boolean sdk) {
         this.name = name;

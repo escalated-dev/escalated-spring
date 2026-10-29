@@ -494,6 +494,16 @@ final class PluginRuntimeBridge implements AutoCloseable {
             for (JsonNode webhook : m.path("webhooks")) {
                 addRoute(entry, entry.webhooks, webhook, null);
             }
+            for (JsonNode schedule : m.path("cronSchedules")) {
+                if (schedule.isTextual()) {
+                    entry.cron.add(schedule.asText());
+                }
+            }
+            for (JsonNode widget : m.path("widgets")) {
+                if (widget.path("hasBadge").asBoolean(false) && widget.path("component").isTextual()) {
+                    entry.badges.add(widget.path("component").asText());
+                }
+            }
             out.add(entry);
         }
         return List.copyOf(out);
