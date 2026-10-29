@@ -22,6 +22,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.http.MediaType;
+import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
@@ -47,6 +48,7 @@ class PluginRuntimeUnavailableTest {
     /** No Node, no package: the admin screen, tickets and filters work without SDK plugins. */
     @Nested
     @SpringBootTest(classes = HostApplication.class)
+    @DirtiesContext
     @AutoConfigureMockMvc
     @ActiveProfiles("test")
     @TestPropertySource(properties = {
@@ -84,6 +86,7 @@ class PluginRuntimeUnavailableTest {
     /** A runtime without HTTP contract 1: its plugins' endpoints answer 503. */
     @Nested
     @SpringBootTest(classes = HostApplication.class)
+    @DirtiesContext
     @AutoConfigureMockMvc
     @ActiveProfiles("test")
     @TestPropertySource(properties = {

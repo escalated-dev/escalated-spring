@@ -38,6 +38,7 @@ import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockHttpSession;
+import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
@@ -51,6 +52,7 @@ import org.springframework.test.web.servlet.request.RequestPostProcessor;
  * plugins ({@link StandInPlugins}). The SDK bridge has its own test, {@link PluginRuntimeBridgeTest}.
  */
 @SpringBootTest(classes = HostApplication.class)
+@DirtiesContext
 @AutoConfigureMockMvc
 @ActiveProfiles("test")
 @Import(StandInPlugins.class)
@@ -97,6 +99,13 @@ class PluginsHttpTest {
         return agents.save(profile);
     }
 
+    /** An Inertia visit from a client on the current asset version. */
+    private static final RequestPostProcessor INERTIA = request -> {
+        request.addHeader("X-Inertia", "true");
+        request.addHeader("X-Inertia-Version", "build-1");
+        return request;
+    };
+
     private static RequestPostProcessor xsrf() {
         return request -> {
             String token = UUID.randomUUID().toString();
@@ -121,7 +130,7 @@ class PluginsHttpTest {
         MockHttpServletRequestBuilder request = "delete".equals(method)
                 ? delete(INDEX + "/" + slug)
                 : post(INDEX + "/" + slug + "/" + method);
-        mvc.perform(request.session(session).with(user(admin.getEmail())).with(xsrf()).header("X-Inertia", "true").header("X-Inertia-Version", "build-1"))
+        mvc.perform(request.session(session).with(user(admin.getEmail())).with(xsrf()).with(INERTIA))
                 .andExpect(status().isSeeOther())
                 .andExpect(header().string("Location", INDEX));
         JsonNode page = inertia(get(INDEX).session(session).with(user(admin.getEmail())));
@@ -178,13 +187,13 @@ class PluginsHttpTest {
     @Test
     void agentsCustomersAndGuestsAreRefused() throws Exception {
         for (RequestPostProcessor who : List.of(user(agent.getEmail()), user("customer-" + unique + "@example.com"))) {
-            MvcResult result = mvc.perform(get(INDEX).with(who).header("X-Inertia", "true").header("X-Inertia-Version", "build-1")).andReturn();
+            MvcResult result = mvc.perform(get(INDEX).with(who).with(INERTIA)).andReturn();
             assertThat(result.getResponse().getStatus()).isEqualTo(403);
             assertThat(result.getResponse().getContentAsString()).doesNotContain("Plugins/Index");
-            mvc.perform(post(INDEX + "/" + BILLING + "/activate").with(who).with(xsrf()).header("X-Inertia", "true").header("X-Inertia-Version", "build-1"))
+            mvc.perform(post(INDEX + "/" + BILLING + "/activate").with(who).with(xsrf()).with(INERTIA))
                     .andExpect(status().isForbidden());
         }
-        MvcResult guest = mvc.perform(get(INDEX).header("X-Inertia", "true").header("X-Inertia-Version", "build-1")).andReturn();
+        MvcResult guest = mvc.perform(get(INDEX).with(INERTIA)).andReturn();
         assertThat(guest.getResponse().getStatus()).isNotEqualTo(200);
         assertThat(guest.getResponse().getContentAsString()).doesNotContain("Plugins/Index");
         assertThat(activations.findBySlug(BILLING)).isEmpty();
@@ -242,7 +251,7 @@ class PluginsHttpTest {
 
     @Test
     void thereIsNoUploadRoute() throws Exception {
-        mvc.perform(post(INDEX + "/upload").with(user(admin.getEmail())).with(xsrf()).header("X-Inertia", "true").header("X-Inertia-Version", "build-1"))
+        mvc.perform(post(INDEX + "/upload").with(user(admin.getEmail())).with(xsrf()).with(INERTIA))
                 .andExpect(status().isNotFound());
     }
 
@@ -288,19 +297,19 @@ class PluginsHttpTest {
 
     @Test
     void anInactivePluginsPageIsA404AndNonAdminsAreRefused() throws Exception {
-        mvc.perform(get(INDEX + "/" + BILLING + "/settings").with(user(admin.getEmail())).header("X-Inertia", "true").header("X-Inertia-Version", "build-1"))
+        mvc.perform(get(INDEX + "/" + BILLING + "/settings").with(user(admin.getEmail())).with(INERTIA))
                 .andExpect(status().isNotFound());
         activate(BILLING);
-        mvc.perform(get(INDEX + "/" + BILLING + "/settings").with(user(agent.getEmail())).header("X-Inertia", "true").header("X-Inertia-Version", "build-1"))
+        mvc.perform(get(INDEX + "/" + BILLING + "/settings").with(user(agent.getEmail())).with(INERTIA))
                 .andExpect(status().isForbidden());
-        mvc.perform(get(INDEX + "/" + BILLING + "/missing").with(user(admin.getEmail())).header("X-Inertia", "true").header("X-Inertia-Version", "build-1"))
+        mvc.perform(get(INDEX + "/" + BILLING + "/missing").with(user(admin.getEmail())).with(INERTIA))
                 .andExpect(status().isNotFound());
     }
 
     @Test
     void aCapabilityTheUserLacksIsA403OnPagesAndEndpoints() throws Exception {
         activate(BILLING);
-        mvc.perform(get(INDEX + "/" + BILLING + "/secret").with(user(admin.getEmail())).header("X-Inertia", "true").header("X-Inertia-Version", "build-1"))
+        mvc.perform(get(INDEX + "/" + BILLING + "/secret").with(user(admin.getEmail())).with(INERTIA))
                 .andExpect(status().isForbidden());
         mvc.perform(get("/escalated/api/plugins/" + BILLING + "/secure").with(user(admin.getEmail())))
                 .andExpect(status().isForbidden());
@@ -389,7 +398,7 @@ class PluginsHttpTest {
     void creatingATicketOverHttpDeliversTicketCreatedToActivePluginsOnly() throws Exception {
         activate(BILLING);
         String customer = "customer-" + unique + "@example.com";
-        mvc.perform(post("/escalated").with(user(customer)).with(xsrf()).header("X-Inertia", "true").header("X-Inertia-Version", "build-1")
+        mvc.perform(post("/escalated").with(user(customer)).with(xsrf()).with(INERTIA)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"subject\":\"Printer " + unique + "\",\"description\":\"Broken\",\"priority\":\"high\","
                                 + "\"department_id\":\"\",\"ticket_type\":\"question\",\"attachments\":[]}"))
@@ -422,11 +431,11 @@ class PluginsHttpTest {
         activate(SECOND);
         Ticket ticket = tickets.create("Reply " + unique, "Body", "Casey", "casey-" + unique + "@example.com", null, null);
         String show = "/escalated/agent/tickets/" + ticket.getTicketNumber();
-        mvc.perform(post(show + "/reply").with(user(agent.getEmail())).with(xsrf()).header("X-Inertia", "true").header("X-Inertia-Version", "build-1")
+        mvc.perform(post(show + "/reply").with(user(agent.getEmail())).with(xsrf()).with(INERTIA)
                         .header("Referer", "http://localhost" + show).contentType(MediaType.APPLICATION_JSON)
                         .content("{\"body\":\"On it " + unique + "\",\"is_internal_note\":false,\"attachments\":[]}"))
                 .andExpect(status().isSeeOther());
-        mvc.perform(post(show + "/note").with(user(agent.getEmail())).with(xsrf()).header("X-Inertia", "true").header("X-Inertia-Version", "build-1")
+        mvc.perform(post(show + "/note").with(user(agent.getEmail())).with(xsrf()).with(INERTIA)
                         .header("Referer", "http://localhost" + show).contentType(MediaType.APPLICATION_JSON)
                         .content("{\"body\":\"Internal " + unique + "\"}"))
                 .andExpect(status().isSeeOther());
@@ -454,7 +463,7 @@ class PluginsHttpTest {
         activate(SECOND);
         activate(BILLING);
         String customer = "customer-" + unique + "@example.com";
-        mvc.perform(post("/escalated").with(user(customer)).with(xsrf()).header("X-Inertia", "true").header("X-Inertia-Version", "build-1")
+        mvc.perform(post("/escalated").with(user(customer)).with(xsrf()).with(INERTIA)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"subject\":\"Throw " + unique + "\",\"description\":\"x\",\"priority\":\"low\","
                                 + "\"department_id\":\"\",\"attachments\":[]}"))
