@@ -37,8 +37,10 @@ import org.springframework.security.core.Authentication;
  * actions are dropped, filters return their input, endpoints answer 503.
  *
  * <p>While the host waits for an answer, the runtime may call back with {@code ctx.*} requests;
- * each is served on its own thread. A call may act only for a plugin the host is dispatching to at
- * that moment; one naming any other plugin is refused, never served as the plugin it names.
+ * each is served on its own thread. The runtime stamps each with {@code host_call_id}, the id of the
+ * host call it serves, so it acts for that dispatch's plugins and user even while others are in
+ * flight. A call may act only for a plugin the host is dispatching to at that moment; one naming any
+ * other plugin is refused, never served as the plugin it names.
  */
 final class PluginRuntimeBridge implements AutoCloseable {
 
@@ -64,6 +66,10 @@ final class PluginRuntimeBridge implements AutoCloseable {
     record Scope(List<String> plugins, Authentication actor) {
     }
 
+    /** A host call in flight: the runtime process and the call's JSON-RPC id. */
+    private record ScopeKey(Object proc, long id) {
+    }
+
     /** The runtime is not running. */
     static final class UnavailableException extends RuntimeException {
         UnavailableException(String message) {
@@ -85,8 +91,7 @@ final class PluginRuntimeBridge implements AutoCloseable {
     private List<PluginEntry> cached = List.of();
     private boolean httpContract;
 
-    private final Map<Long, Scope> scopes = new ConcurrentHashMap<>();
-    private final AtomicLong nextScope = new AtomicLong();
+    private final Map<ScopeKey, Scope> scopes = new ConcurrentHashMap<>();
 
     PluginRuntimeBridge(List<String> command, File directory, Map<String, String> environment, String hostVersion,
                         ContextServer server, ExecutorService executor) {
@@ -279,7 +284,11 @@ final class PluginRuntimeBridge implements AutoCloseable {
 
     /** Makes one call and waits for its answer. */
     private JsonNode send(Proc p, String method, Object params, Duration timeout) throws Exception {
-        long id = p.nextId.incrementAndGet();
+        return send(p, p.nextId.incrementAndGet(), method, params, timeout);
+    }
+
+    /** Makes one call with the id {@code id} and waits for its answer. */
+    private JsonNode send(Proc p, long id, String method, Object params, Duration timeout) throws Exception {
         CompletableFuture<JsonNode> answer = new CompletableFuture<>();
         p.pending.put(id, answer);
         try {
@@ -303,13 +312,17 @@ final class PluginRuntimeBridge implements AutoCloseable {
         }
     }
 
-    /** A call on behalf of a dispatch, starting the runtime when needed. */
+    /**
+     * A call on behalf of a dispatch, starting the runtime when needed. The dispatch is remembered
+     * under the call's id until it returns, so the runtime's ctx calls stamped with that id act for
+     * its plugins and its user.
+     */
     JsonNode call(Scope scope, String method, Object params, Duration timeout) throws Exception {
         Proc p = ensure();
-        long key = nextScope.incrementAndGet();
+        ScopeKey key = new ScopeKey(p, p.nextId.incrementAndGet());
         scopes.put(key, scope);
         try {
-            return send(p, method, params, timeout);
+            return send(p, key.id(), method, params, timeout);
         } finally {
             scopes.remove(key);
         }
@@ -354,11 +367,26 @@ final class PluginRuntimeBridge implements AutoCloseable {
     // ---- the runtime's ctx.* calls
 
     /**
-     * The scope a ctx call acts in: one the runtime is being asked to serve right now that includes
-     * the plugin it names. A call naming none acts for the plugin being served when there is exactly
-     * one dispatch for exactly one plugin.
+     * The scope a ctx call acts in. A call stamped with the id of a host call in flight
+     * ({@code host_call_id}) belongs to that call: it acts for one of the plugins it serves, as its
+     * user, whatever else is in flight. Otherwise (an older runtime, or a call that outlived its host
+     * call) it must name a plugin the runtime is being asked to serve right now, and acts as a user
+     * only when every dispatch for that plugin shares one. A call naming none acts for the plugin
+     * being served when there is exactly one dispatch for exactly one plugin.
      */
-    private Scope resolve(String named) {
+    private Scope resolve(Proc p, String named, Long hostCall) {
+        if (hostCall != null) {
+            Scope scope = scopes.get(new ScopeKey(p, hostCall));
+            if (scope != null) {
+                if ((named == null || named.isEmpty()) && scope.plugins().size() == 1) {
+                    return scope;
+                }
+                if (named != null && scope.plugins().contains(named)) {
+                    return new Scope(List.of(named), scope.actor());
+                }
+                throw new IllegalStateException("host call " + hostCall + " is not serving plugin \"" + named + "\"");
+            }
+        }
         List<Scope> current = new ArrayList<>(scopes.values());
         if (named == null || named.isEmpty()) {
             if (current.size() == 1 && current.get(0).plugins().size() == 1) {
@@ -391,7 +419,8 @@ final class PluginRuntimeBridge implements AutoCloseable {
         reply.set("id", message.get("id"));
         try {
             String named = params.get("plugin") instanceof String name ? name : null;
-            Scope scope = resolve(named);
+            Long hostCall = hostCallId(params.remove("host_call_id"));
+            Scope scope = resolve(p, named, hostCall);
             Object result = server.serve(scope.plugins().get(0), method, params, scope.actor());
             reply.set("result", JSON.valueToTree(result));
         } catch (Exception ex) {
@@ -404,6 +433,22 @@ final class PluginRuntimeBridge implements AutoCloseable {
         } catch (IOException ex) {
             LOG.debug("Answering the plugin runtime's {} failed: {}", method, ex.getMessage());
         }
+    }
+
+    /** A ctx call's {@code host_call_id}, as this bridge sent it (a JSON number); null otherwise. */
+    private static Long hostCallId(Object value) {
+        if (value instanceof Number number) {
+            double d = number.doubleValue();
+            return d == Math.rint(d) ? number.longValue() : null;
+        }
+        if (value instanceof String text) {
+            try {
+                return Long.parseLong(text);
+            } catch (NumberFormatException ex) {
+                return null;
+            }
+        }
+        return null;
     }
 
     // ---- the runtime's manifest

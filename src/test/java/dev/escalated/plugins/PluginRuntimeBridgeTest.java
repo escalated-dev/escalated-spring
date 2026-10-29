@@ -72,7 +72,8 @@ class PluginRuntimeBridgeTest {
                 "endpoints": [
                   {"method": "GET", "path": "/echo/:id"}, {"method": "POST", "path": "/echo/:id"},
                   {"method": "GET", "path": "/boom"}, {"method": "GET", "path": "/Settings"},
-                  {"method": "GET", "path": "/spy"}, {"method": "POST", "path": "/ctx"}
+                  {"method": "GET", "path": "/spy"}, {"method": "POST", "path": "/ctx"},
+                  {"method": "POST", "path": "/ctx-together"}
                 ],
                 "webhooks": [{"method": "POST", "path": "/echo/:id"}],
                 "cronSchedules": []
@@ -306,6 +307,56 @@ class PluginRuntimeBridgeTest {
                 .content("{\"method\":\"ctx.tickets.query\",\"params\":{\"filter\":{\"reference\":\""
                         + stored.getTicketNumber() + "\"}}}"), 200);
         assertThat(found.get("result")).hasSize(1);
+    }
+
+    @Test
+    void ctxCallsInFlightAtOnceEachActAsTheirOwnRequestsUser() throws Exception {
+        lifecycle("/" + CRM + "/activate", "success");
+        AgentProfile second = new AgentProfile();
+        second.setName("Second " + unique);
+        second.setEmail("second-" + unique + "@example.com");
+        second.setAgent(true);
+        second.setAdmin(true);
+        second = agents.save(second);
+        Ticket ticket = tickets.create("Together " + unique, "Body", "Casey", "casey-" + unique + "@example.com",
+                null, null);
+
+        Map<String, JsonNode> who = together(List.of(admin, second), "{\"method\":\"ctx.currentUser\"}");
+        assertThat(who.get(admin.getEmail()).path("result").path("email").asText()).isEqualTo(admin.getEmail());
+        assertThat(who.get(second.getEmail()).path("result").path("email").asText()).isEqualTo(second.getEmail());
+
+        Map<String, JsonNode> wrote = together(List.of(admin, second),
+                "{\"method\":\"ctx.replies.create\",\"params\":{\"data\":{\"ticket_id\":" + ticket.getId()
+                        + ",\"body\":\"Noted\",\"is_internal\":true}}}");
+        assertThat(wrote.get(admin.getEmail()).path("result").path("author_name").asText()).isEqualTo(admin.getName());
+        assertThat(wrote.get(second.getEmail()).path("result").path("author_name").asText()).isEqualTo(second.getName());
+    }
+
+    /** POSTs {@code body} to {@code /ctx-together} as each agent at once; the answers by email. */
+    private Map<String, JsonNode> together(List<AgentProfile> who, String body) throws Exception {
+        Map<String, JsonNode> out = new java.util.concurrent.ConcurrentHashMap<>();
+        List<Thread> threads = new java.util.ArrayList<>();
+        List<Throwable> failures = new java.util.concurrent.CopyOnWriteArrayList<>();
+        for (AgentProfile agent : who) {
+            Thread thread = new Thread(() -> {
+                try {
+                    MvcResult result = mvc.perform(post("/escalated/api/plugins/" + CRM + "/ctx-together")
+                                    .with(user(agent.getEmail())).header("X-Requested-With", "XMLHttpRequest")
+                                    .contentType(MediaType.APPLICATION_JSON).content(body))
+                            .andExpect(status().isOk()).andReturn();
+                    out.put(agent.getEmail(), JSON.readTree(result.getResponse().getContentAsString()));
+                } catch (Throwable ex) {
+                    failures.add(ex);
+                }
+            });
+            threads.add(thread);
+            thread.start();
+        }
+        for (Thread thread : threads) {
+            thread.join(30_000);
+        }
+        assertThat(failures).isEmpty();
+        return out;
     }
 
     @Test

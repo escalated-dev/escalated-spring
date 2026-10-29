@@ -36,13 +36,25 @@ import java.util.concurrent.atomic.AtomicLong;
  *   <li>{@code endpoint}, {@code webhook}, by declared path: {@code /echo/:id} returns the request;
  *       {@code /boom} fails; {@code /Settings} returns page props; {@code /spy} reads
  *       {@code ctx.store.get} as the plugin named in the query's {@code as}; {@code /ctx} makes the
- *       ctx call its body names ({@code {method, params}}) and returns {@code {result}} or {@code {error}}.
+ *       ctx call its body names ({@code {method, params}}) and returns {@code {result}} or {@code {error}};
+ *       {@code /ctx-together} does the same once a second {@code /ctx-together} call has arrived, so
+ *       the two calls' ctx requests are in flight at once.
  * </ul>
+ *
+ * <p>Like the real runtime (after 0.2.0) it stamps every ctx request it makes while handling a host
+ * call with that call's id as {@code host_call_id}, and answers the handshake with
+ * {@code host_call_ids: true}. {@value #NO_HOST_CALL_IDS} turns both off, as an older runtime.
  */
 public final class FakePluginRuntime {
 
     static final String MANIFEST = "ESCALATED_FAKE_PLUGIN_MANIFEST";
     static final String NO_HTTP = "ESCALATED_FAKE_PLUGIN_NO_HTTP";
+    static final String NO_HOST_CALL_IDS = "ESCALATED_FAKE_PLUGIN_NO_HOST_CALL_IDS";
+
+    /** The id of the host call the current worker thread is handling. */
+    private static final ThreadLocal<JsonNode> SERVING = new ThreadLocal<>();
+    private static final Object TOGETHER_LOCK = new Object();
+    private static CompletableFuture<Void> together;
 
     private static final ObjectMapper JSON = new ObjectMapper();
     private static final PrintStream OUT = new PrintStream(System.out, false, StandardCharsets.UTF_8);
@@ -107,7 +119,12 @@ public final class FakePluginRuntime {
     }
 
     /** Asks the host for a ctx.* method and waits for the answer. */
-    private static JsonNode call(String method, Map<String, Object> params) throws Exception {
+    private static JsonNode call(String method, Map<String, Object> given) throws Exception {
+        Map<String, Object> params = new LinkedHashMap<>(given);
+        JsonNode serving = SERVING.get();
+        if (serving != null && !serving.isNull() && System.getenv(NO_HOST_CALL_IDS) == null) {
+            params.put("host_call_id", serving);
+        }
         long id = NEXT.incrementAndGet();
         CompletableFuture<JsonNode> answer = new CompletableFuture<>();
         PENDING.put(id, answer);
@@ -128,12 +145,15 @@ public final class FakePluginRuntime {
         ObjectNode reply = JSON.createObjectNode();
         reply.put("jsonrpc", "2.0");
         reply.set("id", message.get("id"));
+        SERVING.set(message.get("id"));
         try {
             reply.set("result", JSON.valueToTree(dispatch(message.path("method").asText(), message.path("params"))));
         } catch (Exception ex) {
             ObjectNode error = reply.putObject("error");
             error.put("code", -32000);
             error.put("message", ex.getMessage());
+        } finally {
+            SERVING.remove();
         }
         if (message.hasNonNull("id")) {
             write(reply);
@@ -157,6 +177,7 @@ public final class FakePluginRuntime {
                 out.put("runtime_version", "fake");
                 out.put("compatible", "1.0".equals(p.path("protocol_version").asText()));
                 out.put("http_contract_versions", System.getenv(NO_HTTP) != null ? List.of() : List.of(1));
+                out.put("host_call_ids", System.getenv(NO_HOST_CALL_IDS) == null);
                 return out;
             }
             case "manifest":
@@ -231,6 +252,9 @@ public final class FakePluginRuntime {
                     return Map.of("error", ex.getMessage());
                 }
             }
+            case "/ctx-together":
+                meet();
+                // fall through
             case "/ctx": {
                 @SuppressWarnings("unchecked")
                 Map<String, Object> params = p.path("body").has("params")
@@ -247,6 +271,25 @@ public final class FakePluginRuntime {
             }
             default:
                 throw new IllegalStateException("no handler for " + path);
+        }
+    }
+
+    /** Returns once two callers have arrived (or after five seconds), so their ctx requests overlap. */
+    private static void meet() throws Exception {
+        CompletableFuture<Void> mine;
+        synchronized (TOGETHER_LOCK) {
+            if (together != null) {
+                together.complete(null);
+                together = null;
+                return;
+            }
+            together = new CompletableFuture<>();
+            mine = together;
+        }
+        try {
+            mine.get(5, TimeUnit.SECONDS);
+        } catch (java.util.concurrent.TimeoutException ignored) {
+            // Carry on alone.
         }
     }
 }
