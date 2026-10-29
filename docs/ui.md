@@ -169,6 +169,8 @@ JSON `pageJson`, `routesScript` (the `route()` definition) and `csrfToken` (for 
 | `Escalated/Admin/Import/Mapping` | `GET /escalated/admin/import/{platform}/mapping` |
 | `Escalated/Admin/Import/Review` | `POST /escalated/admin/import/{platform}/review` (writes nothing; `POST .../start` starts the import) |
 | `Escalated/Admin/Import/Progress` | `GET /escalated/admin/import/progress/{job}` (polled through `GET .../status/{job}`; `POST /escalated/admin/import/{pause,resume,cancel}/{job}`) |
+| `Escalated/Admin/Plugins/Index` | `GET /escalated/admin/plugins` (`POST .../{slug}/activate`, `.../deactivate`, `DELETE .../{slug}`; see `docs/plugins.md`) |
+| `Escalated/Plugin/Page` | `GET /escalated/admin/plugins/{slug}/{route}` (an active plugin's page) |
 
 Customer writes: `POST /escalated` (`subject`, `description`, `priority`, `department_id`,
 `ticket_type`, `custom_fields` keyed by field slug; see `docs/custom-fields.md`), and `POST /escalated/{reference}/` `reply`, `close` (unless the `allow_customer_close`

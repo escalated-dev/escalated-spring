@@ -56,6 +56,38 @@ public class EscalatedSecurityConfig {
         return registration;
     }
 
+    /**
+     * Plugin webhooks (the plugin contract): open, because the plugin authenticates the sender, and
+     * without CSRF or the API token filter, which would turn away a sender's own {@code Bearer}.
+     */
+    @Bean
+    @Order(-1)
+    public SecurityFilterChain escalatedPluginWebhookSecurityFilterChain(HttpSecurity http) throws Exception {
+        http.securityMatcher("/escalated/webhooks/plugins/**")
+                .csrf(csrf -> csrf.disable())
+                .authorizeHttpRequests(auth -> auth.anyRequest().permitAll());
+        return http.build();
+    }
+
+    /**
+     * Plugin endpoints (the plugin contract).
+     *
+     * <p>They are called by plugin page scripts in the admin's browser, so they take the session as
+     * well as an API token, behind the admin gate; the endpoint's capability is checked by
+     * {@code PluginEndpointController}. In place of a CSRF token, a call that changes state must carry
+     * {@code X-Requested-With} or {@code X-Inertia}, which another site cannot send without a CORS
+     * preflight.
+     */
+    @Bean
+    @Order(0)
+    public SecurityFilterChain escalatedPluginEndpointSecurityFilterChain(HttpSecurity http) throws Exception {
+        http.securityMatcher("/escalated/api/plugins/**")
+                .csrf(csrf -> csrf.disable())
+                .addFilterBefore(apiTokenFilter, UsernamePasswordAuthenticationFilter.class)
+                .authorizeHttpRequests(auth -> auth.anyRequest().access(authorization.admin()));
+        return http.build();
+    }
+
     @Bean
     @Order(1)
     public SecurityFilterChain escalatedApiSecurityFilterChain(HttpSecurity http) throws Exception {

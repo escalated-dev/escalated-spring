@@ -7,6 +7,56 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Upgrading
+- Flyway migration `V24` adds `escalated_plugins` and `escalated_plugin_store`
+  (PostgreSQL and MySQL editions). Hosts whose schema Hibernate builds get both
+  tables from the new entities.
+- The plugin system is always present and inert until a plugin is registered
+  and activated: with no `EscalatedPlugin` bean and the runtime off (the
+  default), nothing runs and every page shares `escalated.plugins` as `{}`.
+- Two security filter chains now come first: `/escalated/webhooks/plugins/**`
+  (open, `@Order(-1)`) and `/escalated/api/plugins/**` (admin, session or API
+  token, `@Order(0)`). A host chain ordered before Escalated's that matches
+  these paths keeps them.
+- `EscalatedSharedProps` has a constructor taking the `PluginRegistry`; the
+  existing one still works and shares no plugin UI.
+
+### Added
+- Plugins, per the shared plugin contract (escalated-developer-context
+  `domain-model/plugin-contract.md`); see `docs/plugins.md`.
+  - **Native plugins**: beans implementing `dev.escalated.plugins.EscalatedPlugin`
+    (actions, filters, endpoints, webhooks, `onActivate`/`onDeactivate`), listed
+    as `registered`. Two plugins with one slug, or a malformed route, fail at
+    startup.
+  - **SDK plugins** (`@escalated-dev/plugin-sdk`) through
+    `@escalated-dev/plugin-runtime`, started with `ProcessBuilder` when
+    `escalated.plugins.runtime.enabled=true` (off by default): JSON-RPC 2.0 over
+    stdio, handshake, HTTP contract 1, `activate`/`deactivate`, the active
+    allow-list on actions and filters, `ctx.*` served while the host waits and
+    only for the plugin being dispatched, restart with backoff, and 503 /
+    dropped actions / unfiltered values while it is down. Listed as `composer`.
+  - **Admin > Plugins** (`Escalated/Admin/Plugins/Index`, `can_upload: false`):
+    activate, deactivate and uninstall in the contract's order, idempotent, 303
+    with a flash; an unknown slug is an error flash, or 404 for JSON. Uninstall
+    keeps the plugin's stored data. No upload route.
+  - **Plugin pages** (`Escalated/Plugin/Page`, props from the plugin's
+    `GET /{component}`), **endpoints** (`/escalated/api/plugins/{slug}{path}`,
+    admin plus capability, `:param` matching, credentials stripped, page-script
+    header for state changes, generic 500s, validated `httpResponse()`
+    envelopes) and **webhooks** (`/escalated/webhooks/plugins/{slug}{path}`,
+    unguarded). Inactive plugins: 404.
+  - **Domain events** to active plugins' actions after commit: every canonical
+    event, never a legacy name, with the contract's payloads.
+  - **ctx**: config, store (queries evaluated in Java, field names validated),
+    tickets and replies through `TicketService` with the contract's keys only
+    (500 rows), contacts, tags, departments, agents, broadcast (STOMP), log,
+    emit (host names dropped), currentUser.
+  - **`escalated.plugins`** on every page: active plugins' `menuItems`,
+    `pageComponents` and `dashboardWidgets`, filtered by capability.
+  - `PluginCapabilities` bean to decide capabilities (default: admins hold all,
+    others their role's permissions).
+- `TicketService.update(id, subject, body, priority, ticketType, metadata)`.
+
 ## [0.2.7] - 2026-10-28
 
 ### Upgrading

@@ -180,7 +180,9 @@ class PageNameParityTest {
           "Escalated/Admin/Capacity/Index",
           "Escalated/Admin/BusinessHours/Index",
           "Escalated/Admin/BusinessHours/Form",
-          "Escalated/Admin/AuditLog/Index");
+          "Escalated/Admin/AuditLog/Index",
+          "Escalated/Admin/Plugins/Index",
+          "Escalated/Plugin/Page");
 
   @Test
   void theUiLayerRendersEveryPageItServes() throws IOException {

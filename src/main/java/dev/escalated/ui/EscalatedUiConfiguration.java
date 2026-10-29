@@ -2,10 +2,12 @@ package dev.escalated.ui;
 
 import dev.escalated.config.EscalatedProperties;
 import dev.escalated.config.EscalatedTransactionManagers;
+import dev.escalated.plugins.PluginRegistry;
 import dev.escalated.repositories.AgentProfileRepository;
 import dev.escalated.security.EscalatedAuthorization;
 import dev.escalated.services.SettingsService;
 import java.util.List;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -44,10 +46,11 @@ public class EscalatedUiConfiguration {
             AgentProfileRepository agents,
             SettingsService settings,
             EscalatedProperties properties,
-            @Qualifier(EscalatedTransactionManagers.ESCALATED) PlatformTransactionManager transactions) {
+            @Qualifier(EscalatedTransactionManagers.ESCALATED) PlatformTransactionManager transactions,
+            ObjectProvider<PluginRegistry> plugins) {
         TransactionTemplate readOnly = new TransactionTemplate(transactions);
         readOnly.setReadOnly(true);
-        return new EscalatedSharedProps(authorization, agents, settings, properties, readOnly);
+        return new EscalatedSharedProps(authorization, agents, settings, properties, readOnly, plugins.getIfAvailable());
     }
 
     @Bean
