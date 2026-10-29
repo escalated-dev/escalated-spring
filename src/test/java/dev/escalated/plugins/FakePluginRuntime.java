@@ -33,6 +33,9 @@ import java.util.concurrent.atomic.AtomicLong;
  *       {@code {hook, event, plugins}}, acting for that plugin.
  *   <li>{@code filter}: a string value gets {@code |sdk} appended; hook {@code fail} is an error.
  *   <li>{@code activate}, {@code deactivate}: {@code ctx.store.insert} into {@code lifecycle}.
+ *   <li>{@code cron}: {@code ctx.store.insert} into {@code cron} {@code {schedule}}.
+ *   <li>{@code badge}: component {@code Inbox} answers {@code "for "} plus {@code ctx.currentUser}'s
+ *       email (or {@code nobody}); {@code Count} answers 7; anything else is an error.
  *   <li>{@code endpoint}, {@code webhook}, by declared path: {@code /echo/:id} returns the request;
  *       {@code /boom} fails; {@code /Settings} returns page props; {@code /spy} reads
  *       {@code ctx.store.get} as the plugin named in the query's {@code as}; {@code /ctx} makes the
@@ -195,6 +198,21 @@ public final class FakePluginRuntime {
                 call("ctx.store.insert", Map.of("plugin", p.path("plugin").asText(), "collection", "lifecycle",
                         "data", Map.of("event", method)));
                 return Map.of("ok", true);
+            case "cron":
+                call("ctx.store.insert", Map.of("plugin", p.path("plugin").asText(), "collection", "cron",
+                        "data", Map.of("schedule", p.path("schedule").asText())));
+                return Map.of("ok", true);
+            case "badge":
+                switch (p.path("component").asText()) {
+                    case "Inbox": {
+                        JsonNode user = call("ctx.currentUser", Map.of("plugin", p.path("plugin").asText()));
+                        return "for " + (user == null || user.isNull() ? "nobody" : user.path("email").asText());
+                    }
+                    case "Count":
+                        return 7;
+                    default:
+                        throw new IllegalStateException("badge failed");
+                }
             case "endpoint":
             case "webhook":
                 return http(method, p);

@@ -22,6 +22,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   existing one still works and shares no plugin UI.
 
 ### Added
+- SDK plugin cron schedules run: every minute `PluginCronScheduler` sends the
+  due five-field (UTC) schedules of active SDK plugins to the runtime as
+  `cron`, as no user. SDK plugin widgets with a `badge` function carry its
+  answer in `escalated.plugins.dashboardWidgets[].badge`, asked as the viewer
+  within 5 s (`null` when it fails).
 - Plugins, per the shared plugin contract (escalated-developer-context
   `domain-model/plugin-contract.md`); see `docs/plugins.md`.
   - **Native plugins**: beans implementing `dev.escalated.plugins.EscalatedPlugin`

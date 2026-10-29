@@ -131,7 +131,19 @@ A page renders `Escalated/Plugin/Page` with `plugin` (the name), `component`,
 Every page also gets `escalated.plugins`: active plugins' `menuItems`,
 `pageComponents` and `dashboardWidgets`, without items whose capability the
 viewer lacks and without `admin` menu items for anyone but an admin. It is `{}`
-when no plugin is active. Plugin config is never shared.
+when no plugin is active. Plugin config is never shared. An SDK plugin's widget
+with a `badge` function also carries `badge`: the runtime is asked for it while
+the page is built, as the viewer, within 5 s; `null` when that fails.
+
+## Cron
+
+An SDK plugin's `cron` keys are five-field cron expressions (`minute hour
+day-of-month month day-of-week`, or `@hourly`, `@daily`, ...), evaluated in
+UTC. At the start of every minute `PluginCronScheduler` (Spring scheduling,
+which the auto-configuration enables) sends each due schedule of each active
+SDK plugin to the runtime as `cron`, side by side, as no user, within 30 s. A
+failing or unreadable schedule is logged and skipped; inactive plugins'
+schedules never run. Native plugins schedule their own work.
 
 ## Endpoints and webhooks
 
@@ -248,4 +260,3 @@ both tables from the entities `PluginActivation` and `PluginStoreRecord`.
 - The JSON-RPC calls carry no request id, so while the runtime serves one SDK
   plugin for two dispatches at once with different users, that plugin's ctx
   calls act as no user.
-- Cron (`cron`) and badges (`badge`) are not scheduled or called yet.

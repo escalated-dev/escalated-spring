@@ -592,6 +592,9 @@ public class PluginRegistry implements DisposableBean {
                 item.put("plugin", entry.slug);
                 item.put("position", widget.order() == null ? 100 : widget.order());
                 item.put("width", isBlank(widget.size()) ? "half" : widget.size());
+                if (entry.sdk && entry.badges.contains(widget.component())) {
+                    item.put("badge", badge(entry, widget.component(), viewer));
+                }
                 dashboardWidgets.add(item);
             }
         }
@@ -600,6 +603,81 @@ public class PluginRegistry implements DisposableBean {
         out.put("pageComponents", pageComponents);
         out.put("dashboardWidgets", dashboardWidgets);
         return out;
+    }
+
+    /** A widget's badge from the runtime, asked as the viewer within 5 s; null when that fails. */
+    private Object badge(PluginEntry entry, String component, Authentication viewer) {
+        Map<String, Object> params = new LinkedHashMap<>();
+        params.put("plugin", entry.name);
+        params.put("component", component);
+        try {
+            JsonNode answer = bridge.call(new PluginRuntimeBridge.Scope(List.of(entry.name), viewer), "badge", params,
+                    FILTER_TIMEOUT);
+            if (answer != null && answer.isNumber()) {
+                return answer.numberValue();
+            }
+            return answer != null && answer.isTextual() ? answer.asText() : null;
+        } catch (Exception ex) {
+            LOG.warn("Escalated plugin {} badge {} failed: {}", entry.name, component, describe(ex));
+            return null;
+        }
+    }
+
+    /**
+     * Runs, side by side, every cron schedule of every active SDK plugin that is due in the minute of
+     * {@code now} (UTC), through the runtime's {@code cron} call, as no user and within 30 s each. A
+     * failing or unreadable schedule is logged and never stops the others.
+     */
+    public void runDueCron(Instant now) {
+        if (bridge == null) {
+            return;
+        }
+        List<PluginEntry> active;
+        try {
+            active = activeEntries();
+        } catch (RuntimeException ex) {
+            LOG.warn("Escalated plugin cron: {}", describe(ex));
+            return;
+        }
+        List<Future<?>> running = new ArrayList<>();
+        for (PluginEntry entry : active) {
+            if (!entry.sdk) {
+                continue;
+            }
+            for (String schedule : entry.cron) {
+                boolean due;
+                try {
+                    due = PluginCron.due(schedule, now);
+                } catch (IllegalArgumentException ex) {
+                    LOG.warn("Escalated plugin {} cron \"{}\" skipped: {}", entry.name, schedule, ex.getMessage());
+                    continue;
+                }
+                if (!due) {
+                    continue;
+                }
+                running.add(executor.submit(() -> {
+                    Map<String, Object> params = new LinkedHashMap<>();
+                    params.put("plugin", entry.name);
+                    params.put("schedule", schedule);
+                    try {
+                        bridge.call(new PluginRuntimeBridge.Scope(List.of(entry.name), null), "cron", params,
+                                ACTION_TIMEOUT);
+                    } catch (Exception ex) {
+                        LOG.warn("Escalated plugin {} cron \"{}\" failed: {}", entry.name, schedule, describe(ex));
+                    }
+                }));
+            }
+        }
+        for (Future<?> future : running) {
+            try {
+                future.get(ACTION_TIMEOUT.toMillis() + 1000, TimeUnit.MILLISECONDS);
+            } catch (InterruptedException ex) {
+                Thread.currentThread().interrupt();
+                return;
+            } catch (ExecutionException | TimeoutException ex) {
+                LOG.warn("Escalated plugin cron: {}", describe(ex));
+            }
+        }
     }
 
     private static boolean isBlank(String value) {

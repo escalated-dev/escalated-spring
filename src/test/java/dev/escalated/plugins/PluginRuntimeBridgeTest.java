@@ -66,7 +66,10 @@ class PluginRuntimeBridgeTest {
               "@acme/sdk-crm": {
                 "name": "@acme/sdk-crm", "version": "3.0.0", "description": "CRM sync",
                 "pages": [{"route": "crm", "component": "Settings", "menu": {"label": "CRM"}}],
-                "components": [], "widgets": [{"component": "Pipeline", "label": "Pipeline", "hasBadge": false}],
+                "components": [], "widgets": [{"component": "Pipeline", "label": "Pipeline", "hasBadge": false},
+                  {"component": "Inbox", "label": "Inbox", "order": 101, "hasBadge": true},
+                  {"component": "Count", "label": "Count", "order": 102, "hasBadge": true},
+                  {"component": "Broken", "label": "Broken", "order": 103, "hasBadge": true}],
                 "actionHooks": ["ticket.created", "plugin.activated"],
                 "filterHooks": [{"hook": "subject.filter", "priority": 1}],
                 "endpoints": [
@@ -75,11 +78,12 @@ class PluginRuntimeBridgeTest {
                   {"method": "GET", "path": "/spy"}, {"method": "POST", "path": "/ctx"}
                 ],
                 "webhooks": [{"method": "POST", "path": "/echo/:id"}],
-                "cronSchedules": []
+                "cronSchedules": ["* * * * *", "0 9 * * *", "not a schedule"]
               },
               "@acme/sdk-other": {
                 "name": "@acme/sdk-other", "version": "1.0.0",
-                "actionHooks": ["ticket.created"], "endpoints": [{"method": "GET", "path": "/spy"}]
+                "actionHooks": ["ticket.created"], "endpoints": [{"method": "GET", "path": "/spy"}],
+                "cronSchedules": ["* * * * *"]
               }
             }
             """;
@@ -186,7 +190,7 @@ class PluginRuntimeBridgeTest {
         assertThat(crm.get("version").asText()).isEqualTo("3.0.0");
         assertThat(crm.get("source").asText()).isEqualTo("composer");
         assertThat(crm.get("provides").get("menu_items").asInt()).isEqualTo(1);
-        assertThat(crm.get("provides").get("widgets").asInt()).isEqualTo(1);
+        assertThat(crm.get("provides").get("widgets").asInt()).isEqualTo(4);
 
         lifecycle("/" + CRM + "/activate", "success");
         eventually("the activate call", () -> rows(CRM, "lifecycle").stream()
@@ -306,6 +310,35 @@ class PluginRuntimeBridgeTest {
                 .content("{\"method\":\"ctx.tickets.query\",\"params\":{\"filter\":{\"reference\":\""
                         + stored.getTicketNumber() + "\"}}}"), 200);
         assertThat(found.get("result")).hasSize(1);
+    }
+
+    @Test
+    void dueCronSchedulesOfActiveSdkPluginsRunThroughTheRuntime() throws Exception {
+        lifecycle("/" + CRM + "/activate", "success");
+        java.time.Instant nine = java.time.Instant.parse("2026-10-29T09:00:20Z");
+
+        registry.runDueCron(nine);
+        assertThat(rows(CRM, "cron").stream().map(row -> row.get("schedule")).sorted().toList())
+                .containsExactly("* * * * *", "0 9 * * *");
+
+        registry.runDueCron(nine.plusSeconds(60));
+        assertThat(rows(CRM, "cron")).hasSize(3);
+        // The inactive plugin's schedule never runs.
+        assertThat(rows(OTHER, "cron")).isEmpty();
+    }
+
+    @Test
+    void sdkWidgetBadgesAreAskedAsTheViewer() throws Exception {
+        lifecycle("/" + CRM + "/activate", "success");
+        JsonNode widgets = inertia(get(INDEX)).get("props").get("escalated").get("plugins").get("dashboardWidgets");
+        Map<String, JsonNode> byComponent = new java.util.HashMap<>();
+        widgets.forEach(widget -> byComponent.put(widget.get("component").asText(), widget));
+
+        assertThat(byComponent.get("Inbox").get("badge").asText()).isEqualTo("for " + admin.getEmail());
+        assertThat(byComponent.get("Count").get("badge").asInt()).isEqualTo(7);
+        assertThat(byComponent.get("Broken").has("badge")).isTrue();
+        assertThat(byComponent.get("Broken").get("badge").isNull()).isTrue();
+        assertThat(byComponent.get("Pipeline").has("badge")).isFalse();
     }
 
     @Test
