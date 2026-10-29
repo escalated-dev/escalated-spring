@@ -6,7 +6,7 @@ import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
-/** Runs active SDK plugins' due cron schedules at the start of every minute (UTC). */
+/** Runs active plugins' (native and SDK) due cron schedules at the start of every minute (UTC). */
 @Component
 public class PluginCronScheduler {
 

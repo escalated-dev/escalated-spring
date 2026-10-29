@@ -179,7 +179,7 @@ class PluginsHttpTest {
         assertThat(billing.get("activated_at").isNull()).isTrue();
         assertThat(billing.get("source").asText()).isEqualTo("registered");
         assertThat(billing.get("provides").get("menu_items").asInt()).isEqualTo(3);
-        assertThat(billing.get("provides").get("widgets").asInt()).isEqualTo(1);
+        assertThat(billing.get("provides").get("widgets").asInt()).isEqualTo(4);
         assertThat(billing.get("provides").get("page_components").asInt()).isEqualTo(1);
         assertThat(plugin(page, SECOND).get("description").isNull()).isTrue();
     }
@@ -563,5 +563,39 @@ class PluginsHttpTest {
         assertThat(forAgent.get("menuItems")).hasSize(1);
         assertThat(forAgent.get("menuItems").get(0).get("section").asText()).isEqualTo("agent");
         assertThat(plugins.toString()).doesNotContain("api_key");
+    }
+
+    @Test
+    void dueCronSchedulesOfActiveNativePluginsRunAsNoUserAndAFailingOneStopsNothing() throws Exception {
+        java.time.Instant nine = java.time.Instant.parse("2026-10-29T09:00:20Z");
+        registry.runDueCron(nine);
+        assertThat(StandInPlugins.CALLS).as("inactive plugins run nothing").isEmpty();
+
+        activate(BILLING);
+        StandInPlugins.reset();
+        registry.runDueCron(nine);
+        assertThat(StandInPlugins.CALLS).contains(
+                "acme/billing cron * * * * * as null", "acme/billing cron 0 9 * * * as null");
+        assertThat(StandInPlugins.CALLS).doesNotContain("acme/billing cron 30 9 * * *", "acme/billing cron unreadable",
+                "acme/second cron * * * * *");
+
+        StandInPlugins.reset();
+        registry.runDueCron(nine.plusSeconds(60));
+        assertThat(StandInPlugins.CALLS).containsExactly("acme/billing cron * * * * * as null");
+    }
+
+    @Test
+    void nativeWidgetBadgesAreAskedAsTheViewerAndAFailingOneIsNull() throws Exception {
+        activate(BILLING);
+        JsonNode widgets = inertia(get(INDEX).with(user(admin.getEmail())))
+                .get("props").get("escalated").get("plugins").get("dashboardWidgets");
+        Map<String, JsonNode> byComponent = new java.util.HashMap<>();
+        widgets.forEach(widget -> byComponent.put(widget.get("component").asText(), widget));
+
+        assertThat(byComponent.get("InboxWidget").get("badge").asText()).isEqualTo("for " + admin.getEmail());
+        assertThat(byComponent.get("CountWidget").get("badge").asInt()).isEqualTo(7);
+        assertThat(byComponent.get("BrokenWidget").has("badge")).isTrue();
+        assertThat(byComponent.get("BrokenWidget").get("badge").isNull()).isTrue();
+        assertThat(byComponent.get("RevenueWidget").has("badge")).isFalse();
     }
 }
