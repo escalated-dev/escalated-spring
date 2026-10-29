@@ -3,6 +3,7 @@ package dev.escalated.ui;
 import dev.escalated.config.EscalatedProperties;
 import dev.escalated.models.AgentProfile;
 import dev.escalated.models.Permission;
+import dev.escalated.plugins.PluginRegistry;
 import dev.escalated.repositories.AgentProfileRepository;
 import dev.escalated.security.EscalatedAuthorization;
 import dev.escalated.services.SettingsService;
@@ -29,7 +30,9 @@ import org.springframework.transaction.support.TransactionTemplate;
  *   <li>{@code errors}: the last write's validation errors, field to first message, once.
  *   <li>{@code escalated}: {@code prefix}, {@code is_agent}, {@code is_admin},
  *       {@code permissions}, {@code features}, {@code broadcasting}, {@code agent_type} and the
- *       knowledge base and guest ticket switches, as {@code EscalatedServiceProvider::shareInertiaData}.
+ *       knowledge base and guest ticket switches, as {@code EscalatedServiceProvider::shareInertiaData};
+ *       and {@code plugins}, the active plugins' {@code menuItems}, {@code pageComponents} and
+ *       {@code dashboardWidgets} ({@code {}} when none is active).
  * </ul>
  */
 public class EscalatedSharedProps implements InertiaSharedProps {
@@ -39,6 +42,7 @@ public class EscalatedSharedProps implements InertiaSharedProps {
     private final SettingsService settings;
     private final EscalatedProperties properties;
     private final TransactionTemplate readOnly;
+    private final PluginRegistry plugins;
 
     public EscalatedSharedProps(
             EscalatedAuthorization authorization,
@@ -46,11 +50,23 @@ public class EscalatedSharedProps implements InertiaSharedProps {
             SettingsService settings,
             EscalatedProperties properties,
             TransactionTemplate readOnly) {
+        this(authorization, agents, settings, properties, readOnly, null);
+    }
+
+    /** As above, sharing the active plugins' menus, slots and widgets as {@code escalated.plugins}. */
+    public EscalatedSharedProps(
+            EscalatedAuthorization authorization,
+            AgentProfileRepository agents,
+            SettingsService settings,
+            EscalatedProperties properties,
+            TransactionTemplate readOnly,
+            PluginRegistry plugins) {
         this.authorization = authorization;
         this.agents = agents;
         this.settings = settings;
         this.properties = properties;
         this.readOnly = readOnly;
+        this.plugins = plugins;
     }
 
     @Override
@@ -97,6 +113,7 @@ public class EscalatedSharedProps implements InertiaSharedProps {
         if (signedIn) {
             escalated.put("agent_type", "full");
         }
+        escalated.put("plugins", plugins == null ? Map.of() : plugins.uiExtensions(signedIn ? authentication : null));
         shared.put("escalated", escalated);
         return shared;
     }

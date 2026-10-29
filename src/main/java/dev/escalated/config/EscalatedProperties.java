@@ -124,6 +124,93 @@ public class EscalatedProperties {
     private NewslettersProperties newsletters = new NewslettersProperties();
     private UiProperties ui = new UiProperties();
     private ImportsProperties imports = new ImportsProperties();
+    private PluginsProperties plugins = new PluginsProperties();
+
+    public PluginsProperties getPlugins() {
+        return plugins;
+    }
+
+    public void setPlugins(PluginsProperties plugins) {
+        this.plugins = plugins;
+    }
+
+    /**
+     * {@code escalated.plugins.*}: the plugin system. Native plugins are beans implementing
+     * {@code dev.escalated.plugins.EscalatedPlugin} and need no setting; SDK plugins run in the
+     * plugin runtime, which is off by default.
+     */
+    public static class PluginsProperties {
+        private RuntimeProperties runtime = new RuntimeProperties();
+
+        public RuntimeProperties getRuntime() {
+            return runtime;
+        }
+
+        public void setRuntime(RuntimeProperties runtime) {
+            this.runtime = runtime;
+        }
+    }
+
+    /**
+     * {@code escalated.plugins.runtime.*}: {@code @escalated-dev/plugin-runtime}, the Node process
+     * that runs SDK plugins ({@code @escalated-dev/plugin-sdk}). Started on first use.
+     */
+    public static class RuntimeProperties {
+        /** Run SDK plugins. Needs Node and the runtime package installed in {@code directory}. */
+        private boolean enabled = false;
+        /** The executable. */
+        private String command = "node";
+        /**
+         * Its arguments. Empty means
+         * {@code node_modules/@escalated-dev/plugin-runtime/build/bin/escalated-plugins.js}, which loads
+         * the plugins installed under {@code directory}'s {@code node_modules}.
+         */
+        private List<String> args = new ArrayList<>();
+        /** The project directory the runtime runs in. Empty means the working directory. */
+        private String directory = "";
+        /** Environment variables added to the host's own. */
+        private Map<String, String> env = new java.util.LinkedHashMap<>();
+
+        public boolean isEnabled() {
+            return enabled;
+        }
+
+        public void setEnabled(boolean enabled) {
+            this.enabled = enabled;
+        }
+
+        public String getCommand() {
+            return command;
+        }
+
+        public void setCommand(String command) {
+            this.command = command;
+        }
+
+        public List<String> getArgs() {
+            return args;
+        }
+
+        public void setArgs(List<String> args) {
+            this.args = args == null ? new ArrayList<>() : args;
+        }
+
+        public String getDirectory() {
+            return directory;
+        }
+
+        public void setDirectory(String directory) {
+            this.directory = directory == null ? "" : directory;
+        }
+
+        public Map<String, String> getEnv() {
+            return env;
+        }
+
+        public void setEnv(Map<String, String> env) {
+            this.env = env == null ? new java.util.LinkedHashMap<>() : env;
+        }
+    }
 
     public ImportsProperties getImports() {
         return imports;

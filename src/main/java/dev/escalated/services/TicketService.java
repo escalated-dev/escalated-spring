@@ -380,12 +380,28 @@ public class TicketService {
 
     @Transactional(transactionManager = EscalatedTransactionManagers.ESCALATED)
     public Ticket update(Long id, String subject, String body, TicketPriority priority) {
+        return update(id, subject, body, priority, null, null);
+    }
+
+    /**
+     * As above, also setting the ticket type and replacing the host metadata. A null argument
+     * leaves that field as it is. One {@code ticket.updated} either way.
+     */
+    @Transactional(transactionManager = EscalatedTransactionManagers.ESCALATED)
+    public Ticket update(Long id, String subject, String body, TicketPriority priority, String ticketType,
+                         java.util.Map<String, Object> metadata) {
         Ticket ticket = findById(id);
         if (subject != null) {
             ticket.setSubject(subject);
         }
         if (body != null) {
             ticket.setBody(body);
+        }
+        if (ticketType != null) {
+            ticket.setTicketType(ticketType);
+        }
+        if (metadata != null) {
+            ticket.setMetadata(metadata);
         }
         if (priority != null && priority != ticket.getPriority()) {
             String oldPriority = ticket.getPriority().name();

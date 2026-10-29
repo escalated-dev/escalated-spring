@@ -158,6 +158,11 @@ public class UiRoutes {
         register("escalated.admin.import.pause", "/admin/import/pause/{jobId}");
         register("escalated.admin.import.resume", "/admin/import/resume/{jobId}");
         register("escalated.admin.import.cancel", "/admin/import/cancel/{jobId}");
+        // Plugins (the plugin contract). No upload route: plugins are installed by the deployer.
+        register("escalated.admin.plugins.index", "/admin/plugins");
+        register("escalated.admin.plugins.activate", "/admin/plugins/{slug}/activate");
+        register("escalated.admin.plugins.deactivate", "/admin/plugins/{slug}/deactivate");
+        register("escalated.admin.plugins.destroy", "/admin/plugins/{slug}");
     }
 
     /** Laravel's resource routes (less {@code show}), with the edit page at {@code edit}. */

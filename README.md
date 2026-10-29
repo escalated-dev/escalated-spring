@@ -25,6 +25,8 @@ For opt-in department/account visibility and targeted SLAs, see [ticket access a
 
 To run the support widget on other sites (a store, a marketing site), see [embedding the widget](docs/embedding-the-widget.md).
 
+To extend the helpdesk with plugins (Java beans, or `@escalated-dev/plugin-sdk` plugins through the Node plugin runtime), see [plugins](docs/plugins.md).
+
 To serve the shared agent, customer and admin screens (`@escalated-dev/escalated`, Vue 3 + Inertia), set `escalated.ui.enabled=true`; see [the Inertia pages](docs/ui.md). It is off by default, so an API-only host is unchanged.
 
 ## Features
@@ -55,6 +57,7 @@ To serve the shared agent, customer and admin screens (`@escalated-dev/escalated
 24. **2FA (TOTP)** -- Time-based one-time password support for agent accounts
 25. **Guest Access** -- Token-based ticket access without authentication
 26. **Inbound Email** -- Single webhook endpoint with Postmark + Mailgun + AWS SES parsers, signed Reply-To ticket resolution, and replies accepted only from the ticket's requester
+27. **Plugins** -- Native Java plugins and SDK plugins (through the Node plugin runtime), with Admin > Plugins, plugin pages, endpoints, webhooks and domain events ([docs](docs/plugins.md))
 
 ## Requirements
 
