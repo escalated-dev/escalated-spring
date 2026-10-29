@@ -282,6 +282,12 @@ class PluginRuntimeBridgeTest {
         assertThat(ticket.get("status").asText()).isEqualTo("pending");
         Ticket stored = ticketRows.findById(ticket.get("id").asLong()).orElseThrow();
         assertThat(stored.getRequesterEmail()).isEqualTo("lead-" + unique + "@example.com");
+        // The create fired ticket.created, which the runtime handles for this plugin in the background.
+        // While that dispatch overlaps a request's, the plugin's ctx calls act as no user (docs/plugins.md).
+        eventually("ticket.created for the ctx-created ticket", () -> rows(CRM, "received").stream()
+                .anyMatch(row -> stored.getId().toString().equals(String.valueOf(
+                        StandInPlugins.record(row.get("event")).get("id")))));
+        Thread.sleep(200);
 
         JsonNode me = call(post("/escalated/api/plugins/" + CRM + "/ctx").contentType(MediaType.APPLICATION_JSON)
                 .content("{\"method\":\"ctx.currentUser\"}"), 200);
