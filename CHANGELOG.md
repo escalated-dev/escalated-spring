@@ -27,6 +27,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `cron`, as no user. SDK plugin widgets with a `badge` function carry its
   answer in `escalated.plugins.dashboardWidgets[].badge`, asked as the viewer
   within 5 s (`null` when it fails).
+- SDK plugin calls in flight at once keep their own users: the bridge reads
+  the `host_call_id` the plugin runtime (after 0.2.0) stamps on each ctx call,
+  so `ctx.currentUser` and the author of a plugin write are those of the
+  request the call serves, even while another request is served. With an
+  older runtime the bridge behaves as before.
 - Plugins, per the shared plugin contract (escalated-developer-context
   `domain-model/plugin-contract.md`); see `docs/plugins.md`.
   - **Native plugins**: beans implementing `dev.escalated.plugins.EscalatedPlugin`

@@ -257,6 +257,8 @@ both tables from the entities `PluginActivation` and `PluginStoreRecord`.
 - There is no tenant mode in this package, so the contract's tenant rules do not
   apply.
 - `ctx.tickets.query` on `requester_id` matches the contact's host user id.
-- The JSON-RPC calls carry no request id, so while the runtime serves one SDK
-  plugin for two dispatches at once with different users, that plugin's ctx
-  calls act as no user.
+- The runtime stamps each ctx call with the id of the host call it serves
+  (`host_call_id`), so an SDK plugin serving several requests at once acts as
+  each request's own user. An older runtime (0.2.0 and before) stamps nothing:
+  then, while it serves one SDK plugin for two dispatches at once with
+  different users, that plugin's ctx calls act as no user.
