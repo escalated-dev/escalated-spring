@@ -87,7 +87,7 @@ repositories {
 }
 
 dependencies {
-    implementation("dev.escalated:escalated-spring:0.2.9")
+    implementation("dev.escalated:escalated-spring:0.2.10")
 }
 ```
 
@@ -97,7 +97,7 @@ Or `pom.xml`:
 <dependency>
     <groupId>dev.escalated</groupId>
     <artifactId>escalated-spring</artifactId>
-    <version>0.2.9</version>
+    <version>0.2.10</version>
 </dependency>
 ```
 
