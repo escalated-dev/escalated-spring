@@ -83,3 +83,46 @@ The permission names earlier releases seeded (`tickets.view`, `agents.manage`,
 
 Users with no role have no permissions: turning the switch on without
 assigning roles locks staff out of every admin and agent screen.
+
+## Two-factor authentication
+
+With `ESCALATED_TWO_FACTOR` on (and `escalated.two-factor.encryption-key` /
+`ESCALATED_TWO_FACTOR_SECRET` set), staff sign in with the host's password
+login and then pass a TOTP challenge before any admin or agent page.
+
+- **Enrolment** is Admin > Settings > Two-factor
+  (`/escalated/admin/settings/two-factor`), open to every staff user, not only
+  admins, and needing no permission. `setup` flashes `two_factor_setup`
+  (`qr_uri`, `recovery_codes`), `confirm` takes a 6-digit `code` and flashes
+  `two_factor_confirmed`, `disable` removes the enrolment. Enrolments live in
+  `escalated_two_factors` (Flyway `V26`); the secret and the recovery codes are
+  encrypted with Spring Security's AES-GCM `Encryptors.delux` under the key
+  and never sent in props. Keep the key stable: with another key, existing
+  enrolments cannot be read and their challenges fail.
+- **TOTP** is RFC 6238 (SHA-1, 6 digits, 30 s) through
+  `com.eatthepath:java-otp`, one step of drift either side. The time step of an
+  accepted code is recorded, and that step or any earlier one is refused, so a
+  code works once.
+- **The challenge.** A staff user with a confirmed enrolment who has not
+  passed it in this session is redirected from every admin and agent page to
+  `GET /escalated/two-factor/challenge` (`Auth/TwoFactorChallenge`), which
+  posts `code` or `recovery_code` back to the same path. Success changes the
+  session ID, marks the session for that user and returns to the page they
+  asked for. Failures are errors on the field sent; 5 attempts per user per
+  minute, then 429. JSON clients get `403 {"two_factor_required": true}`.
+  API token requests are not challenged.
+- **Every new login is challenged.** An interactive sign-in
+  (`InteractiveAuthenticationSuccessEvent`: form login, remember-me, OAuth 2
+  login) and a logout clear the mark. A host whose login publishes no such
+  event calls `TwoFactorSession.forget(request)` on login.
+- **Recovery codes.** Eight single-use codes are issued at setup.
+- **Required.** `escalated.two-factor.required`
+  (`ESCALATED_TWO_FACTOR_REQUIRED`, default false), or the
+  `two_factor_required` setting (the "Require for all staff" switch on the
+  two-factor page posts only that key to Admin > Settings; the setting wins
+  when present). Staff without an enrolment are then sent to enrol and reach
+  nothing else. Shared as `escalated.two_factor_required`.
+- **Lost device.** `TwoFactorService.reset(email)` removes a user's enrolment.
+
+With the switch off nobody is challenged, the enrolment and challenge routes
+answer 404, and stored enrolments are kept.

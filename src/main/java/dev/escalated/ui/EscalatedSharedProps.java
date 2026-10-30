@@ -45,6 +45,7 @@ public class EscalatedSharedProps implements InertiaSharedProps {
     private final PluginRegistry plugins;
     private AccessFeatures accessFeatures;
     private AccessControl accessControl;
+    private dev.escalated.services.TwoFactorService twoFactor;
 
     public EscalatedSharedProps(
             EscalatedAuthorization authorization,
@@ -79,6 +80,12 @@ public class EscalatedSharedProps implements InertiaSharedProps {
     public EscalatedSharedProps withAccess(AccessFeatures features, AccessControl control) {
         this.accessFeatures = features;
         this.accessControl = control;
+        return this;
+    }
+
+    /** Shares {@code escalated.two_factor_required}: whether the signed-in staff user must enrol. */
+    public EscalatedSharedProps withTwoFactor(dev.escalated.services.TwoFactorService service) {
+        this.twoFactor = service;
         return this;
     }
 
@@ -129,6 +136,7 @@ public class EscalatedSharedProps implements InertiaSharedProps {
             features.put(AccessFeatures.SSO, false);
         }
         escalated.put("features", features);
+        escalated.put("two_factor_required", twoFactor != null && (isAdmin || isAgent) && twoFactor.required());
         escalated.put("guest_tickets_enabled", setting("guest_tickets_enabled", true));
         escalated.put("show_powered_by", setting("show_powered_by", true));
         escalated.put("knowledge_base_enabled", properties.getKnowledgeBase().isEnabled());

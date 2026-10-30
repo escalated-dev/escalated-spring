@@ -603,8 +603,28 @@ public class EscalatedProperties {
         }
     }
 
+    /**
+     * {@code escalated.two-factor.*}. The switch itself is {@code escalated.access.two-factor}
+     * ({@code ESCALATED_TWO_FACTOR}); {@code enabled} here is unused and kept for compatibility.
+     */
     public static class TwoFactorProperties {
         private boolean enabled = false;
+
+        /**
+         * Whether every staff user must enrol. Unset: {@code ESCALATED_TWO_FACTOR_REQUIRED}, else
+         * false. The {@code two_factor_required} setting wins when an admin has saved it.
+         */
+        private Boolean required;
+
+        /**
+         * The key enrolment secrets and recovery codes are encrypted with. Unset:
+         * {@code ESCALATED_TWO_FACTOR_SECRET}. Required to enrol anyone; keep it stable, since
+         * changing it makes every existing enrolment unreadable (challenges then fail closed).
+         */
+        private String encryptionKey;
+
+        /** The issuer an authenticator app shows. */
+        private String issuer = "Escalated";
 
         public boolean isEnabled() {
             return enabled;
@@ -612,6 +632,30 @@ public class EscalatedProperties {
 
         public void setEnabled(boolean enabled) {
             this.enabled = enabled;
+        }
+
+        public Boolean getRequired() {
+            return required;
+        }
+
+        public void setRequired(Boolean required) {
+            this.required = required;
+        }
+
+        public String getEncryptionKey() {
+            return encryptionKey;
+        }
+
+        public void setEncryptionKey(String encryptionKey) {
+            this.encryptionKey = encryptionKey;
+        }
+
+        public String getIssuer() {
+            return issuer;
+        }
+
+        public void setIssuer(String issuer) {
+            this.issuer = issuer;
         }
     }
 

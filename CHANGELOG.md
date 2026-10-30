@@ -8,6 +8,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Upgrading
+- Two-factor authentication is an install-level switch,
+  `escalated.access.two-factor` / `ESCALATED_TWO_FACTOR`, default off. To turn
+  it on: run the migrations (Flyway `V26` adds `escalated_two_factors`; a
+  Hibernate-built schema gets it from the new `TwoFactor` entity), set
+  `escalated.two-factor.encryption-key` / `ESCALATED_TWO_FACTOR_SECRET` (keep
+  it stable), then set `ESCALATED_TWO_FACTOR=true`. Set
+  `ESCALATED_TWO_FACTOR_REQUIRED=true` (or the setting) only after telling
+  staff. `TwoFactorService` was rewritten: its earlier methods
+  (`enableTwoFactor`, `verifyAndActivate`, `verifyCode`, `disableTwoFactor`,
+  `getProvisioningUri`), which no route used, are gone, and the
+  `two_factor_secret` / `two_factor_enabled` columns of the agent profile are
+  no longer read. See `docs/access-control.md`.
 - Roles and permissions is now an install-level switch,
   `escalated.access.roles-permissions` / `ESCALATED_ROLES_PERMISSIONS`,
   default off (ADR 2026-10-29-configurable-access-features). Off, the roles
@@ -37,6 +49,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   existing one still works and shares no plugin UI.
 
 ### Added
+- Two-factor authentication is enforced while `ESCALATED_TWO_FACTOR` is on:
+  TOTP enrolment for every staff user (Admin > Settings > Two-factor), a
+  challenge after the host's login on every admin and agent page
+  (`Auth/TwoFactorChallenge`, codes single-use, recovery codes, throttled),
+  and an optional "required" mode (`two_factor_required`). Admin > Settings
+  accepts a post with only `two_factor_required`, as escalated-laravel #275.
 - Roles and permissions are enforced while `ESCALATED_ROLES_PERMISSIONS` is
   on: every admin, agent and staff API route also needs its permission
   (`dev.escalated.security.RoutePermissions`, escalated-laravel's map; an

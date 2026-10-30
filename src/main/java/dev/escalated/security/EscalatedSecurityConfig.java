@@ -2,6 +2,7 @@ package dev.escalated.security;
 
 import dev.escalated.config.EscalatedProperties;
 import dev.escalated.services.TicketStatuses;
+import dev.escalated.services.TwoFactorService;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.security.web.access.intercept.AuthorizationFilter;
 
@@ -26,6 +27,7 @@ public class EscalatedSecurityConfig {
     private final EscalatedProperties properties;
     private final EnsureAccessFeaturesFilter accessFeaturesFilter;
     private final EnforceRoutePermissionsFilter routePermissionsFilter;
+    private final RequireTwoFactorFilter twoFactorFilter;
 
     public EscalatedSecurityConfig(
             ApiTokenAuthenticationFilter apiTokenFilter,
@@ -34,22 +36,25 @@ public class EscalatedSecurityConfig {
             EscalatedProperties properties,
             AccessFeatures accessFeatures,
             AccessControl accessControl,
-            ObjectProvider<TicketStatuses> ticketStatuses) {
+            ObjectProvider<TicketStatuses> ticketStatuses,
+            TwoFactorService twoFactor) {
         this.ticketVisibilityFilter = new TicketVisibilityFilter(ticketAccess);
         this.apiTokenFilter = apiTokenFilter;
         this.authorization = authorization;
         this.properties = properties;
         this.accessFeaturesFilter = new EnsureAccessFeaturesFilter(accessFeatures);
         this.routePermissionsFilter = new EnforceRoutePermissionsFilter(accessControl, ticketStatuses);
+        this.twoFactorFilter = new RequireTwoFactorFilter(twoFactor);
     }
 
     /**
      * The access-feature filters (ADR 2026-10-29-configurable-access-features): a switched-off
-     * feature's routes answer 404 before any gate, and while roles and permissions is on each staff
-     * route also needs its permission, after the gates.
+     * feature's routes answer 404 before any gate; after the gates, the two-factor challenge (admin
+     * and agent pages only), then, while roles and permissions is on, each staff route's permission.
      */
     private HttpSecurity access(HttpSecurity http) {
         return http.addFilterBefore(accessFeaturesFilter, AuthorizationFilter.class)
+                .addFilterAfter(twoFactorFilter, AuthorizationFilter.class)
                 .addFilterAfter(routePermissionsFilter, AuthorizationFilter.class);
     }
 
@@ -175,7 +180,11 @@ public class EscalatedSecurityConfig {
                             if (ui) {
                                 // The pages behind escalated.ui.enabled: the same two gates as
                                 // the admin and agent APIs.
-                                auth.requestMatchers("/escalated/admin", "/escalated/admin/**")
+                                // Every staff user's own two-factor enrolment and the challenge.
+                                auth.requestMatchers("/escalated/admin/settings/two-factor",
+                                                "/escalated/admin/settings/two-factor/**", "/escalated/two-factor/**")
+                                        .access(authorization.agent())
+                                        .requestMatchers("/escalated/admin", "/escalated/admin/**")
                                         .access(authorization.admin())
                                         // The guest pages: no sign-in, a verified email or a grant instead.
                                         .requestMatchers("/escalated/guest", "/escalated/guest/**")
