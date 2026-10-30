@@ -2,13 +2,13 @@ package dev.escalated.ui;
 
 import dev.escalated.config.EscalatedProperties;
 import dev.escalated.models.AgentProfile;
-import dev.escalated.models.Permission;
 import dev.escalated.plugins.PluginRegistry;
 import dev.escalated.repositories.AgentProfileRepository;
+import dev.escalated.security.AccessControl;
+import dev.escalated.security.AccessFeatures;
 import dev.escalated.security.EscalatedAuthorization;
 import dev.escalated.services.SettingsService;
 import jakarta.servlet.http.HttpServletRequest;
-import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -43,6 +43,8 @@ public class EscalatedSharedProps implements InertiaSharedProps {
     private final EscalatedProperties properties;
     private final TransactionTemplate readOnly;
     private final PluginRegistry plugins;
+    private AccessFeatures accessFeatures;
+    private AccessControl accessControl;
 
     public EscalatedSharedProps(
             EscalatedAuthorization authorization,
@@ -69,6 +71,17 @@ public class EscalatedSharedProps implements InertiaSharedProps {
         this.plugins = plugins;
     }
 
+    /**
+     * Shares the access switches as {@code escalated.features.*} and the user's permissions under
+     * roles and permissions (ADR 2026-10-29-configurable-access-features). Without it the switches
+     * are shared as off.
+     */
+    public EscalatedSharedProps withAccess(AccessFeatures features, AccessControl control) {
+        this.accessFeatures = features;
+        this.accessControl = control;
+        return this;
+    }
+
     @Override
     public Map<String, Object> share(HttpServletRequest request) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
@@ -78,7 +91,9 @@ public class EscalatedSharedProps implements InertiaSharedProps {
         Optional<AgentProfile> profile = signedIn ? agents.findByEmail(authentication.getName()) : Optional.empty();
         boolean isAdmin = signedIn && authorization.isAdmin(authentication);
         boolean isAgent = signedIn && authorization.isAgent(authentication);
-        List<String> permissions = readOnly.execute(status -> permissions(isAdmin, profile.orElse(null)));
+        List<String> permissions = accessControl != null
+                ? accessControl.shared(signedIn ? authentication : null, isAdmin || isAgent)
+                : (isAdmin || isAgent ? List.of("*") : List.of());
 
         // Reading the token makes Spring Security write the XSRF-TOKEN cookie Inertia's client sends back.
         if (request.getAttribute(CsrfToken.class.getName()) instanceof CsrfToken token) {
@@ -104,7 +119,16 @@ public class EscalatedSharedProps implements InertiaSharedProps {
         escalated.put("is_agent", isAgent);
         escalated.put("is_admin", isAdmin);
         escalated.put("permissions", permissions);
-        escalated.put("features", Map.of("newsletters", properties.getNewsletters().isEnabled()));
+        Map<String, Object> features = new LinkedHashMap<>();
+        features.put("newsletters", properties.getNewsletters().isEnabled());
+        if (accessFeatures != null) {
+            features.putAll(accessFeatures.shared());
+        } else {
+            features.put(AccessFeatures.ROLES_PERMISSIONS, false);
+            features.put(AccessFeatures.TWO_FACTOR, false);
+            features.put(AccessFeatures.SSO, false);
+        }
+        escalated.put("features", features);
         escalated.put("guest_tickets_enabled", setting("guest_tickets_enabled", true));
         escalated.put("show_powered_by", setting("show_powered_by", true));
         escalated.put("knowledge_base_enabled", properties.getKnowledgeBase().isEnabled());
@@ -126,22 +150,6 @@ public class EscalatedSharedProps implements InertiaSharedProps {
                 : authentication.getName());
         user.put("email", profile != null && profile.getEmail() != null ? profile.getEmail() : authentication.getName());
         return user;
-    }
-
-    private List<String> permissions(boolean isAdmin, AgentProfile profile) {
-        if (isAdmin) {
-            return List.of("*");
-        }
-        List<String> names = new ArrayList<>();
-        if (profile != null) {
-            AgentProfile fresh = agents.findById(profile.getId()).orElse(null);
-            if (fresh != null && fresh.getRole() != null) {
-                for (Permission permission : fresh.getRole().getPermissions()) {
-                    names.add(permission.getName());
-                }
-            }
-        }
-        return names;
     }
 
     private boolean setting(String key, boolean fallback) {

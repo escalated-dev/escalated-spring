@@ -29,6 +29,14 @@ public interface AgentProfileRepository extends JpaRepository<AgentProfile, Long
 
     List<AgentProfile> findByActiveTrueAndAgentTrueOrderByName();
 
+    /**
+     * The permission names an active profile's role grants: what a user may do while roles and
+     * permissions is enforced. Empty for an unknown, inactive or role-less profile.
+     */
+    @Query("SELECT DISTINCT p.name FROM AgentProfile ap JOIN ap.role r JOIN r.permissions p "
+            + "WHERE ap.email = :email AND ap.active = true")
+    List<String> findPermissionNamesByEmail(@Param("email") String email);
+
     @Query("SELECT ap FROM AgentProfile ap "
             + "WHERE (:search IS NULL OR LOWER(ap.email) LIKE :search OR LOWER(ap.name) LIKE :search) "
             + "ORDER BY ap.admin DESC, ap.agent DESC, ap.id ASC")

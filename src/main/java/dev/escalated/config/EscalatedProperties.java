@@ -125,6 +125,51 @@ public class EscalatedProperties {
     private UiProperties ui = new UiProperties();
     private ImportsProperties imports = new ImportsProperties();
     private PluginsProperties plugins = new PluginsProperties();
+    private AccessProperties access = new AccessProperties();
+
+    public AccessProperties getAccess() {
+        return access;
+    }
+
+    public void setAccess(AccessProperties access) {
+        this.access = access;
+    }
+
+    /**
+     * {@code escalated.access.*}: the install-level access switches (ADR
+     * 2026-10-29-configurable-access-features). Unset, each falls back to its environment variable
+     * ({@code ESCALATED_ROLES_PERMISSIONS}, {@code ESCALATED_TWO_FACTOR}, {@code ESCALATED_SSO}),
+     * else off. Never read from the settings table. See {@code dev.escalated.security.AccessFeatures}.
+     */
+    public static class AccessProperties {
+        private Boolean rolesPermissions;
+        private Boolean twoFactor;
+        private Boolean sso;
+
+        public Boolean getRolesPermissions() {
+            return rolesPermissions;
+        }
+
+        public void setRolesPermissions(Boolean rolesPermissions) {
+            this.rolesPermissions = rolesPermissions;
+        }
+
+        public Boolean getTwoFactor() {
+            return twoFactor;
+        }
+
+        public void setTwoFactor(Boolean twoFactor) {
+            this.twoFactor = twoFactor;
+        }
+
+        public Boolean getSso() {
+            return sso;
+        }
+
+        public void setSso(Boolean sso) {
+            this.sso = sso;
+        }
+    }
 
     public PluginsProperties getPlugins() {
         return plugins;
