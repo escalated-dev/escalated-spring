@@ -69,6 +69,13 @@ public class UiRoutes {
         register("escalated.admin.settings.email.update", "/admin/settings/email");
         register("escalated.admin.settings.public-tickets", "/admin/settings/public-tickets");
         register("escalated.admin.settings.public-tickets.update", "/admin/settings/public-tickets");
+        // Two-factor enrolment and the challenge (ADR 2026-10-29-configurable-access-features).
+        register("escalated.admin.two-factor.index", "/admin/settings/two-factor");
+        register("escalated.admin.two-factor.setup", "/admin/settings/two-factor/setup");
+        register("escalated.admin.two-factor.confirm", "/admin/settings/two-factor/confirm");
+        register("escalated.admin.two-factor.disable", "/admin/settings/two-factor/disable");
+        register("escalated.two-factor.challenge", "/two-factor/challenge");
+        register("escalated.two-factor.verify", "/two-factor/challenge");
         resource("workflows", "workflow", "/admin/workflows/{workflow}");
         register("escalated.admin.workflows.toggle", "/admin/workflows/{workflow}/toggle");
         register("escalated.admin.workflows.reorder", "/admin/workflows/reorder");
