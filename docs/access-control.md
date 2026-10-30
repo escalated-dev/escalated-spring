@@ -126,3 +126,62 @@ login and then pass a TOTP challenge before any admin or agent page.
 
 With the switch off nobody is challenged, the enrolment and challenge routes
 answer 404, and stored enrolments are kept.
+
+## Single sign-on
+
+With `ESCALATED_SSO` on, staff (and customers) can sign in through the provider
+chosen in Admin > Settings > SSO (`sso_provider`: `none`, `saml`, `oauth`,
+`jwt`). The page (`Admin/Settings/SsoSettings`) shows secrets masked as
+`********` (posting the mask back keeps the stored value) and lists the
+endpoints to give the identity provider. With `none`, `/escalated/sso/login`
+answers 404; a provider's routes answer 404 while another provider is chosen.
+
+| Route | Use |
+|---|---|
+| `GET /escalated/sso/login` | Start sign-in with the configured provider |
+| `GET /escalated/sso/saml/metadata` | SP metadata XML; its URL is the default SP entity ID |
+| `POST /escalated/sso/saml/acs` | SAML assertion consumer (HTTP-POST binding) |
+| `GET /escalated/sso/oauth/callback` | OAuth 2 / OIDC redirect URI |
+| `GET\|POST /escalated/sso/jwt/callback` | JWT hand-off (`jwt` parameter) |
+
+- **SAML** (XML signatures through Apache Santuario): the IdP certificate
+  (`sso_certificate`) must be configured; the single assertion must carry a
+  signature by it over the whole assertion (a signed Response alone, a key in
+  `KeyInfo`, `EncryptedAssertion` and duplicate IDs are refused); `Issuer` must
+  be `sso_entity_id`; `Audience` must name the SP entity ID; `Destination` and
+  the bearer `Recipient` must be the ACS URL; the validity windows must hold
+  (`escalated.sso.clock-skew`, default 120 s, at most 300); `InResponseTo` must
+  be an AuthnRequest issued in the last 10 minutes (IdP-initiated responses
+  only with `escalated.sso.allow-idp-initiated`); and the assertion ID is
+  single-use. Issued and used IDs live in `escalated_sso_message_ids`
+  (Flyway `V27`).
+- **OAuth 2 / OIDC** (Nimbus OAuth 2.0 SDK): authorization code with a
+  single-use `state` kept in the session and PKCE (`S256`); the code is
+  exchanged at `sso_oauth_token_url` and the profile read from
+  `sso_oauth_userinfo_url`. `email_verified: false` is refused.
+- **JWT** (Nimbus JOSE): `alg` must be `sso_jwt_algorithm` (HS* with
+  `sso_jwt_secret`, at least 32 bytes; RS* with the PEM public key or
+  certificate in `sso_jwt_secret`); `exp` is required; `nbf`/`iat` hold within
+  the skew; `aud` must be `escalated.sso.jwt-audience` (default the install's
+  base URL); `jti` is required and single-use.
+- **Users.** The email comes from `sso_attr_email` (SAML falls back to an
+  email-shaped NameID), the name from `sso_attr_name`, the role from
+  `sso_attr_role`. The user is found through `EscalatedSsoUsers`: by default
+  the host's `UserDetailsService` (or, without one, Escalated's agent profiles
+  by email). An unknown email is refused unless `escalated.sso.create-users`
+  is on and the host has a `UserDetailsManager`, which then gets a user with
+  an unusable random password. A host replaces this by defining an
+  `EscalatedSsoUsers` bean.
+- **Roles.** With roles & permissions on and `escalated.sso.sync-roles` on, a
+  role attribute naming an existing Escalated role becomes the user's role.
+  An unknown value changes nothing. SSO never grants the admin or agent gate.
+- On success the user is saved in the HTTP session under a new session ID,
+  the two-factor mark is cleared (SSO does not skip the challenge), and the
+  browser goes to `escalated.sso.redirect-to` (default `/escalated/agent`).
+  Every refusal answers a generic 403 and logs the reason.
+- Install-level properties (each with an `ESCALATED_SSO_*` env fallback):
+  `escalated.sso.sp-entity-id`, `allow-idp-initiated`, `jwt-audience`,
+  `clock-skew`, `create-users`, `sync-roles`, `redirect-to`, `base-url`.
+
+With the switch off every `/escalated/sso/*` route and the settings page
+answer 404. Escalated does not turn off the host's own password login.

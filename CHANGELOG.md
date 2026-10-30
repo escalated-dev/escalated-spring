@@ -8,6 +8,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Upgrading
+- Single sign-on is an install-level switch, `escalated.access.sso` /
+  `ESCALATED_SSO`, default off. To turn it on: run the migrations (Flyway
+  `V27` adds `escalated_sso_message_ids`; a Hibernate-built schema gets it from
+  the new entity), give the IdP the endpoints from Admin > Settings > SSO, make
+  sure a SAML install has the IdP certificate, decide on
+  `escalated.sso.create-users` and `escalated.sso.sync-roles`, then set
+  `ESCALATED_SSO=true`. `/escalated/sso/**` is open to guests and exempt from
+  CSRF (each response is checked by its own signature or state).
 - Two-factor authentication is an install-level switch,
   `escalated.access.two-factor` / `ESCALATED_TWO_FACTOR`, default off. To turn
   it on: run the migrations (Flyway `V26` adds `escalated_two_factors`; a
@@ -49,6 +57,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   existing one still works and shares no plugin UI.
 
 ### Added
+- Single sign-on while `ESCALATED_SSO` is on: SAML 2 (signed assertions with
+  Issuer, Audience, Destination, Recipient, validity, InResponseTo and replay
+  checks), OAuth 2 / OIDC (state + PKCE) and JWT (pinned algorithm, exp, aud,
+  single-use jti), with user lookup or creation through `EscalatedSsoUsers`
+  and optional role mapping. Admin > Settings > SSO is served.
 - Two-factor authentication is enforced while `ESCALATED_TWO_FACTOR` is on:
   TOTP enrolment for every staff user (Admin > Settings > Two-factor), a
   challenge after the host's login on every admin and agent page

@@ -38,6 +38,8 @@ public class EnsureAccessFeaturesFilter extends OncePerRequestFilter {
         routes.put(AccessFeatures.TWO_FACTOR, List.of(
                 "/escalated/admin/settings/two-factor", "/escalated/admin/settings/two-factor/**",
                 "/escalated/two-factor/**"));
+        routes.put(AccessFeatures.SSO, List.of(
+                "/escalated/admin/settings/sso", "/escalated/admin/settings/sso/**", "/escalated/sso/**"));
         return routes;
     }
 

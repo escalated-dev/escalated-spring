@@ -67,6 +67,10 @@ public class UiRoutes {
         register("escalated.admin.settings.database.update", "/admin/settings/database");
         register("escalated.admin.settings.email", "/admin/settings/email");
         register("escalated.admin.settings.email.update", "/admin/settings/email");
+        // Single sign-on (ADR 2026-10-29-configurable-access-features).
+        register("escalated.admin.settings.sso", "/admin/settings/sso");
+        register("escalated.admin.settings.sso.update", "/admin/settings/sso");
+        register("escalated.sso.login", "/sso/login");
         register("escalated.admin.settings.public-tickets", "/admin/settings/public-tickets");
         register("escalated.admin.settings.public-tickets.update", "/admin/settings/public-tickets");
         // Two-factor enrolment and the challenge (ADR 2026-10-29-configurable-access-features).
