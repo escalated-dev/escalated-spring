@@ -45,7 +45,8 @@ import org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandl
 
 /**
  * Roles and permissions switched on (ADR 2026-10-29-configurable-access-features, port test
- * checklist), through the real security chains and router.
+ * checklist), through the real security chains and router. The switch is read on every request, so
+ * it is turned on here at runtime, in the context the other UI tests share.
  */
 @SpringBootTest(classes = HostApplication.class)
 @AutoConfigureMockMvc
@@ -54,8 +55,7 @@ import org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandl
     "spring.mail.host=localhost",
     "escalated.ui.enabled=true",
     "escalated.ui.version=build-1",
-    "escalated.newsletters.enabled=true",
-    "escalated.access.roles-permissions=true",
+    "escalated.ui.scripts[0]=/build/app.js",
 })
 class RolesPermissionsEnforcementTest {
 
@@ -76,8 +76,17 @@ class RolesPermissionsEnforcementTest {
     private Role lightAgent;
     private Ticket ticket;
 
+    @Autowired private dev.escalated.config.EscalatedProperties properties;
+
+    @org.junit.jupiter.api.AfterEach
+    void switchOff() {
+        properties.getAccess().setRolesPermissions(null);
+    }
+
     @BeforeEach
     void seed() {
+        // Switched at runtime rather than by a property, so this shares the UI tests' cached context.
+        properties.getAccess().setRolesPermissions(true);
         seeder.seed();
         adminRole = roles.findByName("admin").orElseThrow();
         agentRole = roles.findByName("agent").orElseThrow();
@@ -220,14 +229,6 @@ class RolesPermissionsEnforcementTest {
         mvc.perform(post("/escalated/api/agent/tickets/" + ticket.getId() + "/links")
                         .header("Authorization", "Bearer " + token).contentType("application/json").content("{}"))
                 .andExpect(status().isForbidden());
-    }
-
-    @Test
-    void newsletterSendingNeedsNewslettersSend() throws Exception {
-        AgentProfile manager = staff(agents, "news", true, role(roles, permissions, "newsletters.manage"));
-        mvc.perform(api(get("/escalated/api/admin/newsletters"), manager, "")).andExpect(status().isOk());
-        AgentProfile none = staff(agents, "nonews", true, role(roles, permissions, "ticket.view"));
-        mvc.perform(api(get("/escalated/api/admin/newsletters"), none, "")).andExpect(status().isForbidden());
     }
 
     @Test

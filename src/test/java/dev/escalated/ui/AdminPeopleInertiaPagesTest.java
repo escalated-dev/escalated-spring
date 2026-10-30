@@ -49,7 +49,6 @@ import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilde
     "escalated.ui.enabled=true",
     "escalated.ui.version=build-1",
     "escalated.ui.scripts[0]=/build/app.js",
-    "escalated.access.roles-permissions=true",
 })
 class AdminPeopleInertiaPagesTest {
 
@@ -61,6 +60,12 @@ class AdminPeopleInertiaPagesTest {
     @Autowired private PermissionRepository permissions;
     @Autowired private ApiTokenRepository apiTokens;
     @Autowired private dev.escalated.services.PermissionSeeder seeder;
+    @Autowired private dev.escalated.config.EscalatedProperties properties;
+
+    @org.junit.jupiter.api.AfterEach
+    void switchRolesOff() {
+        properties.getAccess().setRolesPermissions(null);
+    }
 
     private String unique;
     private String totpSeed;
@@ -79,6 +84,7 @@ class AdminPeopleInertiaPagesTest {
         admin.setAgent(true);
         admin.setAdmin(true);
         admin.setTwoFactorSecret(totpSeed);
+        properties.getAccess().setRolesPermissions(true);
         seeder.seed();
         admin.setRole(roles.findByName("admin").orElseThrow());
         admin = agents.save(admin);

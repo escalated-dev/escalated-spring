@@ -38,6 +38,7 @@ import org.springframework.test.web.servlet.MockMvc;
     "spring.mail.host=localhost",
     "escalated.ui.enabled=true",
     "escalated.ui.version=build-1",
+    "escalated.ui.scripts[0]=/build/app.js",
 })
 class RolesPermissionsSwitchedOffTest {
 
