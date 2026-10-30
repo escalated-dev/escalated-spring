@@ -19,6 +19,7 @@ import dev.escalated.repositories.AgentProfileRepository;
 import dev.escalated.repositories.PluginActivationRepository;
 import dev.escalated.repositories.PluginStoreRecordRepository;
 import dev.escalated.repositories.TicketRepository;
+import dev.escalated.scheduling.PluginCronScheduler;
 import dev.escalated.services.TicketService;
 import hostapp.HostApplication;
 import jakarta.servlet.http.Cookie;
@@ -41,6 +42,7 @@ import org.springframework.mock.web.MockHttpSession;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.TestPropertySource;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
@@ -62,6 +64,10 @@ import org.springframework.test.web.servlet.request.RequestPostProcessor;
     "escalated.ui.version=build-1",
 })
 class PluginsHttpTest {
+
+    /** The wall-clock scheduler would also run "* * * * *" when a test crosses a minute; the tests drive cron themselves. */
+    @MockitoBean
+    PluginCronScheduler pluginCronScheduler;
 
     private static final ObjectMapper JSON = new ObjectMapper();
     private static final String BILLING = "acme--billing";
