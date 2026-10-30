@@ -175,6 +175,17 @@ public class Inertia {
         session.setAttribute(FLASH_SESSION_KEY, flash);
     }
 
+    /**
+     * Shows structured data once on the next page, as {@code flash.<key>} (for example
+     * {@code two_factor_setup}). Kept in the server-side session, never in a cookie.
+     */
+    public void flash(String key, Object value) {
+        HttpSession session = currentRequest().getSession(true);
+        Map<String, Object> flash = sessionMap(session, FLASH_SESSION_KEY);
+        flash.put(key, value);
+        session.setAttribute(FLASH_SESSION_KEY, flash);
+    }
+
     /** Hands validation errors (field to messages) to the next page, as {@code errors}: the first message each. */
     public void errors(Map<String, List<String>> errors) {
         HttpSession session = currentRequest().getSession(true);

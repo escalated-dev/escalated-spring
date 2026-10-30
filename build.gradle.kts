@@ -82,6 +82,10 @@ dependencies {
     // available, these copies can be replaced with:
     //   implementation("dev.escalated:escalated-locale:<version>")
 
+    // TOTP (RFC 6238) for two-factor authentication, and the base32 its secrets are written in.
+    implementation("com.eatthepath:java-otp:0.4.0")
+    implementation("commons-codec:commons-codec:1.21.0")
+
     implementation("org.flywaydb:flyway-core")
     // Flyway 10 moved database support out of core. Without these, core
     // answers "Unsupported Database" for both engines Escalated ships

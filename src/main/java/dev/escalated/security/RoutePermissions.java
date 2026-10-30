@@ -208,6 +208,10 @@ public final class RoutePermissions {
     private static List<Entry> build() {
         List<Entry> map = new ArrayList<>();
 
+        // ---- Personal: every staff user's own two-factor enrolment -------------
+        map.add(e("*", A + "/settings/two-factor", List.of()));
+        map.add(e("*", A + "/settings/two-factor/**", List.of()));
+
         // ---- Tickets: the admin and agent pages ------------------------------
         map.add(e("GET", G, VIEW));
         map.add(e("POST", STAFF + "/tickets/bulk", VIEW)); // plus each action's, see required()

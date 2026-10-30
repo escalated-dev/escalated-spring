@@ -54,7 +54,7 @@ To serve the shared agent, customer and admin screens (`@escalated-dev/escalated
 21. **Capacity Management** -- Track and enforce agent workload limits
 22. **Skill-based Routing** -- Route tickets to agents with matching skills
 23. **CSAT Ratings** -- Customer satisfaction surveys with token-based access
-24. **2FA (TOTP)** -- Time-based one-time password support for agent accounts
+24. **2FA (TOTP)** -- Time-based one-time passwords for staff, with a challenge after sign-in, behind the install-level `ESCALATED_TWO_FACTOR` switch ([access control](docs/access-control.md))
 25. **Guest Access** -- Token-based ticket access without authentication
 26. **Inbound Email** -- Single webhook endpoint with Postmark + Mailgun + AWS SES parsers, signed Reply-To ticket resolution, and replies accepted only from the ticket's requester
 27. **Plugins** -- Native Java plugins and SDK plugins (through the Node plugin runtime), with Admin > Plugins, plugin pages, endpoints, webhooks and domain events ([docs](docs/plugins.md))

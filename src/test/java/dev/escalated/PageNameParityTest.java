@@ -182,6 +182,8 @@ class PageNameParityTest {
           "Escalated/Admin/BusinessHours/Form",
           "Escalated/Admin/AuditLog/Index",
           "Escalated/Admin/Plugins/Index",
+          "Escalated/Admin/Settings/TwoFactor",
+          "Escalated/Auth/TwoFactorChallenge",
           "Escalated/Plugin/Page");
 
   @Test

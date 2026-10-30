@@ -43,9 +43,9 @@ public class AdminUiPages {
      */
     public static final List<String> SUPPORTED_SETTINGS = List.of(
             "allow_customer_close", "show_powered_by",
-            "widget_color", "widget_position", "widget_greeting", WidgetOrigins.SETTING);
+            "widget_color", "widget_position", "widget_greeting", WidgetOrigins.SETTING, "two_factor_required");
 
-    private static final Set<String> BOOLEAN_SETTINGS = Set.of("allow_customer_close", "show_powered_by");
+    private static final Set<String> BOOLEAN_SETTINGS = Set.of("allow_customer_close", "show_powered_by", "two_factor_required");
     private static final Pattern HEX_COLOR = Pattern.compile("^#[0-9A-Fa-f]{6}$");
 
     private final SettingsService settings;
@@ -88,6 +88,7 @@ public class AdminUiPages {
         values.put("widget_position", settings.getOrDefault("widget_position", "bottom-right"));
         values.put("widget_greeting", settings.getOrDefault("widget_greeting", "Hi there! How can we help?"));
         values.put(WidgetOrigins.SETTING, settings.getOrDefault(WidgetOrigins.SETTING, ""));
+        values.put("two_factor_required", bool("two_factor_required", false));
 
         Map<String, Object> props = new LinkedHashMap<>();
         props.put("settings", values);
