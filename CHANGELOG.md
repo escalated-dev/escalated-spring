@@ -8,6 +8,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Upgrading
+- Roles and permissions is now an install-level switch,
+  `escalated.access.roles-permissions` / `ESCALATED_ROLES_PERMISSIONS`,
+  default off (ADR 2026-10-29-configurable-access-features). Off, the roles
+  screens and `/escalated/api/admin/roles*` answer 404 and the admin and agent
+  gates are the only authority; `escalated.permissions` is `['*']` for staff.
+  The newsletter screens no longer check `newsletters.manage` /
+  `newsletters.send` while it is off, so any admin may use them; installs that
+  relied on those permissions to restrict admins must turn the switch on.
+- To turn it on: run the migrations (Flyway `V25` seeds escalated-laravel's
+  permissions and the `admin`, `agent` and `light_agent` roles; a
+  Hibernate-built schema gets them at startup while the switch is on), give
+  every staff user a role (at least one `admin`, e.g.
+  `PermissionSeeder.assignRole(email, "admin")`), then set
+  `ESCALATED_ROLES_PERMISSIONS=true`. A user without a role has no
+  permissions, whatever `is_admin` says. See `docs/access-control.md`.
 - Flyway migration `V24` adds `escalated_plugins` and `escalated_plugin_store`
   (PostgreSQL and MySQL editions). Hosts whose schema Hibernate builds get both
   tables from the new entities.
@@ -22,6 +37,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   existing one still works and shares no plugin UI.
 
 ### Added
+- Roles and permissions are enforced while `ESCALATED_ROLES_PERMISSIONS` is
+  on: every admin, agent and staff API route also needs its permission
+  (`dev.escalated.security.RoutePermissions`, escalated-laravel's map; an
+  unmapped staff route is refused), status changes to resolved/closed/reopened
+  need `ticket.close`, bulk actions check each action, and API tokens are
+  checked against their owner's permissions. Every page shares
+  `escalated.features.roles_permissions`, `two_factor` and `sso`.
 - Native plugins get cron schedules and widget badges, like SDK plugins:
   `EscalatedPlugin.cron()` (cron expression to `PluginCronTask`, run by
   `PluginCronScheduler` when due, as no user, within 30 s, for active plugins

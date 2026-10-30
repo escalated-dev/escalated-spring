@@ -1,6 +1,9 @@
 package dev.escalated.security;
 
 import dev.escalated.config.EscalatedProperties;
+import dev.escalated.services.TicketStatuses;
+import org.springframework.beans.factory.ObjectProvider;
+import org.springframework.security.web.access.intercept.AuthorizationFilter;
 
 import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.annotation.Bean;
@@ -21,16 +24,33 @@ public class EscalatedSecurityConfig {
     private final EscalatedAuthorization authorization;
     private final TicketVisibilityFilter ticketVisibilityFilter;
     private final EscalatedProperties properties;
+    private final EnsureAccessFeaturesFilter accessFeaturesFilter;
+    private final EnforceRoutePermissionsFilter routePermissionsFilter;
 
     public EscalatedSecurityConfig(
             ApiTokenAuthenticationFilter apiTokenFilter,
             EscalatedAuthorization authorization,
             TicketAccess ticketAccess,
-            EscalatedProperties properties) {
+            EscalatedProperties properties,
+            AccessFeatures accessFeatures,
+            AccessControl accessControl,
+            ObjectProvider<TicketStatuses> ticketStatuses) {
         this.ticketVisibilityFilter = new TicketVisibilityFilter(ticketAccess);
         this.apiTokenFilter = apiTokenFilter;
         this.authorization = authorization;
         this.properties = properties;
+        this.accessFeaturesFilter = new EnsureAccessFeaturesFilter(accessFeatures);
+        this.routePermissionsFilter = new EnforceRoutePermissionsFilter(accessControl, ticketStatuses);
+    }
+
+    /**
+     * The access-feature filters (ADR 2026-10-29-configurable-access-features): a switched-off
+     * feature's routes answer 404 before any gate, and while roles and permissions is on each staff
+     * route also needs its permission, after the gates.
+     */
+    private HttpSecurity access(HttpSecurity http) {
+        return http.addFilterBefore(accessFeaturesFilter, AuthorizationFilter.class)
+                .addFilterAfter(routePermissionsFilter, AuthorizationFilter.class);
     }
 
     /**
@@ -81,7 +101,7 @@ public class EscalatedSecurityConfig {
     @Bean
     @Order(0)
     public SecurityFilterChain escalatedPluginEndpointSecurityFilterChain(HttpSecurity http) throws Exception {
-        http.securityMatcher("/escalated/api/plugins/**")
+        access(http).securityMatcher("/escalated/api/plugins/**")
                 .csrf(csrf -> csrf.disable())
                 .addFilterBefore(apiTokenFilter, UsernamePasswordAuthenticationFilter.class)
                 .authorizeHttpRequests(auth -> auth.anyRequest().access(authorization.admin()));
@@ -91,7 +111,7 @@ public class EscalatedSecurityConfig {
     @Bean
     @Order(1)
     public SecurityFilterChain escalatedApiSecurityFilterChain(HttpSecurity http) throws Exception {
-        http.securityMatcher("/escalated/api/**")
+        access(http).securityMatcher("/escalated/api/**")
                 .csrf(csrf -> csrf.disable())
                 .sessionManagement(
                         session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
@@ -131,7 +151,7 @@ public class EscalatedSecurityConfig {
     @Order(2)
     public SecurityFilterChain escalatedWebSecurityFilterChain(HttpSecurity http) throws Exception {
         boolean ui = properties.getUi().isEnabled();
-        http.securityMatcher("/escalated/**")
+        access(http).securityMatcher("/escalated/**")
                 .csrf(
                         csrf -> {
                             csrf.ignoringRequestMatchers(

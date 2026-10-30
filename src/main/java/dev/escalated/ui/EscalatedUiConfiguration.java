@@ -47,10 +47,13 @@ public class EscalatedUiConfiguration {
             SettingsService settings,
             EscalatedProperties properties,
             @Qualifier(EscalatedTransactionManagers.ESCALATED) PlatformTransactionManager transactions,
-            ObjectProvider<PluginRegistry> plugins) {
+            ObjectProvider<PluginRegistry> plugins,
+            dev.escalated.security.AccessFeatures accessFeatures,
+            dev.escalated.security.AccessControl accessControl) {
         TransactionTemplate readOnly = new TransactionTemplate(transactions);
         readOnly.setReadOnly(true);
-        return new EscalatedSharedProps(authorization, agents, settings, properties, readOnly, plugins.getIfAvailable());
+        return new EscalatedSharedProps(authorization, agents, settings, properties, readOnly, plugins.getIfAvailable())
+                .withAccess(accessFeatures, accessControl);
     }
 
     @Bean

@@ -37,7 +37,10 @@ import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.ResultActions;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 
-/** The people pages over the Inertia protocol: users, roles and API tokens. */
+/**
+ * The people pages over the Inertia protocol: users, roles and API tokens. The roles screens exist
+ * only with roles and permissions on, so it is on here and the admin holds the {@code admin} role.
+ */
 @SpringBootTest(classes = HostApplication.class)
 @AutoConfigureMockMvc
 @ActiveProfiles("test")
@@ -56,6 +59,13 @@ class AdminPeopleInertiaPagesTest {
     @Autowired private RoleRepository roles;
     @Autowired private PermissionRepository permissions;
     @Autowired private ApiTokenRepository apiTokens;
+    @Autowired private dev.escalated.services.PermissionSeeder seeder;
+    @Autowired private dev.escalated.config.EscalatedProperties properties;
+
+    @org.junit.jupiter.api.AfterEach
+    void switchRolesOff() {
+        properties.getAccess().setRolesPermissions(null);
+    }
 
     private String unique;
     private String totpSeed;
@@ -74,6 +84,9 @@ class AdminPeopleInertiaPagesTest {
         admin.setAgent(true);
         admin.setAdmin(true);
         admin.setTwoFactorSecret(totpSeed);
+        properties.getAccess().setRolesPermissions(true);
+        seeder.seed();
+        admin.setRole(roles.findByName("admin").orElseThrow());
         admin = agents.save(admin);
 
         agent = new AgentProfile();

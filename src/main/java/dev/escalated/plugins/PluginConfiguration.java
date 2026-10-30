@@ -35,10 +35,17 @@ import org.springframework.transaction.support.TransactionTemplate;
 @Configuration(proxyBeanMethods = false)
 public class PluginConfiguration {
 
-    /** Admins hold every capability; anyone else, the permissions of their agent role. */
+    /**
+     * Admins hold every capability; anyone else, the permissions of their agent role. While roles and
+     * permissions is on, only the role counts, admins included (ADR 2026-10-29-configurable-access-features).
+     */
     static PluginCapabilities defaultCapabilities(
-            EscalatedAuthorization authorization, AgentProfileRepository agents, TransactionTemplate readOnly) {
+            EscalatedAuthorization authorization, AgentProfileRepository agents, TransactionTemplate readOnly,
+            dev.escalated.security.AccessControl access) {
         return (user, capability) -> {
+            if (access != null && access.enforced()) {
+                return access.allows(user, capability);
+            }
             if (authorization.isAdmin(user)) {
                 return true;
             }
@@ -74,6 +81,7 @@ public class PluginConfiguration {
             ObjectProvider<AuthorizedTicketBroadcaster> broadcaster,
             ObjectProvider<PluginCapabilities> capabilities,
             EscalatedAuthorization authorization,
+            ObjectProvider<dev.escalated.security.AccessControl> accessControl,
             @Qualifier(EscalatedTransactionManagers.ESCALATED) PlatformTransactionManager transactionManager) {
         TransactionTemplate transactions = new TransactionTemplate(transactionManager);
         TransactionTemplate readOnly = new TransactionTemplate(transactionManager);
@@ -92,7 +100,7 @@ public class PluginConfiguration {
                 new PluginStorage(records, transactions),
                 domain,
                 capabilities.orderedStream().findFirst()
-                        .orElseGet(() -> defaultCapabilities(authorization, agents, readOnly)),
+                        .orElseGet(() -> defaultCapabilities(authorization, agents, readOnly, accessControl.getIfAvailable())),
                 authorization::isAdmin,
                 transactions,
                 executor);

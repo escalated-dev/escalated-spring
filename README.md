@@ -40,7 +40,7 @@ To serve the shared agent, customer and admin screens (`@escalated-dev/escalated
 7. **Knowledge Base** -- Articles and categories with search, view counts, and feedback
 8. **Webhooks** -- HMAC-signed webhook delivery with retry logic
 9. **API Tokens** -- SHA-256 hashed token authentication for API access
-10. **Roles & Permissions** -- Granular role-based access control
+10. **Roles & Permissions** -- Granular role-based access control, enforced behind the install-level `ESCALATED_ROLES_PERMISSIONS` switch ([access control](docs/access-control.md))
 11. **Audit Logging** -- Complete audit trail for all actions
 12. **Import System** -- Bulk ticket import from structured data
 13. **Side Conversations** -- Private threaded conversations within tickets
