@@ -4,7 +4,7 @@ buildscript {
     }
     dependencies {
         // The Boot Gradle plugin resolves its own graph, outside the app BOM.
-        classpath(platform("tools.jackson:jackson-bom:3.1.8"))
+        classpath(platform("tools.jackson:jackson-bom:3.2.4"))
         classpath("org.apache.commons:commons-lang3:3.21.0")
     }
 }
@@ -24,7 +24,7 @@ version = "0.2.9"
 // Security patches within the release lines managed by Boot 4.1.1. Keep each
 // Jackson family aligned rather than overriding only core or databind.
 extra["jackson-2-bom.version"] = "2.21.8"
-extra["jackson-bom.version"] = "3.1.8"
+extra["jackson-bom.version"] = "3.2.4"
 extra["tomcat.version"] = "11.0.27"
 
 java {
@@ -51,7 +51,7 @@ repositories {
 dependencies {
     // Export patched families to Gradle consumers as well as the generated POM.
     api(platform("com.fasterxml.jackson:jackson-bom:2.21.8"))
-    api(platform("tools.jackson:jackson-bom:3.1.8"))
+    api(platform("tools.jackson:jackson-bom:3.2.4"))
     // These types occur in public controllers, repository interfaces,
     // constructors and annotations, so hosts need them on the compile classpath.
     api("org.springframework.boot:spring-boot-starter-web")
