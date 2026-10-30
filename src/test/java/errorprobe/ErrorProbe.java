@@ -46,6 +46,12 @@ public class ErrorProbe {
             throw new IllegalStateException("relation escalated_secret_table does not exist");
         }
 
+        @GetMapping("/escalated/error-probe/500-response")
+        public ResponseEntity<String> failedResponse() {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("upstream detail: relation escalated_secret_table does not exist");
+        }
+
         @GetMapping("/escalated/error-probe/503")
         public String down() {
             throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, "upstream detail");

@@ -128,6 +128,24 @@ public class EscalatedProperties {
     private AccessProperties access = new AccessProperties();
     private SsoProperties sso = new SsoProperties();
 
+    /**
+     * {@code escalated.debug}: debug mode, off by default. While it is on, an Inertia visit to an
+     * Escalated page that fails with a 500 is not answered with the generic {@code Escalated/Error}
+     * page: an exception goes on to the container and Boot's error handling, and a 500 a controller
+     * returned goes out as written, the way escalated-laravel leaves a 500 to the framework's debug
+     * page under {@code APP_DEBUG}. Other statuses still get the page. Never turn it on in
+     * production.
+     */
+    private boolean debug = false;
+
+    public boolean isDebug() {
+        return debug;
+    }
+
+    public void setDebug(boolean debug) {
+        this.debug = debug;
+    }
+
     public SsoProperties getSso() {
         return sso;
     }

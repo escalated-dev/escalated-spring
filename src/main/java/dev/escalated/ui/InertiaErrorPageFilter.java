@@ -35,6 +35,10 @@ import org.springframework.web.util.ContentCachingResponseWrapper;
  * {@link UiRoutes#PREFIX}, responses that are already Inertia pages, and every other status
  * (redirects, validation's 303, the version check's 409). Registered only while
  * {@code escalated.ui.enabled} is on.
+ *
+ * <p>With {@code escalated.debug} on, a 500 is left alone too: an exception is rethrown for the
+ * container and Boot's error handling, and a 500 response goes out as written, the way
+ * escalated-laravel leaves a 500 to the framework's debug page under {@code APP_DEBUG}.
  */
 public class InertiaErrorPageFilter extends OncePerRequestFilter {
 
@@ -82,7 +86,8 @@ public class InertiaErrorPageFilter extends OncePerRequestFilter {
         try {
             chain.doFilter(request, captured);
         } catch (IOException | ServletException | RuntimeException exception) {
-            if (response.isCommitted()) {
+            if (response.isCommitted() || properties.isDebug()) {
+                // In debug mode the failure is the developer's to read, as the framework shows it.
                 throw exception;
             }
             LOG.error("Unhandled exception on {} {}", request.getMethod(), request.getRequestURI(), exception);
@@ -92,6 +97,7 @@ public class InertiaErrorPageFilter extends OncePerRequestFilter {
 
         int status = captured.getStatus();
         if (MESSAGES.containsKey(status)
+                && !(status == 500 && properties.isDebug())
                 && captured.getHeader(Inertia.HEADER) == null
                 && !response.isCommitted()) {
             captured.resetBuffer();

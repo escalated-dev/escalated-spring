@@ -115,6 +115,10 @@ escalated.route-prefix=escalated
 # The shared Inertia pages (off by default; Laravel defaults to on). See docs/ui.md
 escalated.ui.enabled=false
 
+# Debug mode (off by default): a 500 on an Inertia visit reaches Boot's own error handling
+# instead of the generic Error page. Development only; see docs/ui.md
+escalated.debug=false
+
 # Feature toggles
 escalated.knowledge-base.enabled=true
 escalated.broadcasting.enabled=false
