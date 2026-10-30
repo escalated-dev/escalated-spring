@@ -79,4 +79,18 @@ public class EscalatedUiConfiguration {
         registration.addUrlPatterns(UiRoutes.PREFIX + "/*");
         return registration;
     }
+
+    /**
+     * The Escalated/Error page for Inertia visits that end in an error. Ahead of Spring Security
+     * (whose filter chain is at {@code -100}), so a refused gate or CSRF token is caught too.
+     */
+    @Bean
+    public FilterRegistrationBean<InertiaErrorPageFilter> escalatedInertiaErrorPageFilter(
+            EscalatedProperties properties) {
+        FilterRegistrationBean<InertiaErrorPageFilter> registration =
+                new FilterRegistrationBean<>(new InertiaErrorPageFilter(properties));
+        registration.addUrlPatterns(UiRoutes.PREFIX, UiRoutes.PREFIX + "/*");
+        registration.setOrder(-101);
+        return registration;
+    }
 }

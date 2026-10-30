@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Upgrading
+- **An Inertia visit to an Escalated page that ends in 403, 404, 419, 429, 500 or 503 now gets the shared `Escalated/Error` page** (props `status` and a generic `message`, as Laravel and Rails send them) instead of an empty body, Boot's error JSON or Spring Security's error, which the Inertia client could only show in a modal. A new servlet filter (`InertiaErrorPageFilter`, order `-101`, ahead of Spring Security) does it for `/escalated/**` while `escalated.ui.enabled` is on, so a refused gate or CSRF token, a status a controller returns, a `ResponseStatusException` and an unhandled exception (logged, then answered 500) all get the page. A controller's or exception's own text never reaches it. Untouched: requests without `X-Inertia` (full page loads, JSON and API clients), `/escalated/api/**`, the webhook, SSO, newsletter, WebSocket and widget paths, host routes, redirects, validation's 303 and the version check's 409. There is no debug mode to defer to, so a 500 always gets the page; the exception is in the log.
+
 ## [0.2.8] - 2026-10-30
 
 ### Upgrading

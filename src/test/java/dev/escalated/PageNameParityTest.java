@@ -185,7 +185,8 @@ class PageNameParityTest {
           "Escalated/Admin/Settings/TwoFactor",
           "Escalated/Auth/TwoFactorChallenge",
           "Escalated/Admin/Settings/SsoSettings",
-          "Escalated/Plugin/Page");
+          "Escalated/Plugin/Page",
+          "Escalated/Error");
 
   @Test
   void theUiLayerRendersEveryPageItServes() throws IOException {
