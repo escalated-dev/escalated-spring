@@ -1,17 +1,20 @@
 package dev.escalated.ui;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import dev.escalated.config.EscalatedProperties;
 import dev.escalated.models.AgentProfile;
 import dev.escalated.repositories.AgentProfileRepository;
 import errorprobe.ErrorProbe;
 import hostapp.HostApplication;
 import java.util.UUID;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -51,6 +54,7 @@ class InertiaErrorPageTest {
 
     @Autowired private MockMvc mvc;
     @Autowired private AgentProfileRepository agents;
+    @Autowired private EscalatedProperties properties;
 
     private AgentProfile admin;
     private AgentProfile agent;
@@ -70,6 +74,11 @@ class InertiaErrorPageTest {
         agent.setEmail("agent-" + unique + "@example.com");
         agent.setAgent(true);
         agent = agents.save(agent);
+    }
+
+    @AfterEach
+    void debugOff() {
+        properties.setDebug(false);
     }
 
     private static MockHttpServletRequestBuilder inertia(MockHttpServletRequestBuilder request) {
@@ -133,6 +142,55 @@ class InertiaErrorPageTest {
         assertThat(response.getContentAsString())
                 .doesNotContain("upstream detail")
                 .doesNotContain("escalated_secret_table");
+    }
+
+    @Test
+    void aFailedResponseGetsTheErrorPageWithoutItsBody() throws Exception {
+        MockHttpServletResponse response =
+                perform(inertia(get("/escalated/error-probe/500-response")).with(user(agent.getEmail())));
+
+        errorPage(response, 500, "Something went wrong on our end.");
+        assertThat(response.getContentAsString()).doesNotContain("escalated_secret_table");
+    }
+
+    /*
+     * With escalated.debug on, a 500 is the developer's to read: an exception goes on to the
+     * container and Boot's error handling, and a 500 a controller returned goes out as written, the
+     * way escalated-laravel leaves a 500 to the framework's debug page under APP_DEBUG. Every other
+     * status still gets the page. (The flag is read per request, so these share the cached context.)
+     */
+
+    @Test
+    void inDebugModeAnUnhandledExceptionReachesTheFrameworksOwnErrorHandling() {
+        properties.setDebug(true);
+
+        assertThatThrownBy(() -> perform(inertia(get("/escalated/error-probe/500")).with(user(agent.getEmail()))))
+                .hasRootCauseInstanceOf(IllegalStateException.class)
+                .rootCause()
+                .hasMessage("relation escalated_secret_table does not exist");
+    }
+
+    @Test
+    void inDebugModeAFailedResponseGoesOutAsWritten() throws Exception {
+        properties.setDebug(true);
+
+        MockHttpServletResponse response =
+                perform(inertia(get("/escalated/error-probe/500-response")).with(user(agent.getEmail())));
+
+        assertThat(response.getStatus()).isEqualTo(500);
+        assertThat(response.getHeader("X-Inertia")).isNull();
+        assertThat(response.getContentAsString())
+                .isEqualTo("upstream detail: relation escalated_secret_table does not exist");
+    }
+
+    @Test
+    void inDebugModeOtherStatusesStillGetTheErrorPage() throws Exception {
+        properties.setDebug(true);
+
+        errorPage(
+                perform(inertia(get("/escalated/error-probe/503")).with(user(agent.getEmail()))),
+                503,
+                "The service is temporarily unavailable. Try again shortly.");
     }
 
     @Test

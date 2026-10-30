@@ -48,6 +48,19 @@ The components that call `fetch` instead (saved views, presence, mentions) send 
 `<meta name="csrf-token">` value as `X-CSRF-TOKEN`, as on Laravel; the built-in root page writes
 that tag, and the chain accepts either header.
 
+## Errors
+
+An Inertia visit to an Escalated page that ends in 403, 404, 419, 429, 500 or 503 gets the shared
+`Escalated/Error` page, props `status` and a generic `message` (`InertiaErrorPageFilter`). A
+controller's or exception's own text never reaches it. Full page loads, JSON and API clients, host
+routes and other statuses are left alone.
+
+While developing, set `escalated.debug=true` (default `false`): a 500 on an Inertia visit then skips
+the page. An exception goes on to the container and Boot's error handling (the whitelabel page or
+error JSON, with the stack trace as `server.error.*` allows), and a 500 a controller returned goes
+out as written, the way escalated-laravel leaves a 500 to the framework's debug page under
+`APP_DEBUG`. The other statuses still get the page. Leave it off in production.
+
 ## Shared props
 
 Every page receives, as Laravel's `HandleInertiaRequests` and `shareInertiaData` share them:
