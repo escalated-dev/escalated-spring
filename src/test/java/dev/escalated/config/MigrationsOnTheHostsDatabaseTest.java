@@ -66,7 +66,7 @@ class MigrationsOnTheHostsDatabaseTest {
     @Test
     void theDefaultRolesAreSeeded() {
         assertThat(jdbc.queryForList("SELECT name FROM escalated_roles", String.class))
-                .containsExactlyInAnyOrder("admin", "agent", "supervisor");
+                .containsExactlyInAnyOrder("admin", "agent", "supervisor", "light_agent");
     }
 
     @Test
