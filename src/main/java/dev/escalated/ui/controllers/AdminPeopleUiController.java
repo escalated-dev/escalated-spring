@@ -67,6 +67,22 @@ public class AdminPeopleUiController {
         return inertia.back(routes.url("escalated.admin.users.index"));
     }
 
+    /**
+     * The users screen's roles picker ({@code escalated.admin.users.roles}): only while roles and
+     * permissions is on (404 otherwise), and needs {@code role.manage}.
+     */
+    @PutMapping("/users/{user:\\d+}/roles")
+    public ResponseEntity<Void> updateRoles(@PathVariable("user") Long id, HttpServletRequest request,
+                                            Authentication authentication) {
+        String refused = pages.updateUserRoles(id, UiInput.of(request), agentId(authentication));
+        if (refused != null) {
+            inertia.flash("error", refused);
+            return inertia.back(routes.url("escalated.admin.users.index"));
+        }
+        inertia.flash("success", "User updated.");
+        return inertia.back(routes.url("escalated.admin.users.index"));
+    }
+
     // ── Roles ───────────────────────────────────────────────────────────
 
     @GetMapping("/roles")

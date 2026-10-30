@@ -299,6 +299,7 @@ public final class RoutePermissions {
         // ---- Users, agents, audit ------------------------------------------------------------
         map.add(e("GET", BOTH + "/users", "user.view"));
         map.add(e("*", BOTH + "/users/*/role", "user.manage"));
+        map.add(e("PUT", A + "/users/*/roles", "role.manage"));
         map.add(e("GET", BOTH + "/{audit-log,audit-logs}",
                 "audit.view"));
 
