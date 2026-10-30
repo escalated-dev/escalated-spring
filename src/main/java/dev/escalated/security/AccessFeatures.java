@@ -28,7 +28,7 @@ public class AccessFeatures {
     public static final String SSO = "sso";
 
     /** The features this port enforces. One not listed here is reported off. */
-    static final Set<String> ENFORCED = Set.of(ROLES_PERMISSIONS, TWO_FACTOR);
+    static final Set<String> ENFORCED = Set.of(ROLES_PERMISSIONS, TWO_FACTOR, SSO);
 
     private final EscalatedProperties properties;
     private final Environment environment;

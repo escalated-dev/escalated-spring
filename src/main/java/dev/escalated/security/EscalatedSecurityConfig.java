@@ -163,7 +163,10 @@ public class EscalatedSecurityConfig {
                                     "/escalated/api/**",
                                     "/escalated/n/**",
                                     "/escalated/webhook/**",
-                                    "/escalated/webhooks/newsletter/**");
+                                    "/escalated/webhooks/newsletter/**",
+                                    // The IdP's cross-site POST to the SAML ACS and the JWT hand-off
+                                    // carry no CSRF token; each is checked by its own signature.
+                                    "/escalated/sso/**");
                             if (ui) {
                                 // Inertia's client (axios) echoes the XSRF-TOKEN cookie back as
                                 // X-XSRF-TOKEN, unmasked, as on Laravel; the pages' fetch calls
@@ -192,7 +195,10 @@ public class EscalatedSecurityConfig {
                                         .requestMatchers("/escalated/agent", "/escalated/agent/**")
                                         .access(authorization.agent());
                             }
-                            auth.requestMatchers("/escalated/ws/**")
+                            // Single sign-on: guests sign in here (404 while ESCALATED_SSO is off).
+                            auth.requestMatchers("/escalated/sso/**")
+                                    .permitAll()
+                                    .requestMatchers("/escalated/ws/**")
                                     .permitAll()
                                     .requestMatchers("/escalated/kb/**")
                                     .permitAll()

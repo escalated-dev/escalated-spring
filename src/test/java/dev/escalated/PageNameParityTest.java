@@ -184,6 +184,7 @@ class PageNameParityTest {
           "Escalated/Admin/Plugins/Index",
           "Escalated/Admin/Settings/TwoFactor",
           "Escalated/Auth/TwoFactorChallenge",
+          "Escalated/Admin/Settings/SsoSettings",
           "Escalated/Plugin/Page");
 
   @Test

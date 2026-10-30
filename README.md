@@ -58,6 +58,7 @@ To serve the shared agent, customer and admin screens (`@escalated-dev/escalated
 25. **Guest Access** -- Token-based ticket access without authentication
 26. **Inbound Email** -- Single webhook endpoint with Postmark + Mailgun + AWS SES parsers, signed Reply-To ticket resolution, and replies accepted only from the ticket's requester
 27. **Plugins** -- Native Java plugins and SDK plugins (through the Node plugin runtime), with Admin > Plugins, plugin pages, endpoints, webhooks and domain events ([docs](docs/plugins.md))
+28. **Single Sign-On** -- SAML 2, OAuth 2 / OIDC and JWT sign-in behind the install-level `ESCALATED_SSO` switch ([access control](docs/access-control.md))
 
 ## Requirements
 

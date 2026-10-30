@@ -126,6 +126,103 @@ public class EscalatedProperties {
     private ImportsProperties imports = new ImportsProperties();
     private PluginsProperties plugins = new PluginsProperties();
     private AccessProperties access = new AccessProperties();
+    private SsoProperties sso = new SsoProperties();
+
+    public SsoProperties getSso() {
+        return sso;
+    }
+
+    public void setSso(SsoProperties sso) {
+        this.sso = sso;
+    }
+
+    /**
+     * {@code escalated.sso.*}: the install-level rules around single sign-on, used while
+     * {@code escalated.access.sso} is on. The provider and its fields are chosen in Admin > Settings >
+     * SSO. Each unset value falls back to its {@code ESCALATED_SSO_*} environment variable.
+     */
+    public static class SsoProperties {
+        /** SAML SP entity ID. Default: the SP metadata URL. */
+        private String spEntityId;
+        /** Accept IdP-initiated (unsolicited) SAML responses. Default false. */
+        private Boolean allowIdpInitiated;
+        /** The {@code aud} a JWT must carry. Default: the install's base URL. */
+        private String jwtAudience;
+        /** Allowed clock drift in seconds, at most 300. Default 120. */
+        private Integer clockSkew;
+        /** Create a host user for an unknown email. Default false. */
+        private Boolean createUsers;
+        /** Replace the user's Escalated role from the role attribute (roles and permissions on). */
+        private Boolean syncRoles;
+        /** Where a successful sign-in goes when no page was asked for. Default the agent dashboard. */
+        private String redirectTo;
+        /** This install's base URL for the SP endpoints. Default: the request's. */
+        private String baseUrl;
+
+        public String getSpEntityId() {
+            return spEntityId;
+        }
+
+        public void setSpEntityId(String spEntityId) {
+            this.spEntityId = spEntityId;
+        }
+
+        public Boolean getAllowIdpInitiated() {
+            return allowIdpInitiated;
+        }
+
+        public void setAllowIdpInitiated(Boolean allowIdpInitiated) {
+            this.allowIdpInitiated = allowIdpInitiated;
+        }
+
+        public String getJwtAudience() {
+            return jwtAudience;
+        }
+
+        public void setJwtAudience(String jwtAudience) {
+            this.jwtAudience = jwtAudience;
+        }
+
+        public Integer getClockSkew() {
+            return clockSkew;
+        }
+
+        public void setClockSkew(Integer clockSkew) {
+            this.clockSkew = clockSkew;
+        }
+
+        public Boolean getCreateUsers() {
+            return createUsers;
+        }
+
+        public void setCreateUsers(Boolean createUsers) {
+            this.createUsers = createUsers;
+        }
+
+        public Boolean getSyncRoles() {
+            return syncRoles;
+        }
+
+        public void setSyncRoles(Boolean syncRoles) {
+            this.syncRoles = syncRoles;
+        }
+
+        public String getRedirectTo() {
+            return redirectTo;
+        }
+
+        public void setRedirectTo(String redirectTo) {
+            this.redirectTo = redirectTo;
+        }
+
+        public String getBaseUrl() {
+            return baseUrl;
+        }
+
+        public void setBaseUrl(String baseUrl) {
+            this.baseUrl = baseUrl;
+        }
+    }
 
     public AccessProperties getAccess() {
         return access;
