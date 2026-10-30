@@ -71,6 +71,21 @@ too). Seeding only adds what is missing.
 The permission names earlier releases seeded (`tickets.view`, `agents.manage`,
 ...) are kept but grant nothing.
 
+### Giving users roles from Admin > Users
+
+While the switch is on, **Admin > Users** shows each user's role and an admin
+with `role.manage` can change it. The screen saves with `PUT C:/Program Files/Git/escalated/admin/users/{user}/roles` and
+`{ "role_ids": [...] }`, as escalated-laravel. The ids must be existing roles
+(422 otherwise), and you cannot take away your own `role.manage` ("You cannot
+remove your own role management."). While the switch is off the route answers
+404 and the screen shows no roles.
+
+A user holds **one** Escalated role in this package (the role on their agent
+profile), where Laravel keeps a set. The screen sends the user's whole set with
+one role ticked or unticked, so: `[]` clears the role; one id sets it; the
+current role plus one other sets the other (ticking a new role replaces the old
+one); two roles that are both new are refused with a 422 on `role_ids`.
+
 ### Turning it on
 
 1. Give every staff user a role. This port keeps one role per agent profile

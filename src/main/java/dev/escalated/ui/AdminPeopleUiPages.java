@@ -7,6 +7,7 @@ import dev.escalated.models.Role;
 import dev.escalated.repositories.AgentProfileRepository;
 import dev.escalated.repositories.PermissionRepository;
 import dev.escalated.repositories.RoleRepository;
+import dev.escalated.security.AccessFeatures;
 import dev.escalated.services.ApiTokenAdminService;
 import dev.escalated.services.RolePermissionService;
 import dev.escalated.services.UserService;
@@ -43,10 +44,11 @@ public class AdminPeopleUiPages {
     private final PermissionRepository permissions;
     private final ApiTokenAdminService tokens;
     private final UiRoutes routes;
+    private final AccessFeatures features;
 
     public AdminPeopleUiPages(UserService users, AgentProfileRepository agents, RolePermissionService roleService,
                               RoleRepository roles, PermissionRepository permissions, ApiTokenAdminService tokens,
-                              UiRoutes routes) {
+                              UiRoutes routes, AccessFeatures features) {
         this.users = users;
         this.agents = agents;
         this.roleService = roleService;
@@ -54,6 +56,7 @@ public class AdminPeopleUiPages {
         this.permissions = permissions;
         this.tokens = tokens;
         this.routes = routes;
+        this.features = features;
     }
 
     // ── Users ───────────────────────────────────────────────────────────
@@ -70,13 +73,98 @@ public class AdminPeopleUiPages {
             row.put("email", user.getEmail());
             row.put("is_admin", user.isAdmin());
             row.put("is_agent", user.isAgent());
+            // Escalated roles, only while roles & permissions is enforced: the user's role slug.
+            if (features.rolesPermissions()) {
+                row.put("roles", user.getRole() == null ? List.of() : List.of(user.getRole().getName()));
+            }
             rows.add(row);
         }
         Map<String, Object> props = new LinkedHashMap<>();
         props.put("users", UiPresenter.paginator(found, rows, routes.url("escalated.admin.users.index")));
         props.put("filters", Map.of("search", term));
         props.put("currentUserId", currentUserId);
+        // ...and the roles an admin can give them ({id, name, slug}, by name; a role's name is its slug).
+        if (features.rolesPermissions()) {
+            List<Role> all = new ArrayList<>(roles.findAll());
+            all.sort(Comparator.comparing(Role::getName).thenComparing(Role::getId));
+            List<Map<String, Object>> options = new ArrayList<>();
+            for (Role role : all) {
+                Map<String, Object> option = new LinkedHashMap<>();
+                option.put("id", role.getId());
+                option.put("name", role.getName());
+                option.put("slug", role.getName());
+                options.add(option);
+            }
+            props.put("roles", options);
+        }
         return props;
+    }
+
+    /**
+     * The users screen's roles picker, as escalated-laravel's {@code UserController::updateRoles}:
+     * {@code role_ids} validated with Laravel's rules (present, an array, of integers that are roles).
+     * An agent profile holds one role here, where Laravel keeps a set. The screen sends the user's
+     * whole set with one role ticked or unticked, so {@code []} clears the role, one id sets it, the
+     * current role plus one other sets the other, and two new roles at once are refused.
+     *
+     * @return null when saved, else the error to flash (removing your own role management)
+     */
+    @Transactional(transactionManager = EscalatedTransactionManagers.ESCALATED)
+    public String updateUserRoles(Long userId, UiInput input, Long currentUserId) {
+        Object raw = input.raw("role_ids");
+        if (raw == null) {
+            throw UiInput.invalid("role_ids", "The role ids field must be present.");
+        }
+        if (!(raw instanceof List<?> list)) {
+            throw UiInput.invalid("role_ids", "The role ids field must be an array.");
+        }
+        List<Long> ids = new ArrayList<>();
+        for (int i = 0; i < list.size(); i++) {
+            Long id = integer(list.get(i));
+            if (id == null) {
+                throw UiInput.invalid("role_ids." + i, "The role_ids." + i + " field must be an integer.");
+            }
+            if (!roles.existsById(id)) {
+                throw UiInput.invalid("role_ids." + i, "The selected role_ids." + i + " is invalid.");
+            }
+            if (!ids.contains(id)) {
+                ids.add(id);
+            }
+        }
+
+        AgentProfile target = agents.findById(userId)
+                .orElseThrow(() -> new EntityNotFoundException("User not found"));
+        Long current = target.getRole() == null ? null : target.getRole().getId();
+        List<Long> added = ids.stream().filter(id -> !id.equals(current)).toList();
+        if (added.size() > 1) {
+            throw UiInput.invalid("role_ids", "A user has one Escalated role here; choose one role.");
+        }
+        Long chosen = ids.isEmpty() ? null : added.isEmpty() ? current : added.get(0);
+        Role role = chosen == null ? null : findRole(chosen);
+
+        // Taking away your own role management would leave nobody able to undo it.
+        if (userId.equals(currentUserId) && (role == null
+                || role.getPermissions().stream().noneMatch(permission -> "role.manage".equals(permission.getName())))) {
+            return "You cannot remove your own role management.";
+        }
+
+        target.setRole(role);
+        agents.save(target);
+        return null;
+    }
+
+    private static Long integer(Object value) {
+        if (value instanceof Integer || value instanceof Long || value instanceof Short) {
+            return ((Number) value).longValue();
+        }
+        if (value instanceof String text && text.matches("-?\\d+")) {
+            try {
+                return Long.parseLong(text);
+            } catch (NumberFormatException tooLong) {
+                return null;
+            }
+        }
+        return null;
     }
 
     /** Validates as Laravel's {@code UserController::updateRole}; self-demotion is the service's refusal. */

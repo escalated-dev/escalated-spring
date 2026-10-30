@@ -125,6 +125,7 @@ public class UiRoutes {
         register("escalated.admin.webhooks.retry", "/admin/webhooks/deliveries/{delivery}/retry");
         register("escalated.admin.users.index", "/admin/users");
         register("escalated.admin.users.role", "/admin/users/{user}/role");
+        register("escalated.admin.users.roles", "/admin/users/{user}/roles");
         resource("roles", "role", "/admin/roles/{role}/edit");
         resource("skills", "skill", "/admin/skills/{skill}/edit");
         register("escalated.admin.capacity.index", "/admin/capacity");

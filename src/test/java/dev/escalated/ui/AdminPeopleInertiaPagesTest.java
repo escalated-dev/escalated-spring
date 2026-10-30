@@ -119,7 +119,7 @@ class AdminPeopleInertiaPagesTest {
         assertThat(fieldNames(users)).contains("data", "current_page", "last_page", "links", "total");
         assertThat(users.get("total").asLong()).isEqualTo(1);
         JsonNode row = users.get("data").get(0);
-        assertThat(fieldNames(row)).containsExactly("id", "name", "email", "is_admin", "is_agent");
+        assertThat(fieldNames(row)).containsExactly("id", "name", "email", "is_admin", "is_agent", "roles");
         assertThat(row.get("is_agent").asBoolean()).isTrue();
         assertThat(row.get("is_admin").asBoolean()).isFalse();
 

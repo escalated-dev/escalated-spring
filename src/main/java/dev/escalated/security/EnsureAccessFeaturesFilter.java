@@ -33,7 +33,7 @@ public class EnsureAccessFeaturesFilter extends OncePerRequestFilter {
     private static Map<String, List<String>> routes() {
         Map<String, List<String>> routes = new LinkedHashMap<>();
         routes.put(AccessFeatures.ROLES_PERMISSIONS, List.of(
-                "/escalated/admin/roles", "/escalated/admin/roles/**",
+                "/escalated/admin/roles", "/escalated/admin/roles/**", "/escalated/admin/users/*/roles",
                 "/escalated/api/admin/roles", "/escalated/api/admin/roles/**"));
         routes.put(AccessFeatures.TWO_FACTOR, List.of(
                 "/escalated/admin/settings/two-factor", "/escalated/admin/settings/two-factor/**",
