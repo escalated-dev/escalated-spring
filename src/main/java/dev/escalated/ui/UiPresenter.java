@@ -345,9 +345,14 @@ public final class UiPresenter {
         return map;
     }
 
+    /**
+     * The latest public reply: the list's preview, age and author never come from an internal
+     * note (escalated-laravel's {@code latestReply}).
+     */
     private static Reply latestReply(Ticket ticket) {
         return ticket.getReplies().stream()
                 .filter(Objects::nonNull)
+                .filter(reply -> !reply.isInternal())
                 .max(Comparator.comparing(Reply::getCreatedAt, Comparator.nullsFirst(Comparator.naturalOrder())))
                 .orElse(null);
     }
@@ -355,6 +360,7 @@ public final class UiPresenter {
     private static Map<String, Object> replySummary(Reply reply) {
         Map<String, Object> map = new LinkedHashMap<>();
         map.put("id", reply.getId());
+        map.put("body", reply.getBody());
         map.put("is_internal_note", reply.isInternal());
         map.put("author", Map.of("name", String.valueOf(reply.getAuthorName())));
         map.put("created_at", iso(reply.getCreatedAt()));

@@ -10,8 +10,12 @@ import jakarta.persistence.criteria.Path;
 import jakarta.persistence.criteria.Predicate;
 import jakarta.persistence.criteria.Root;
 import jakarta.persistence.criteria.Subquery;
+import java.time.Duration;
 import java.time.Instant;
+import java.time.LocalDate;
+import java.time.ZoneId;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -25,14 +29,48 @@ import org.springframework.data.jpa.domain.Specification;
  * string: {@code status}, {@code priority}, {@code assigned_to}, {@code unassigned},
  * {@code department_id}, {@code ticket_type}, {@code search}, {@code sla_breached}, {@code tag} /
  * {@code tag_ids}, {@code following}, {@code sort_by}, {@code sort_dir}, {@code per_page} and
- * {@code page}. A value that does not parse is ignored, as a filter the list does not know.
+ * {@code page}; and the agent panel's {@code open}, {@code sla_at_risk}, {@code resolved_today} and
+ * {@code updated_within_hours}. A value that does not parse is ignored, as a filter the list does not know.
  */
 public final class UiTicketFilters {
 
     private static final List<TicketStatus> CLOSED =
             List.of(TicketStatus.RESOLVED, TicketStatus.CLOSED, TicketStatus.MERGED);
 
+    /** Not open: resolved, closed, merged or snoozed. */
+    private static final List<TicketStatus> NOT_OPEN =
+            List.of(TicketStatus.RESOLVED, TicketStatus.CLOSED, TicketStatus.MERGED, TicketStatus.SNOOZED);
+
+    /** How close a due SLA target has to be for an open ticket to be at risk. */
+    private static final Duration SLA_AT_RISK = Duration.ofMinutes(60);
+
+    private static final long MAX_HOURS = 8760;
+
     private UiTicketFilters() {}
+
+    /**
+     * Checks the filters added for the agent panel: {@code open}, {@code sla_at_risk} and
+     * {@code resolved_today} are booleans, {@code updated_within_hours} an integer from 1 to 8760.
+     * Returns the errors, empty when the filters are valid.
+     */
+    public static Map<String, List<String>> validate(Map<String, String> filters) {
+        Map<String, List<String>> errors = new LinkedHashMap<>();
+        for (String key : List.of("open", "sla_at_risk", "resolved_today")) {
+            String value = blankToNull(filters.get(key));
+            if (value != null && !List.of("0", "1", "true", "false").contains(value.toLowerCase(Locale.ROOT))) {
+                errors.put(key, List.of("The " + key + " field must be true or false."));
+            }
+        }
+        String hours = blankToNull(filters.get("updated_within_hours"));
+        if (hours != null) {
+            Long value = parseLong(hours);
+            if (value == null || value < 1 || value > MAX_HOURS) {
+                errors.put("updated_within_hours",
+                        List.of("The updated_within_hours field must be an integer between 1 and 8760."));
+            }
+        }
+        return errors;
+    }
 
     public static Specification<Ticket> specification(Map<String, String> filters, Long currentAgentId) {
         return (root, query, cb) -> {
@@ -79,6 +117,30 @@ public final class UiTicketFilters {
                 predicates.add(cb.or(
                         cb.and(cb.isNull(root.get("firstRespondedAt")), cb.lessThan(firstDue, now)),
                         cb.lessThan(resolutionDue, now)));
+            }
+            if (truthy(filters.get("open"))) {
+                predicates.add(root.get("status").in(NOT_OPEN).not());
+            }
+            if (truthy(filters.get("sla_at_risk"))) {
+                // Open tickets whose first response (still unsent) or resolution is overdue or
+                // falls due within the hour.
+                Instant soon = Instant.now().plus(SLA_AT_RISK);
+                Path<Instant> firstDue = root.get("slaFirstResponseDueAt");
+                Path<Instant> resolutionDue = root.get("slaDueAt");
+                predicates.add(root.get("status").in(NOT_OPEN).not());
+                predicates.add(cb.or(
+                        cb.and(cb.isNull(root.get("firstRespondedAt")), cb.lessThanOrEqualTo(firstDue, soon)),
+                        cb.lessThanOrEqualTo(resolutionDue, soon)));
+            }
+            if (truthy(filters.get("resolved_today"))) {
+                ZoneId zone = ZoneId.systemDefault();
+                predicates.add(cb.greaterThanOrEqualTo(root.<Instant>get("resolvedAt"),
+                        LocalDate.now(zone).atStartOfDay(zone).toInstant()));
+            }
+            Long hours = parseLong(filters.get("updated_within_hours"));
+            if (hours != null && hours > 0) {
+                predicates.add(cb.greaterThanOrEqualTo(root.<Instant>get("updatedAt"),
+                        Instant.now().minus(Duration.ofHours(Math.min(hours, MAX_HOURS)))));
             }
             List<Long> tagIds = new ArrayList<>();
             Long tag = parseLong(filters.get("tag"));
@@ -159,7 +221,7 @@ public final class UiTicketFilters {
         }
     }
 
-    private static boolean truthy(String value) {
+    static boolean truthy(String value) {
         return value != null && ("1".equals(value.trim()) || "true".equalsIgnoreCase(value.trim()));
     }
 

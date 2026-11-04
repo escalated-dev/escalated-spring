@@ -9,13 +9,18 @@ import dev.escalated.services.ChatSessionService;
 import dev.escalated.services.MacroService;
 import dev.escalated.services.TicketActionRegistry;
 import dev.escalated.services.TicketService;
+import dev.escalated.services.ValidationFailedException;
+import dev.escalated.ui.AgentInbox;
 import dev.escalated.ui.AgentUiPages;
 import dev.escalated.ui.EscalatedUiRenderer;
 import dev.escalated.ui.Inertia;
 import dev.escalated.ui.UiInput;
 import dev.escalated.ui.UiRoutes;
+import dev.escalated.ui.UiTicketFilters;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpSession;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -47,6 +52,9 @@ public class AgentUiController extends TicketWritesController {
     @Autowired
     private ChatSessionService chats;
 
+    @Autowired
+    private AgentInbox inbox;
+
     public AgentUiController(
             EscalatedUiRenderer renderer,
             Inertia inertia,
@@ -69,15 +77,41 @@ public class AgentUiController extends TicketWritesController {
         return renderer.render("Escalated/Agent/Dashboard", pages.dashboard(agentId(authentication)));
     }
 
+    /**
+     * The queue, with the agent panel's {@code inbox} and {@code queue} props ({@link AgentInbox}).
+     * Besides the list filters it takes {@code assigned=me} and {@code view=<id>}; a malformed
+     * {@code open}, {@code sla_at_risk}, {@code resolved_today} or {@code updated_within_hours}
+     * goes back with {@code errors}.
+     */
     @GetMapping("/tickets")
-    public Object index(@RequestParam Map<String, String> filters, Authentication authentication) {
-        return renderer.render("Escalated/Agent/TicketIndex", pages.index(filters, agentId(authentication)));
+    public Object index(@RequestParam Map<String, String> filters, Authentication authentication,
+                        HttpSession session) {
+        Map<String, List<String>> errors = UiTicketFilters.validate(filters);
+        if (!errors.isEmpty()) {
+            throw new ValidationFailedException(errors);
+        }
+        Long agentId = agentId(authentication);
+        Map<String, String> normalised = inbox.normalise(filters, agentId);
+        AgentInbox.Queue queue = inbox.queueFor(normalised, agentId);
+        inbox.remember(session, queue);
+
+        Map<String, Object> props = pages.index(inbox.listFilters(normalised, queue), agentId);
+        props.put("filters", new LinkedHashMap<>(filters));
+        props.put("queue", queue.prop());
+        props.put("inbox", inbox.inbox(agentId, queue));
+        return renderer.render("Escalated/Agent/TicketIndex", props);
     }
 
     @GetMapping("/tickets/{ticket}")
-    public Object show(@PathVariable("ticket") String reference, Authentication authentication) {
+    public Object show(@PathVariable("ticket") String reference, Authentication authentication,
+                       HttpSession session) {
         Ticket ticket = pages.resolve(reference);
-        return renderer.render("Escalated/Agent/TicketShow", pages.show(ticket.getId(), agentId(authentication)));
+        Long agentId = agentId(authentication);
+        AgentInbox.Queue queue = inbox.recalled(session, agentId);
+        Map<String, Object> props = pages.show(ticket.getId(), agentId);
+        props.put("queue", queue.prop());
+        props.put("inbox", inbox.inbox(agentId, queue));
+        return renderer.render("Escalated/Agent/TicketShow", props);
     }
 
     /**
