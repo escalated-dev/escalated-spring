@@ -104,7 +104,8 @@ class AdminStatusInertiaPagesTest {
                 "position", "is_default", "is_system", "created_at", "updated_at");
         assertThat(open.get("is_system").asBoolean()).isTrue();
         assertThat(open.get("category").asText()).isEqualTo("open");
-        assertThat(bySlug(props.get("statuses"), "pending").get("category").asText()).isEqualTo("pending");
+        assertThat(bySlug(props.get("statuses"), "waiting_on_customer").get("category").asText()).isEqualTo("pending");
+        assertThat(bySlug(props.get("statuses"), "waiting_on_agent").get("category").asText()).isEqualTo("open");
         assertThat(bySlug(props.get("statuses"), "snoozed").get("category").asText()).isEqualTo("on_hold");
         assertThat(bySlug(props.get("statuses"), "in_progress").get("category").asText()).isEqualTo("open");
         for (String solved : new String[] {"resolved", "closed", "merged"}) {

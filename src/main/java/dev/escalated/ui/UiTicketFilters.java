@@ -191,9 +191,9 @@ public final class UiTicketFilters {
     }
 
     /**
-     * A status as the pages send it. The lower-cased constants, plus the shared frontend's
-     * {@code waiting_on_customer} and {@code waiting_on_agent}, which this port keeps as
-     * {@code pending}. Anything else is null.
+     * A status as the pages send it: the lower-cased constants ({@code waiting_on_customer},
+     * {@code waiting_on_agent}...), or the old {@code pending}, which is waiting on the customer.
+     * Anything else is null.
      */
     public static TicketStatus parseStatus(String value) {
         return dev.escalated.services.TicketStatuses.builtIn(value);

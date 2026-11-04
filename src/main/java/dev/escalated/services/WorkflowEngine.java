@@ -158,6 +158,10 @@ public class WorkflowEngine {
             return "equals".equals(operator) ? equal : !equal;
         }
         String expected = text(untyped.get("value"), "");
+        if ("status".equals(field) && "pending".equalsIgnoreCase(expected)) {
+            // A condition saved before the two waiting statuses: pending was waiting on the customer.
+            expected = "waiting_on_customer";
+        }
         String actual = ticket.getOrDefault(field, "");
         return applyOperator(operator, actual, expected);
     }

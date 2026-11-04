@@ -10,9 +10,7 @@ import dev.escalated.models.TicketStatus;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
-import java.util.Objects;
 
 /**
  * An escalation rule's conditions, as escalated-laravel's {@code EscalationService}: a list of
@@ -140,20 +138,8 @@ public final class EscalationConditions {
         }
     }
 
-    /** A status as the pages name it; the frontend's waiting states are this port's pending. */
+    /** A status as the pages name it (the old {@code pending} is waiting on the customer). */
     private static TicketStatus status(String value) {
-        if (value == null || value.isEmpty()) {
-            return null;
-        }
-        String name = value.toLowerCase(Locale.ROOT);
-        if ("waiting_on_customer".equals(name) || "waiting_on_agent".equals(name)) {
-            return TicketStatus.PENDING;
-        }
-        for (TicketStatus status : TicketStatus.values()) {
-            if (Objects.equals(status.name().toLowerCase(Locale.ROOT), name)) {
-                return status;
-            }
-        }
-        return null;
+        return TicketStatuses.builtIn(value);
     }
 }

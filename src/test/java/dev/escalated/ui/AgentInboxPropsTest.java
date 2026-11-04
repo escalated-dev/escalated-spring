@@ -101,7 +101,11 @@ class AgentInboxPropsTest {
         });
         ticket(t -> {
             t.setAssignedAgent(agent);
-            t.setStatus(TicketStatus.PENDING);
+            t.setStatus(TicketStatus.WAITING_ON_CUSTOMER);
+        });
+        ticket(t -> {
+            t.setAssignedAgent(agent);
+            t.setStatus(TicketStatus.WAITING_ON_AGENT);
         });
         ticket(t -> resolved(t, now, agent));
         ticket(t -> resolved(t, now.minus(Duration.ofDays(2)), agent));
@@ -122,9 +126,9 @@ class AgentInboxPropsTest {
         assertThat(AgentInertiaPagesTest.fieldNames(inbox)).containsExactly("counts", "views", "stats");
         assertThat(AgentInertiaPagesTest.fieldNames(inbox.get("counts"))).containsExactly("mine", "unassigned", "all");
         // Unresolved, unsnoozed tickets in each queue.
-        assertThat(inbox.get("counts").get("mine").asLong()).isEqualTo(2);
+        assertThat(inbox.get("counts").get("mine").asLong()).isEqualTo(3);
         assertThat(delta(before, inbox, "counts", "unassigned")).isEqualTo(1);
-        assertThat(delta(before, inbox, "counts", "all")).isEqualTo(4);
+        assertThat(delta(before, inbox, "counts", "all")).isEqualTo(5);
 
         assertThat(viewIds(inbox)).containsExactlyElementsOf(BUILT_IN);
         JsonNode urgent = inbox.get("views").get(0);
@@ -133,7 +137,11 @@ class AgentInboxPropsTest {
         assertThat(urgent.get("filters")).isEqualTo(JSON.readTree("{\"priority\":\"urgent\",\"open\":1}"));
         assertThat(view(inbox, "urgent").get("count").asLong() - view(before, "urgent").get("count").asLong())
                 .isEqualTo(1);
+        // The two waiting views are different tickets (they were one status, pending, before).
         assertThat(view(inbox, "waiting_on_customer").get("count").asLong()).isEqualTo(1);
+        assertThat(view(inbox, "waiting_on_me").get("count").asLong()).isEqualTo(1);
+        assertThat(page("/escalated/agent/tickets?assigned_to=" + agent.getId() + "&status=waiting_on_agent")
+                .get("props").get("tickets").get("total").asLong()).isEqualTo(1);
         assertThat(view(inbox, "waiting_on_customer").get("filters")).isEqualTo(JSON.readTree(
                 "{\"assigned_to\":" + agent.getId() + ",\"status\":\"waiting_on_customer\"}"));
         assertThat(view(inbox, "waiting_on_me").get("filters")).isEqualTo(JSON.readTree(
@@ -142,7 +150,7 @@ class AgentInboxPropsTest {
         assertThat(view(inbox, "recently_updated").get("filters")).isEqualTo(JSON.readTree(
                 "{\"open\":1,\"updated_within_hours\":24,\"sort_by\":\"updated_at\"}"));
         assertThat(view(inbox, "recently_updated").get("count").asLong()
-                - view(before, "recently_updated").get("count").asLong()).isEqualTo(4);
+                - view(before, "recently_updated").get("count").asLong()).isEqualTo(5);
 
         assertThat(AgentInertiaPagesTest.fieldNames(inbox.get("stats")))
                 .containsExactly("open", "urgent", "sla_at_risk", "resolved_today");
@@ -212,7 +220,7 @@ class AgentInboxPropsTest {
             t.setPriority(TicketPriority.HIGH);
             t.setStatus(TicketStatus.CLOSED);
         });
-        ticket(t -> t.setStatus(TicketStatus.PENDING));
+        ticket(t -> t.setStatus(TicketStatus.WAITING_ON_CUSTOMER));
 
         JsonNode views = page("/escalated/agent/tickets").get("props").get("inbox").get("views");
         List<Long> savedIds = new ArrayList<>();

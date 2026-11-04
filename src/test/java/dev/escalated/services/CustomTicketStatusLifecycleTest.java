@@ -117,7 +117,7 @@ class CustomTicketStatusLifecycleTest {
         ticketService.changeStatusByName(ticket.getId(), awaiting.getSlug(), "agent@example.com");
 
         Ticket stored = tickets.findById(ticket.getId()).orElseThrow();
-        assertThat(stored.getStatus()).isEqualTo(TicketStatus.PENDING);
+        assertThat(stored.getStatus()).isEqualTo(TicketStatus.WAITING_ON_CUSTOMER);
         assertThat(stored.getCustomStatus().getSlug()).isEqualTo(awaiting.getSlug());
     }
 

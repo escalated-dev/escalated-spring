@@ -305,7 +305,7 @@ class AdminWorkflowContractTest {
 
         Ticket fresh = tickets.findById(ticket.getId()).orElseThrow();
         assertThat(fresh.getPriority()).isEqualTo(TicketPriority.URGENT);
-        assertThat(fresh.getStatus().name()).isEqualTo("PENDING");
+        assertThat(fresh.getStatus().name()).isEqualTo("WAITING_ON_CUSTOMER");
     }
 
     private JsonNode createFrom(String body) throws Exception {
