@@ -436,6 +436,20 @@ public class EscalatedProperties {
         /** Stylesheet URLs the built-in page links. */
         private List<String> stylesheets = new ArrayList<>();
 
+        /**
+         * How long the agent panel's {@code inbox} counts are kept per agent and queue, in this
+         * process. 0 recomputes them on every request.
+         */
+        private int agentInboxCacheSeconds = 10;
+
+        public int getAgentInboxCacheSeconds() {
+            return agentInboxCacheSeconds;
+        }
+
+        public void setAgentInboxCacheSeconds(int agentInboxCacheSeconds) {
+            this.agentInboxCacheSeconds = Math.max(0, agentInboxCacheSeconds);
+        }
+
         public boolean isEnabled() {
             return enabled;
         }
