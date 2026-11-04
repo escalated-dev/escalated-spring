@@ -842,7 +842,8 @@ public class TicketService {
     private static String statusColor(String status) {
         return switch (status) {
             case "open" -> "#3B82F6";
-            case "pending", "snoozed" -> "#F59E0B";
+            case "waiting_on_customer", "snoozed" -> "#F59E0B";
+            case "waiting_on_agent" -> "#F97316";
             case "in_progress" -> "#8B5CF6";
             case "resolved" -> "#10B981";
             case "closed", "merged" -> "#6B7280";

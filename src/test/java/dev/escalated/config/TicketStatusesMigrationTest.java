@@ -29,8 +29,8 @@ class TicketStatusesMigrationTest {
             List<Map<String, Object>> rows = jdbc.queryForList(
                     "SELECT slug, category FROM escalated_ticket_statuses WHERE is_system = TRUE ORDER BY slug");
             assertThat(rows).extracting(row -> row.get("slug") + "=" + row.get("category")).containsExactly(
-                    "closed=solved", "in_progress=open", "merged=solved", "open=open", "pending=pending",
-                    "resolved=solved", "snoozed=on_hold");
+                    "closed=solved", "in_progress=open", "merged=solved", "open=open", "resolved=solved",
+                    "snoozed=on_hold", "waiting_on_agent=open", "waiting_on_customer=pending");
 
             jdbc.update("INSERT INTO escalated_ticket_statuses (label, slug, category) VALUES ('Parts', 'parts', 'on_hold')");
             Long parts = jdbc.queryForObject("SELECT id FROM escalated_ticket_statuses WHERE slug = 'parts'", Long.class);

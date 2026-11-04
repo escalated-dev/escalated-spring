@@ -290,7 +290,7 @@ class PluginRuntimeBridgeTest {
         JsonNode ticket = created.get("result");
         assertThat(ticket.get("subject").asText()).isEqualTo("From CRM " + unique);
         assertThat(ticket.get("channel").asText()).isEqualTo("api");
-        assertThat(ticket.get("status").asText()).isEqualTo("pending");
+        assertThat(ticket.get("status").asText()).isEqualTo("waiting_on_customer");
         Ticket stored = ticketRows.findById(ticket.get("id").asLong()).orElseThrow();
         assertThat(stored.getRequesterEmail()).isEqualTo("lead-" + unique + "@example.com");
         // The create fired ticket.created, which the runtime handles for this plugin in the background.

@@ -378,11 +378,11 @@ final class PluginDomain {
     }
 
     private static dev.escalated.models.TicketStatus status(Object value) {
-        try {
-            return dev.escalated.models.TicketStatus.valueOf(String.valueOf(value).trim().toUpperCase(Locale.ROOT));
-        } catch (IllegalArgumentException ex) {
+        dev.escalated.models.TicketStatus status = dev.escalated.services.TicketStatuses.builtIn(String.valueOf(value));
+        if (status == null) {
             throw new IllegalArgumentException("unknown status " + value);
         }
+        return status;
     }
 
     /**

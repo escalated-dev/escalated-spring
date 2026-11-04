@@ -200,7 +200,7 @@ class AdminTicketInertiaPagesTest {
         JsonNode shown = props.get("ticket");
         assertThat(shown.get("replies").get(0).get("body").asText()).isEqualTo("Internal " + unique);
         assertThat(shown.get("replies").get(0).get("is_internal_note").asBoolean()).isTrue();
-        assertThat(shown.get("status").asText()).isEqualTo("pending");
+        assertThat(shown.get("status").asText()).isEqualTo("waiting_on_customer");
         assertThat(shown.get("priority").asText()).isEqualTo("low");
         assertThat(shown.get("assigned_to").asLong()).isEqualTo(agent.getId());
         assertThat(shown.get("department").get("id").asLong()).isEqualTo(department.getId());

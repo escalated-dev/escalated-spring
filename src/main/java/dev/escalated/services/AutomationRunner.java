@@ -138,7 +138,7 @@ public class AutomationRunner {
                 return ticket.getAssignedAgent() != null
                         && compareHours(ticket.getUpdatedAt(), now, operator, value);
             case "status":
-                return ticket.getStatus() != null && ticket.getStatus().name().equalsIgnoreCase(value);
+                return ticket.getStatus() != null && ticket.getStatus() == TicketStatuses.builtIn(value);
             case "priority":
                 return ticket.getPriority() != null && ticket.getPriority().name().equalsIgnoreCase(value);
             case "assigned":

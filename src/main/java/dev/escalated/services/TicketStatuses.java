@@ -28,10 +28,13 @@ public class TicketStatuses {
     /** escalated-laravel's categories, in its order. */
     public static final List<String> CATEGORIES = List.of("new", "open", "pending", "on_hold", "solved");
 
-    /** Values a status input may name that are not a built-in constant but mean one. */
+    /**
+     * Values a status input may name that are not a built-in constant but mean one: {@code pending},
+     * the single waiting status this port stored before it took Laravel's two, means waiting on the
+     * customer, so workflows, macros, rules and saved views written with it keep working.
+     */
     private static final Map<String, TicketStatus> BUILT_IN_ALIASES = Map.of(
-            "waiting_on_customer", TicketStatus.PENDING,
-            "waiting_on_agent", TicketStatus.PENDING);
+            "pending", TicketStatus.WAITING_ON_CUSTOMER);
 
     /** The system rows: one per built-in status, as the pages label and colour them. */
     private static final Map<TicketStatus, String[]> SYSTEM_ROWS = systemRows();
@@ -48,7 +51,7 @@ public class TicketStatuses {
             return null;
         }
         return switch (status) {
-            case PENDING -> "pending";
+            case WAITING_ON_CUSTOMER -> "pending";
             case SNOOZED -> "on_hold";
             case RESOLVED, CLOSED, MERGED -> "solved";
             default -> "open";
@@ -58,7 +61,7 @@ public class TicketStatuses {
     /** The built-in status a ticket takes when it gets a custom status of {@code category}. */
     public static TicketStatus anchorOf(String category) {
         return switch (category == null ? "" : category) {
-            case "pending" -> TicketStatus.PENDING;
+            case "pending" -> TicketStatus.WAITING_ON_CUSTOMER;
             case "on_hold" -> TicketStatus.IN_PROGRESS;
             case "solved" -> TicketStatus.RESOLVED;
             default -> TicketStatus.OPEN;
@@ -77,9 +80,9 @@ public class TicketStatuses {
     }
 
     /**
-     * A built-in status as an input names it: the constant in any case, or the shared frontend's
-     * {@code waiting_on_customer} / {@code waiting_on_agent}, which this port keeps as pending.
-     * Null for anything else.
+     * A built-in status as an input names it: the constant in any case (the shared frontend's
+     * {@code waiting_on_customer}, {@code in_progress}...), or the old {@code pending}, which is
+     * waiting on the customer. Null for anything else.
      */
     public static TicketStatus builtIn(String value) {
         if (value == null || value.isBlank()) {
@@ -163,7 +166,8 @@ public class TicketStatuses {
         Map<TicketStatus, String[]> rows = new LinkedHashMap<>();
         rows.put(TicketStatus.OPEN, new String[] {"Open", "#3b82f6", "0"});
         rows.put(TicketStatus.IN_PROGRESS, new String[] {"In Progress", "#8b5cf6", "1"});
-        rows.put(TicketStatus.PENDING, new String[] {"Pending", "#f59e0b", "0"});
+        rows.put(TicketStatus.WAITING_ON_CUSTOMER, new String[] {"Waiting on Customer", "#f59e0b", "0"});
+        rows.put(TicketStatus.WAITING_ON_AGENT, new String[] {"Waiting on Agent", "#f97316", "2"});
         rows.put(TicketStatus.SNOOZED, new String[] {"Snoozed", "#64748b", "0"});
         rows.put(TicketStatus.RESOLVED, new String[] {"Resolved", "#10b981", "0"});
         rows.put(TicketStatus.CLOSED, new String[] {"Closed", "#6b7280", "1"});

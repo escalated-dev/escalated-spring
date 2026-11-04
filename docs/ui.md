@@ -309,15 +309,17 @@ The agent pages need the agent gate, the admin pages the admin gate (the same as
 `/escalated/api/agent` and `/escalated/api/admin` APIs). Tickets outside an agent's department or
 account scope are a 404.
 
-Statuses are the lower-cased constants (`open`, `pending`, `in_progress`, `resolved`, `closed`,
-`snoozed`, `merged`). The shared frontend's `waiting_on_customer` and `waiting_on_agent` are stored
-as `pending`; its `escalated` status and `critical` priority do not exist here and are refused.
+Statuses are the lower-cased constants (`open`, `in_progress`, `waiting_on_customer`,
+`waiting_on_agent`, `resolved`, `closed`, `snoozed`, `merged`), escalated-laravel's values plus
+this port's `snoozed` and `merged`. `pending`, the single waiting status this port stored before, is still read
+as `waiting_on_customer`. Laravel's `escalated`, `reopened` and `live` statuses and `critical`
+priority do not exist here and are refused.
 
 Custom statuses (`/escalated/admin/statuses`) are sub-statuses of five categories: `new`, `open`,
 `pending`, `on_hold`, `solved`. A status input (the ticket pages' status action, the bulk action,
 `POST /escalated/api/admin/tickets/{id}/status`, macros, automations and workflows) takes a
 built-in value or a custom status slug. A custom status gives the ticket its category's built-in
-anchor (`new`/`open` -> `open`, `pending` -> `pending`, `on_hold` -> `in_progress`, `solved` ->
+anchor (`new`/`open` -> `open`, `pending` -> `waiting_on_customer`, `on_hold` -> `in_progress`, `solved` ->
 `resolved`) through the normal status change, so resolving stamps `resolved_at`, stops the SLA,
 raises `ticket.resolved` and is auto-closed like a built-in resolve; the ticket's
 `ticket_status_id` points at the custom status. Setting a built-in status (snooze, merge,

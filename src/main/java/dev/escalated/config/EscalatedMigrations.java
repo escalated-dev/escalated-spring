@@ -104,6 +104,11 @@ public class EscalatedMigrations implements InitializingBean {
 
     /** Migrates {@code dataSource}; see the class documentation. */
     public static void migrate(DataSource dataSource, String hostHistoryTable) {
+        migrate(dataSource, hostHistoryTable, null);
+    }
+
+    /** Migrates {@code dataSource} up to {@code target} (every migration when null); for tests of an upgrade. */
+    static void migrate(DataSource dataSource, String hostHistoryTable, String target) {
         Inspection database = inspect(dataSource, hostHistoryTable);
 
         if (!database.hasHistory && database.adoptable.isEmpty() && database.hasTables) {
@@ -138,6 +143,7 @@ public class EscalatedMigrations implements InitializingBean {
                 .baselineDescription(adopting
                         ? "Adopted from " + hostHistoryTable
                         : "<< Escalated baseline >>")
+                .target(target == null ? "latest" : target)
                 .load()
                 .migrate();
 

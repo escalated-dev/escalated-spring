@@ -154,7 +154,7 @@ class AdminConfigInertiaPagesTest {
         macroService.applyMacro(macro.getId(), ticket.getId(), admin.getEmail());
 
         Ticket applied = tickets.findById(ticket.getId());
-        assertThat(applied.getStatus()).isEqualTo(TicketStatus.PENDING);
+        assertThat(applied.getStatus()).isEqualTo(TicketStatus.WAITING_ON_CUSTOMER);
         assertThat(applied.getPriority()).isEqualTo(TicketPriority.URGENT);
         assertThat(applied.getAssignedAgent().getId()).isEqualTo(agent.getId());
         assertThat(applied.getDepartment().getId()).isEqualTo(department.getId());
