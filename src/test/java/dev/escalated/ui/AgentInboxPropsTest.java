@@ -325,6 +325,15 @@ class AgentInboxPropsTest {
             Map<String, Object> errors = (Map<String, Object>) result.getRequest().getSession()
                     .getAttribute(Inertia.ERRORS_SESSION_KEY);
             assertThat(errors).as(bad[0] + "=" + bad[1]).containsKey(bad[0]);
+
+            // A JSON client gets the 422, as Laravel's $request->validate() answers it.
+            MvcResult json = mvc.perform(get("/escalated/agent/tickets").param(bad[0], bad[1])
+                            .with(user(agent.getEmail())).header("Accept", "application/json"))
+                    .andExpect(status().isUnprocessableEntity())
+                    .andReturn();
+            JsonNode body = JSON.readTree(json.getResponse().getContentAsString());
+            assertThat(body.get("errors").has(bad[0])).as(bad[0] + "=" + bad[1]).isTrue();
+            assertThat(body.get("message").asText()).isNotBlank();
         }
     }
 
