@@ -476,6 +476,10 @@ public class TicketService {
                 ticket.setResolvedAt(Instant.now());
             } else if (newStatus == TicketStatus.CLOSED) {
                 ticket.setClosedAt(Instant.now());
+            } else if (newStatus == TicketStatus.REOPENED) {
+                // As escalated-laravel's Ticket::markReopened.
+                ticket.setResolvedAt(null);
+                ticket.setClosedAt(null);
             }
         }
 
@@ -492,7 +496,7 @@ public class TicketService {
         TicketEvent.Type eventType = oldStatus == newStatus ? TicketEvent.Type.STATUS_CHANGED : switch (newStatus) {
             case CLOSED -> TicketEvent.Type.CLOSED;
             case RESOLVED -> TicketEvent.Type.RESOLVED;
-            case OPEN -> oldStatus == TicketStatus.CLOSED || oldStatus == TicketStatus.RESOLVED
+            case OPEN, REOPENED -> oldStatus == TicketStatus.CLOSED || oldStatus == TicketStatus.RESOLVED
                     ? TicketEvent.Type.REOPENED : TicketEvent.Type.STATUS_CHANGED;
             default -> TicketEvent.Type.STATUS_CHANGED;
         };
@@ -841,7 +845,9 @@ public class TicketService {
 
     private static String statusColor(String status) {
         return switch (status) {
-            case "open" -> "#3B82F6";
+            case "open", "reopened" -> "#3B82F6";
+            case "escalated" -> "#EF4444";
+            case "live" -> "#06B6D4";
             case "waiting_on_customer", "snoozed" -> "#F59E0B";
             case "waiting_on_agent" -> "#F97316";
             case "in_progress" -> "#8B5CF6";

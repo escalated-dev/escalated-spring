@@ -125,6 +125,21 @@ public class SlaScheduler {
         }
     }
 
+    /**
+     * The statuses escalated-laravel's default transitions allow to become {@code escalated}: not
+     * waiting on the customer, resolved, closed or live (nor this port's snoozed or merged).
+     */
+    private static final java.util.Set<dev.escalated.models.TicketStatus> ESCALATABLE = java.util.EnumSet.of(
+            dev.escalated.models.TicketStatus.OPEN, dev.escalated.models.TicketStatus.IN_PROGRESS,
+            dev.escalated.models.TicketStatus.WAITING_ON_AGENT, dev.escalated.models.TicketStatus.REOPENED);
+
+    private void escalate(Ticket ticket) {
+        Ticket current = ticketService.findById(ticket.getId());
+        if (ESCALATABLE.contains(current.getStatus())) {
+            ticketService.changeStatus(ticket.getId(), dev.escalated.models.TicketStatus.ESCALATED, "system");
+        }
+    }
+
     /** Announces each due ticket once, and records it. */
     private void announce(String ruleType, long deadline, List<Ticket> matching,
                           TicketEvent.Type type, String slaType) {
@@ -139,8 +154,9 @@ public class SlaScheduler {
 
     /**
      * Performs the rule's actions in order, as escalated-laravel's {@code EscalationService}; a
-     * failing action is logged and the next one still runs. {@code escalate} changes nothing here
-     * (this port has no escalated status): every firing is announced as {@code ticket.escalated}.
+     * failing action is logged and the next one still runs. {@code escalate} sets the escalated
+     * status unless the ticket is escalated already or Laravel's transitions do not allow it (see
+     * {@link #ESCALATABLE}); every firing is announced as {@code ticket.escalated}, as before.
      */
     private void applyEscalationRule(Ticket ticket, EscalationRule rule) {
         log.info("Applying escalation rule '{}' to ticket {}", rule.getName(), ticket.getTicketNumber());
@@ -150,7 +166,7 @@ public class SlaScheduler {
             String value = raw == null ? "" : String.valueOf(raw).trim();
             try {
                 switch (type) {
-                    case "escalate" -> { }
+                    case "escalate" -> escalate(ticket);
                     case "change_priority" -> ticketService.update(ticket.getId(), null, null,
                             TicketPriority.valueOf(value.toUpperCase(Locale.ROOT)));
                     case "assign_to" -> ticketService.assign(ticket.getId(), Long.parseLong(value), "system");

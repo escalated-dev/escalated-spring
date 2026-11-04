@@ -203,7 +203,8 @@ class CustomerInertiaPagesTest {
         assertThat(ratings.findByTicket(ticket.getId())).hasSize(1);
 
         write(path + "/reopen", "{}").andExpect(status().isSeeOther());
-        assertThat(tickets.findById(ticket.getId()).getStatus()).isEqualTo(TicketStatus.OPEN);
+        // escalated-laravel's TicketService::reopen: the reopened status, not open.
+        assertThat(tickets.findById(ticket.getId()).getStatus()).isEqualTo(TicketStatus.REOPENED);
     }
 
     @Test

@@ -48,8 +48,9 @@ class WaitingStatusesMigrationTest {
             List<Map<String, Object>> rows = jdbc.queryForList(
                     "SELECT slug, category FROM escalated_ticket_statuses WHERE is_system = TRUE ORDER BY slug");
             assertThat(rows).extracting(row -> row.get("slug") + "=" + row.get("category")).containsExactly(
-                    "closed=solved", "in_progress=open", "merged=solved", "open=open", "resolved=solved",
-                    "snoozed=on_hold", "waiting_on_agent=open", "waiting_on_customer=pending");
+                    "closed=solved", "escalated=open", "in_progress=open", "live=open", "merged=solved", "open=open",
+                    "reopened=open", "resolved=solved", "snoozed=on_hold", "waiting_on_agent=open",
+                    "waiting_on_customer=pending");
             // The pending system row was renamed, not replaced: its id is kept.
             assertThat(jdbc.queryForObject(
                     "SELECT id FROM escalated_ticket_statuses WHERE slug = 'waiting_on_customer'", Long.class))

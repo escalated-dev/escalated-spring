@@ -168,6 +168,9 @@ public class TicketStatuses {
         rows.put(TicketStatus.IN_PROGRESS, new String[] {"In Progress", "#8b5cf6", "1"});
         rows.put(TicketStatus.WAITING_ON_CUSTOMER, new String[] {"Waiting on Customer", "#f59e0b", "0"});
         rows.put(TicketStatus.WAITING_ON_AGENT, new String[] {"Waiting on Agent", "#f97316", "2"});
+        rows.put(TicketStatus.ESCALATED, new String[] {"Escalated", "#ef4444", "3"});
+        rows.put(TicketStatus.REOPENED, new String[] {"Reopened", "#3b82f6", "4"});
+        rows.put(TicketStatus.LIVE, new String[] {"Live", "#06b6d4", "5"});
         rows.put(TicketStatus.SNOOZED, new String[] {"Snoozed", "#64748b", "0"});
         rows.put(TicketStatus.RESOLVED, new String[] {"Resolved", "#10b981", "0"});
         rows.put(TicketStatus.CLOSED, new String[] {"Closed", "#6b7280", "1"});

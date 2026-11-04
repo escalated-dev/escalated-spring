@@ -181,6 +181,8 @@ public class ChatSessionService {
                 TicketPriority.MEDIUM,
                 departmentId);
         ticket.setChannel("chat");
+        // A live chat's ticket is live, as escalated-laravel's ChatSessionService::startChat.
+        ticket.setStatus(TicketStatus.LIVE);
         if (metadata != null) {
             ticket.setMetadata(metadata);
         }

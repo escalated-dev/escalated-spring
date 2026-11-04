@@ -135,7 +135,7 @@ class InboundEmailServiceTest {
         assertThat(result.ticketId()).isEqualTo(42L);
         assertThat(result.replyId()).isEqualTo(900L);
         verify(ticketService).addReply(42L, "body text", "Owner", "owner@example.com", "inbound_email", false);
-        verify(ticketService).changeStatus(42L, TicketStatus.OPEN, "owner@example.com");
+        verify(ticketService).changeStatus(42L, TicketStatus.REOPENED, "owner@example.com");
         verify(ticketService, never()).create(anyString(), anyString(), any(), anyString(), any(), any());
     }
 

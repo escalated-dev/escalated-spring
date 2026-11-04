@@ -310,10 +310,14 @@ The agent pages need the agent gate, the admin pages the admin gate (the same as
 account scope are a 404.
 
 Statuses are the lower-cased constants (`open`, `in_progress`, `waiting_on_customer`,
-`waiting_on_agent`, `resolved`, `closed`, `snoozed`, `merged`), escalated-laravel's values plus
-this port's `snoozed` and `merged`. `pending`, the single waiting status this port stored before, is still read
-as `waiting_on_customer`. Laravel's `escalated`, `reopened` and `live` statuses and `critical`
-priority do not exist here and are refused.
+`waiting_on_agent`, `escalated`, `resolved`, `closed`, `reopened`, `live`, `snoozed`, `merged`),
+escalated-laravel's values plus this port's `snoozed` and `merged`. As in Laravel, an escalation
+rule's `escalate` action sets `escalated` (from `open`, `in_progress`, `waiting_on_agent` or
+`reopened`), reopening a resolved or closed ticket (the customer's reopen, a requester's email
+reply, or a status change to `reopened`) sets `reopened` and clears its resolved and closed times,
+and a live chat's ticket starts `live`. `pending`, the single waiting status this port stored
+before, is still read as `waiting_on_customer`. Laravel's `critical` priority does not exist here
+and is refused.
 
 Custom statuses (`/escalated/admin/statuses`) are sub-statuses of five categories: `new`, `open`,
 `pending`, `on_hold`, `solved`. A status input (the ticket pages' status action, the bulk action,

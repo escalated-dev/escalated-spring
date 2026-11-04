@@ -68,7 +68,7 @@ public class InboundEmailService {
                     false
             );
             if (ticket.getStatus() == TicketStatus.RESOLVED || ticket.getStatus() == TicketStatus.CLOSED) {
-                ticketService.changeStatus(ticket.getId(), TicketStatus.OPEN, ticket.getRequesterEmail());
+                ticketService.changeStatus(ticket.getId(), TicketStatus.REOPENED, ticket.getRequesterEmail());
             }
             return new ProcessResult(
                     Outcome.REPLIED_TO_EXISTING,
