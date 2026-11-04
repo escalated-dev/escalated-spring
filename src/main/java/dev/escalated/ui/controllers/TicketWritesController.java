@@ -14,6 +14,11 @@ import dev.escalated.ui.UiInput;
 import dev.escalated.ui.UiRoutes;
 import dev.escalated.ui.UiTicketFilters;
 import jakarta.servlet.http.HttpServletRequest;
+import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
+import java.time.ZoneId;
+import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.List;
 import org.springframework.http.ResponseEntity;
@@ -26,8 +31,8 @@ import org.springframework.web.multipart.MultipartHttpServletRequest;
  * The writes a ticket page posts, shared by the agent ({@code /escalated/agent/tickets/...}) and
  * admin ({@code /escalated/admin/tickets/...}) pages, as escalated-laravel's agent and admin
  * {@code TicketController}s: {@code reply}, {@code note}, {@code assign}, {@code status},
- * {@code priority}, {@code tags}, {@code department}, {@code macro} and {@code follow}. Each goes
- * back to the ticket with a flash; tickets are named by reference.
+ * {@code priority}, {@code tags}, {@code department}, {@code macro}, {@code follow}, {@code snooze}
+ * and {@code unsnooze}. Each goes back to the ticket with a flash; tickets are named by reference.
  */
 public abstract class TicketWritesController {
 
@@ -163,6 +168,46 @@ public abstract class TicketWritesController {
         }
         boolean following = pages.toggleFollow(ticket.getId(), agentId);
         return done(ticket, following ? "You are now following this ticket." : "You are no longer following this ticket.");
+    }
+
+    @PostMapping("/tickets/{ticket}/snooze")
+    public ResponseEntity<Void> snooze(@PathVariable("ticket") String reference, HttpServletRequest request,
+                                       Authentication authentication) {
+        Ticket ticket = pages.resolve(reference);
+        Instant until = parseFuture(UiInput.of(request).string("snoozed_until"));
+        tickets.snooze(ticket.getId(), until, authentication.getName());
+        return done(ticket, "Ticket snoozed until " + until + ".");
+    }
+
+    @PostMapping("/tickets/{ticket}/unsnooze")
+    public ResponseEntity<Void> unsnooze(@PathVariable("ticket") String reference, Authentication authentication) {
+        Ticket ticket = pages.resolve(reference);
+        tickets.unsnooze(ticket.getId(), authentication.getName());
+        return done(ticket, "Ticket unsnoozed.");
+    }
+
+    /**
+     * {@code snoozed_until} as SnoozeButton sends it (an ISO instant), or a local date-time in the
+     * server's zone; it must be in the future.
+     */
+    static Instant parseFuture(String value) {
+        if (value == null) {
+            throw UiInput.invalid("snoozed_until", "The snoozed until field is required.");
+        }
+        Instant until;
+        try {
+            until = OffsetDateTime.parse(value).toInstant();
+        } catch (DateTimeParseException notOffset) {
+            try {
+                until = LocalDateTime.parse(value).atZone(ZoneId.systemDefault()).toInstant();
+            } catch (DateTimeParseException notADate) {
+                throw UiInput.invalid("snoozed_until", "The snoozed until field must be a valid date.");
+            }
+        }
+        if (!until.isAfter(Instant.now())) {
+            throw UiInput.invalid("snoozed_until", "The snoozed until field must be a date after now.");
+        }
+        return until;
     }
 
     private ResponseEntity<Void> post(String reference, HttpServletRequest request, Authentication authentication,

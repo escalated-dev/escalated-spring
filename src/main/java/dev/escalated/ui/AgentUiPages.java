@@ -1,6 +1,7 @@
 package dev.escalated.ui;
 
 import dev.escalated.config.EscalatedTransactionManagers;
+import dev.escalated.models.AgentProfile;
 import dev.escalated.models.ChatSession;
 import dev.escalated.models.Reply;
 import dev.escalated.models.Ticket;
@@ -8,6 +9,7 @@ import dev.escalated.models.TicketFollower;
 import dev.escalated.models.TicketLink;
 import dev.escalated.models.TicketPriority;
 import dev.escalated.models.TicketStatus;
+import dev.escalated.repositories.AgentProfileRepository;
 import dev.escalated.repositories.CannedResponseRepository;
 import dev.escalated.repositories.ChatSessionRepository;
 import dev.escalated.repositories.DepartmentRepository;
@@ -17,6 +19,7 @@ import dev.escalated.repositories.TagRepository;
 import dev.escalated.repositories.TicketFollowerRepository;
 import dev.escalated.repositories.TicketLinkRepository;
 import dev.escalated.repositories.TicketRepository;
+import dev.escalated.security.TicketAccess;
 import dev.escalated.services.TicketActionRegistry;
 import dev.escalated.services.TicketSubjectService;
 import jakarta.persistence.EntityNotFoundException;
@@ -29,6 +32,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -63,6 +67,12 @@ public class AgentUiPages {
     private final UiRoutes routes;
 
     private final dev.escalated.services.TicketCustomFieldValues customFields;
+
+    @Autowired
+    private AgentProfileRepository agentProfiles;
+
+    @Autowired
+    private TicketAccess access;
 
     public AgentUiPages(
             TicketRepository tickets,
@@ -163,6 +173,7 @@ public class AgentUiPages {
         chat(ticket, detail);
         detail.put("requester_ticket_count", tickets.countByRequesterEmail(ticket.getRequesterEmail()));
         detail.put("related_tickets", related(ticket));
+        detail.put("requester_tickets", requesterTickets(ticket));
         detail.put("subjects", subjects.serializeForTicket(ticket));
 
         List<Map<String, Object>> canned = new ArrayList<>();
@@ -177,6 +188,7 @@ public class AgentUiPages {
         props.put("departments", activeDepartments());
         props.put("tags", UiPresenter.tags(tags.findAll()));
         props.put("cannedResponses", canned);
+        props.put("agents", assignableAgents(ticket));
         props.put("macros", macroRows);
         props.put("is_following", agentId != null
                 && followers.existsByTicketIdAndUserId(ticket.getId(), String.valueOf(agentId)));
@@ -252,6 +264,50 @@ public class AgentUiPages {
         metadata.put("accepted_at", UiPresenter.iso(session.getAcceptedAt()));
         metadata.put("ended_at", UiPresenter.iso(session.getEndedAt()));
         detail.put("chat_metadata", metadata);
+    }
+
+    /**
+     * The staff the ticket can be assigned to, as {@code {id, name}}: active agents and admins who
+     * may see it under the department and account visibility rules.
+     */
+    private List<Map<String, Object>> assignableAgents(Ticket ticket) {
+        List<Map<String, Object>> list = new ArrayList<>();
+        for (AgentProfile agent : agentProfiles.findByActiveTrueOrderByName()) {
+            if ((agent.isAgent() || agent.isAdmin()) && access.canAssign(ticket, agent)) {
+                Map<String, Object> row = new LinkedHashMap<>();
+                row.put("id", agent.getId());
+                row.put("name", agent.getName() == null ? "" : agent.getName());
+                list.add(row);
+            }
+        }
+        return list;
+    }
+
+    /**
+     * The requester's five most recent other tickets, matched by requester email as
+     * {@code requester_ticket_count} is, newest first. Read through the ticket repository, so the
+     * visibility rules apply.
+     */
+    private List<Map<String, Object>> requesterTickets(Ticket ticket) {
+        String email = ticket.getRequesterEmail();
+        if (email == null || email.isBlank()) {
+            return List.of();
+        }
+        Specification<Ticket> sameRequester = (root, query, cb) -> cb.and(
+                cb.equal(root.get("requesterEmail"), email),
+                cb.notEqual(root.get("id"), ticket.getId()));
+        List<Map<String, Object>> list = new ArrayList<>();
+        for (Ticket other : tickets.findAll(sameRequester, firstFive()).getContent()) {
+            Map<String, Object> row = new LinkedHashMap<>();
+            row.put("id", other.getId());
+            row.put("reference", other.getTicketNumber());
+            row.put("subject", other.getSubject());
+            row.put("status", UiPresenter.status(other.getStatus()));
+            row.put("created_at", UiPresenter.iso(other.getCreatedAt()));
+            row.put("updated_at", UiPresenter.iso(other.getUpdatedAt()));
+            list.add(row);
+        }
+        return list;
     }
 
     private List<Map<String, Object>> related(Ticket ticket) {
