@@ -61,6 +61,8 @@ public class Inertia {
     private final List<InertiaSharedProps> shared;
     private final InertiaRootTemplate template;
     private final UiRoutes routes;
+    private EscalatedEmbed embed;
+    private AdminNavigation navigation;
 
     public Inertia(
             EscalatedProperties properties,
@@ -71,6 +73,17 @@ public class Inertia {
         this.shared = shared;
         this.template = template;
         this.routes = routes;
+    }
+
+    /**
+     * The embeddable admin (ADR 2026-11-05-embeddable-admin): an embedded admin page's first visit
+     * renders with {@code escalated.ui.embed.root-view} when one is set, given
+     * {@code escalatedNavigation} as well.
+     */
+    public Inertia withEmbed(EscalatedEmbed embed, AdminNavigation navigation) {
+        this.embed = embed;
+        this.navigation = navigation;
+        return this;
     }
 
     /** Renders {@code component} with {@code props} for the current request. */
@@ -88,8 +101,16 @@ public class Inertia {
         }
 
         String rootView = properties.getUi().getRootView();
+        boolean embeddedView = embed != null && embed.enabled() && embed.rootView() != null
+                && EscalatedEmbed.isEmbedded(request);
+        if (embeddedView) {
+            rootView = embed.rootView();
+        }
         if (rootView != null && !rootView.isBlank()) {
             ModelAndView view = new ModelAndView(rootView);
+            if (embeddedView) {
+                view.addObject("escalatedNavigation", navigation == null ? List.of() : navigation.adminNavigation(request));
+            }
             view.addObject("page", page);
             view.addObject("pageJson", pageJson);
             view.addObject("routesScript", routes.script());
@@ -208,7 +229,9 @@ public class Inertia {
 
     static String url(HttpServletRequest request) {
         String query = request.getQueryString();
-        return request.getRequestURI() + (query == null || query.isEmpty() ? "" : "?" + query);
+        Object embedded = request.getAttribute(EscalatedEmbed.ORIGINAL_URI_ATTRIBUTE);
+        String uri = embedded instanceof String original ? original : request.getRequestURI();
+        return uri + (query == null || query.isEmpty() ? "" : "?" + query);
     }
 
     /** Reads and removes a one-shot session map (flash, errors). */

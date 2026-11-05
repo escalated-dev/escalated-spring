@@ -451,6 +451,9 @@ public class EscalatedProperties {
         /** Agent pages show a customer as online when the portal or the widget saw them within this many seconds. */
         private int presenceOnlineWindowSeconds = 120;
 
+        /** The admin embedded in the host's own admin panel. Off by default. */
+        private EmbedProperties embed = new EmbedProperties();
+
         public boolean isAgentNotificationsEnabled() {
             return agentNotificationsEnabled;
         }
@@ -521,6 +524,162 @@ public class EscalatedProperties {
 
         public void setStylesheets(List<String> stylesheets) {
             this.stylesheets = stylesheets;
+        }
+
+        public EmbedProperties getEmbed() {
+            return embed;
+        }
+
+        public void setEmbed(EmbedProperties embed) {
+            this.embed = embed;
+        }
+    }
+
+    /**
+     * {@code escalated.ui.embed.*}: the admin embedded in the host's own admin panel (ADR
+     * 2026-11-05-embeddable-admin). Optional and off by default; while {@code enabled} is false
+     * nothing else here has any effect.
+     *
+     * <p>Also read from {@code ESCALATED_EMBED}, {@code ESCALATED_EMBED_MODE},
+     * {@code ESCALATED_EMBED_PREFIX} and {@code ESCALATED_EMBED_FRAME_ANCESTORS} (comma-separated),
+     * and settable from Java with an {@code EscalatedEmbedConfigurer} bean:
+     * {@code embed -> embed.embedAdmin().prefix("admin/support")}.
+     */
+    public static class EmbedProperties {
+        /** Master switch. */
+        private boolean enabled = false;
+
+        /** {@code layout} (a Vue/Inertia or server-rendered host) or {@code iframe}. */
+        private String mode = "layout";
+
+        /** URL prefix the admin pages are mounted under, instead of {@code /escalated/admin}. */
+        private String prefix = "admin/support";
+
+        /**
+         * Names of {@code jakarta.servlet.Filter} beans to run on embedded admin requests, in
+         * order, before Escalated's own guards. Null or empty: none beyond the host's security
+         * chain for the prefix (if any) and Escalated's own.
+         */
+        private List<String> middleware;
+
+        /**
+         * Drops Escalated's admin gate from the embedded admin, so the host's security chain and
+         * {@link #middleware} alone decide who reaches it. Two-factor and route permissions stay.
+         */
+        private boolean replaceAdminGate = false;
+
+        /** Name of the host layout the frontend wraps admin pages in (its {@code layouts} map). */
+        private String layout;
+
+        /** Thymeleaf view rendering embedded admin pages' first visits (a server-rendered host). */
+        private String rootView;
+
+        /** iframe mode: exact origins allowed to frame the admin. No wildcards, no {@code *}. */
+        private List<String> frameAncestors = new ArrayList<>();
+
+        /** Turns embedding on; the fluent methods below set the other keys. */
+        public EmbedProperties embedAdmin() {
+            this.enabled = true;
+            return this;
+        }
+
+        public EmbedProperties prefix(String value) {
+            setPrefix(value);
+            return this;
+        }
+
+        public EmbedProperties mode(String value) {
+            setMode(value);
+            return this;
+        }
+
+        public EmbedProperties middleware(String... beanNames) {
+            setMiddleware(new ArrayList<>(List.of(beanNames)));
+            return this;
+        }
+
+        public EmbedProperties replaceAdminGate(boolean value) {
+            setReplaceAdminGate(value);
+            return this;
+        }
+
+        public EmbedProperties layout(String value) {
+            setLayout(value);
+            return this;
+        }
+
+        public EmbedProperties rootView(String value) {
+            setRootView(value);
+            return this;
+        }
+
+        public EmbedProperties frameAncestors(String... origins) {
+            setFrameAncestors(new ArrayList<>(List.of(origins)));
+            return this;
+        }
+
+        public boolean isEnabled() {
+            return enabled;
+        }
+
+        public void setEnabled(boolean enabled) {
+            this.enabled = enabled;
+        }
+
+        public String getMode() {
+            return mode;
+        }
+
+        public void setMode(String mode) {
+            this.mode = mode;
+        }
+
+        public String getPrefix() {
+            return prefix;
+        }
+
+        public void setPrefix(String prefix) {
+            this.prefix = prefix;
+        }
+
+        public List<String> getMiddleware() {
+            return middleware;
+        }
+
+        public void setMiddleware(List<String> middleware) {
+            this.middleware = middleware;
+        }
+
+        public boolean isReplaceAdminGate() {
+            return replaceAdminGate;
+        }
+
+        public void setReplaceAdminGate(boolean replaceAdminGate) {
+            this.replaceAdminGate = replaceAdminGate;
+        }
+
+        public String getLayout() {
+            return layout;
+        }
+
+        public void setLayout(String layout) {
+            this.layout = layout;
+        }
+
+        public String getRootView() {
+            return rootView;
+        }
+
+        public void setRootView(String rootView) {
+            this.rootView = rootView;
+        }
+
+        public List<String> getFrameAncestors() {
+            return frameAncestors;
+        }
+
+        public void setFrameAncestors(List<String> frameAncestors) {
+            this.frameAncestors = frameAncestors == null ? new ArrayList<>() : frameAncestors;
         }
     }
 

@@ -70,6 +70,9 @@ public class InertiaErrorPageFilter extends OncePerRequestFilter {
         if (!Inertia.isInertia(request)) {
             return true;
         }
+        if (EscalatedEmbed.isEmbedded(request)) {
+            return false;
+        }
         String path = request.getRequestURI().substring(request.getContextPath().length());
         if (!path.equals(UiRoutes.PREFIX) && !path.startsWith(UiRoutes.PREFIX + "/")) {
             return true;

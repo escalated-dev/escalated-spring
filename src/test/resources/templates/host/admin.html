@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="csrf-token" th:if="${csrfToken}" th:content="${csrfToken}">
+    <title>Host admin</title>
+    <script th:utext="${routesScript}"></script>
+    <script type="module" src="/build/app.js"></script>
+</head>
+<body>
+<div class="host-admin">
+    <aside class="host-sidebar">
+        <a href="/admin">Dashboard</a>
+        <a href="/admin/orders">Orders</a>
+        <nav aria-label="Support">
+            <a th:each="item : ${escalatedNavigation}"
+               th:href="${item.url}"
+               th:text="${item.label}"
+               th:attr="aria-current=${item.active} ? 'page' : null"></a>
+        </nav>
+    </aside>
+    <main class="host-content">
+        <div id="app" th:attr="data-page=${pageJson}"></div>
+    </main>
+</div>
+</body>
+</html>

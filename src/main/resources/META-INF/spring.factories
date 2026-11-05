@@ -1,0 +1,2 @@
+org.springframework.boot.EnvironmentPostProcessor=\
+dev.escalated.config.EmbedEnvironmentPostProcessor

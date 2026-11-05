@@ -206,6 +206,50 @@ public class UiRoutes {
         routes.put(name, uri.startsWith("//") ? uri.substring(1) : PREFIX + uri);
     }
 
+    /**
+     * Points every admin page's name at {@code basePath} instead of {@code /escalated/admin}: the
+     * embedded admin (ADR 2026-11-05-embeddable-admin). The two-factor enrolment pages stay.
+     * Called by {@link EscalatedEmbed} when embedding is on; the names themselves never change.
+     */
+    public final void mountAdminAt(String basePath) {
+        routes.replaceAll((name, uri) -> EscalatedEmbed.moves(uri)
+                ? basePath + uri.substring(EscalatedEmbed.ADMIN.length())
+                : uri);
+    }
+
+    /**
+     * The name of the route serving {@code path}, or null: a name whose URI is exactly the path
+     * first, then one whose placeholders match its segments, in table order.
+     */
+    public String nameOf(String path) {
+        if (path == null) {
+            return null;
+        }
+        for (Map.Entry<String, String> route : routes.entrySet()) {
+            if (route.getValue().equals(path)) {
+                return route.getKey();
+            }
+        }
+        for (Map.Entry<String, String> route : routes.entrySet()) {
+            String uri = route.getValue();
+            if (!uri.contains("{")) {
+                continue;
+            }
+            StringBuilder regex = new StringBuilder();
+            Matcher matcher = PARAMETER.matcher(uri);
+            int last = 0;
+            while (matcher.find()) {
+                regex.append(Pattern.quote(uri.substring(last, matcher.start()))).append("[^/]+");
+                last = matcher.end();
+            }
+            regex.append(Pattern.quote(uri.substring(last)));
+            if (path.matches(regex.toString())) {
+                return route.getKey();
+            }
+        }
+        return null;
+    }
+
     public Map<String, String> all() {
         return Collections.unmodifiableMap(routes);
     }
