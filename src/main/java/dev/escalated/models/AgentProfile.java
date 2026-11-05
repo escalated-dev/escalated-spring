@@ -39,6 +39,10 @@ public class AgentProfile extends BaseEntity {
     @Column(name = "is_available", nullable = false)
     private boolean available = true;
 
+    /** The agent's own status (ADR 2026-11-05-agent-panel-data): online, away or offline. */
+    @Column(name = "chat_status", nullable = false, length = 20)
+    private String chatStatus = "offline";
+
     @Column(name = "is_admin", nullable = false)
     private boolean admin = false;
 
@@ -132,6 +136,14 @@ public class AgentProfile extends BaseEntity {
 
     public boolean isAvailable() {
         return available;
+    }
+
+    public String getChatStatus() {
+        return chatStatus;
+    }
+
+    public void setChatStatus(String chatStatus) {
+        this.chatStatus = chatStatus;
     }
 
     public void setAvailable(boolean available) {

@@ -21,7 +21,17 @@ public interface KnowledgeBaseArticleRepository extends JpaRepository<KnowledgeB
 
     Page<KnowledgeBaseArticle> findByPublishedTrueOrderByPublishedAtDesc(Pageable pageable);
 
+    /** Published articles matching a LIKE pattern (lower-cased, escaped with {@code !}). */
     @Query("SELECT a FROM KnowledgeBaseArticle a WHERE a.published = true "
-            + "AND (LOWER(a.title) LIKE LOWER(CONCAT('%', :query, '%')) OR LOWER(a.content) LIKE LOWER(CONCAT('%', :query, '%')))")
-    Page<KnowledgeBaseArticle> searchPublished(@Param("query") String query, Pageable pageable);
+            + "AND (LOWER(a.title) LIKE :pattern ESCAPE '!' OR LOWER(a.content) LIKE :pattern ESCAPE '!')")
+    Page<KnowledgeBaseArticle> searchPublished(@Param("pattern") String pattern, Pageable pageable);
+
+    /**
+     * The agents' knowledge-base search (ADR 2026-11-05-agent-panel-data): published articles
+     * matching the pattern, title matches first, then the most recently updated.
+     */
+    @Query("SELECT a FROM KnowledgeBaseArticle a LEFT JOIN FETCH a.category WHERE a.published = true "
+            + "AND (LOWER(a.title) LIKE :pattern ESCAPE '!' OR LOWER(a.content) LIKE :pattern ESCAPE '!') "
+            + "ORDER BY CASE WHEN LOWER(a.title) LIKE :pattern ESCAPE '!' THEN 0 ELSE 1 END, a.updatedAt DESC, a.id DESC")
+    List<KnowledgeBaseArticle> searchForAgents(@Param("pattern") String pattern, Pageable pageable);
 }

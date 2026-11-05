@@ -7,6 +7,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Upgrading
+- **Migration `V30__agent_panel_data`** (PostgreSQL and MySQL; ADR 2026-11-05-agent-panel-data) adds `escalated_tickets.last_customer_activity_at`, `escalated_agent_profiles.chat_status` (default `offline`) and the `escalated_ticket_reads`, `escalated_customer_presence` and `escalated_notifications` tables. Existing tickets get no customer activity, so none turn unread on upgrade.
+- **Agents get in-app notifications** (`escalated.ui.agent-notifications-enabled`, on by default). Assigning a ticket to yourself creates none, and the `ticket_reply` notification is only for customer-side replies. This package sends no notification emails, so no email changes.
+- **Setting an agent status updates `is_available`**: only `online` leaves the agent available for new chats. Agents who never set a status keep their current availability.
+- **`inbox` gains `unread`** (three more count queries, cached with the rest) and the agent ticket rows gain `is_unread`, `requester_online` and `requester_last_seen_at`. Older frontends ignore them.
+- The widget's article search now takes `%` and `_` literally.
+- The test task runs with a 1 GB heap: the suite's cached contexts outgrew Gradle's 512 MB default.
+
+### Added
+- **The agent panel's data** (ADR 2026-11-05-agent-panel-data, after escalated-laravel; `docs/agent-panel.md`):
+  - agent status: `PUT`/`POST /escalated/agent/status` (`escalated.agent.status`), shared `escalated.agent_status` and `escalated.agent_statuses`;
+  - knowledge-base search for agents: `GET /escalated/agent/kb/search` (`escalated.agent.kb.search`, `kb.view`), published articles, title matches first;
+  - unread tickets: `escalated_ticket_reads`, `escalated.agent.tickets.read` / `.unread`, admin bulk `mark_read` / `mark_unread`, `is_unread` on list rows (one query per page) and the ticket page, `inbox.unread` `{mine, unassigned, all}`;
+  - customer presence: the customer portal, the guest API and the widget record when the customer was last seen (throttled to 30 seconds); agent pages only show `requester_online` (within `escalated.ui.presence-online-window-seconds`, default 120) and `requester_last_seen_at`;
+  - notifications: `escalated.agent.notifications.index` / `.read` / `.read-all`, shared `escalated.notifications.unread_count`, types `ticket_assigned`, `ticket_reply`, `sla_warning`, `sla_breached`, `chat_transferred`; notifications about tickets the agent can no longer see are redacted; with broadcasting on, `notification.created` to the agent's `/user/queue/escalated.notifications`.
+
+### Not sent
+- `mention` notifications: this package detects no @mentions in replies yet. Notification titles are English.
+
 ## [0.2.11] - 2026-11-04
 
 ### Upgrading

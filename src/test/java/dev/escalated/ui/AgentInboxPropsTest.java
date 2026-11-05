@@ -123,7 +123,7 @@ class AgentInboxPropsTest {
 
         JsonNode page = page("/escalated/agent/tickets");
         JsonNode inbox = page.get("props").get("inbox");
-        assertThat(AgentInertiaPagesTest.fieldNames(inbox)).containsExactly("counts", "views", "stats");
+        assertThat(AgentInertiaPagesTest.fieldNames(inbox)).containsExactly("counts", "unread", "views", "stats");
         assertThat(AgentInertiaPagesTest.fieldNames(inbox.get("counts"))).containsExactly("mine", "unassigned", "all");
         // Unresolved, unsnoozed tickets in each queue.
         assertThat(inbox.get("counts").get("mine").asLong()).isEqualTo(3);
@@ -346,9 +346,9 @@ class AgentInboxPropsTest {
         JsonNode row = page("/escalated/agent/tickets?search=" + unique).get("props").get("tickets").get("data").get(0);
         assertThat(row.get("latest_reply").get("body").asText()).isEqualTo("Customer-visible answer");
         assertThat(row.get("latest_reply").get("is_internal_note").asBoolean()).isFalse();
-        // Escalated tracks no per-agent read state or customer presence.
-        assertThat(row.has("is_unread")).isFalse();
-        assertThat(row.has("requester_online")).isFalse();
+        // Per-agent read state and the customer's presence (ADR 2026-11-05-agent-panel-data).
+        assertThat(row.has("is_unread")).isTrue();
+        assertThat(row.has("requester_online")).isTrue();
     }
 
     @Test
@@ -359,7 +359,7 @@ class AgentInboxPropsTest {
 
         JsonNode props = page(show, session).get("props");
         assertThat(props.get("queue")).isEqualTo(JSON.readTree("{\"key\":\"all\",\"title\":\"All tickets\"}"));
-        assertThat(AgentInertiaPagesTest.fieldNames(props.get("inbox"))).containsExactly("counts", "views", "stats");
+        assertThat(AgentInertiaPagesTest.fieldNames(props.get("inbox"))).containsExactly("counts", "unread", "views", "stats");
         assertThat(props.get("inbox").get("counts").get("mine").asLong()).isEqualTo(1);
 
         page("/escalated/agent/tickets?assigned_to=" + agent.getId(), session);

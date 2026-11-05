@@ -28,6 +28,10 @@ public class GuestAccessController {
     private final TicketService ticketService;
     private final GuestAccessGrants grants;
 
+    /** Records the customer as on the site, for the agent pages' presence (ADR 2026-11-05-agent-panel-data). */
+    @org.springframework.beans.factory.annotation.Autowired(required = false)
+    private dev.escalated.services.AgentPanelService agentPanel;
+
     public GuestAccessController(TicketService ticketService, GuestAccessGrants grants) {
         this.ticketService = ticketService;
         this.grants = grants;
@@ -38,6 +42,9 @@ public class GuestAccessController {
         Optional<Ticket> ticket = grants.resolve(reference, request.getHeader("Authorization"));
         if (ticket.isEmpty()) {
             return GuestResponses.invalidToken();
+        }
+        if (agentPanel != null) {
+            agentPanel.quietlySee(ticket.get().getRequesterEmail());
         }
         return GuestResponses.of(200, ticketService.guestView(ticket.get().getId()));
     }

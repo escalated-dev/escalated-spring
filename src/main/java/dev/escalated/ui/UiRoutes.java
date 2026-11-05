@@ -44,6 +44,14 @@ public class UiRoutes {
         register("escalated.agent.tickets.custom-action", "/agent/tickets/{ticket}/actions/{action}");
         register("escalated.agent.tickets.snooze", "/agent/tickets/{ticket}/snooze");
         register("escalated.agent.tickets.unsnooze", "/agent/tickets/{ticket}/unsnooze");
+        // The agent panel's data (ADR 2026-11-05-agent-panel-data).
+        register("escalated.agent.tickets.read", "/agent/tickets/{ticket}/read");
+        register("escalated.agent.tickets.unread", "/agent/tickets/{ticket}/unread");
+        register("escalated.agent.status", "/agent/status");
+        register("escalated.agent.kb.search", "/agent/kb/search");
+        register("escalated.agent.notifications.index", "/agent/notifications");
+        register("escalated.agent.notifications.read", "/agent/notifications/{id}/read");
+        register("escalated.agent.notifications.read-all", "/agent/notifications/read-all");
         // End Chat on the agent ticket page; Laravel serves it at /admin/chat/{session}/end under this name.
         register("escalated.admin.chat.end", "/agent/chat/{session}/end");
         // Live chat transfer from TicketShow's action bar, from the agent's browser session like End Chat.
