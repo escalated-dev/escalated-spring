@@ -1,6 +1,7 @@
 package dev.escalated.security;
 
 import dev.escalated.services.TwoFactorService;
+import dev.escalated.ui.EscalatedEmbed;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -93,8 +94,10 @@ public class RequireTwoFactorFilter extends OncePerRequestFilter {
         boolean get = "GET".equalsIgnoreCase(request.getMethod());
         if (get) {
             String query = request.getQueryString();
-            TwoFactorSession.rememberIntended(request, request.getRequestURI()
-                    + (query == null || query.isEmpty() ? "" : "?" + query));
+            // An embedded admin page is remembered at the URL the browser asked for.
+            Object embedded = request.getAttribute(EscalatedEmbed.ORIGINAL_URI_ATTRIBUTE);
+            String uri = embedded instanceof String original ? original : request.getRequestURI();
+            TwoFactorSession.rememberIntended(request, uri + (query == null || query.isEmpty() ? "" : "?" + query));
         }
         response.setStatus(get ? HttpServletResponse.SC_FOUND : HttpServletResponse.SC_SEE_OTHER);
         response.setHeader("Location", request.getContextPath() + location);
