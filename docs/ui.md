@@ -299,8 +299,11 @@ Agent writes: `POST /escalated/agent/tickets/{reference}/` `reply`, `note`, `ass
 `/escalated/admin/tickets/{reference}/`, less `actions/{action}`, plus `snooze` (`snoozed_until`, a
 future date-time; the ticket becomes `snoozed`) and `unsnooze` (back to `open`). The admin queue
 posts `POST /escalated/admin/tickets/bulk` (`ticket_ids`, at most 50; `action` one of `status`,
-`priority`, `assign`, `tags`, `department`, `delete`; `value`), which skips a ticket the action
-cannot apply to and flashes how many changed. Its saved views are JSON, called with `fetch`:
+`priority`, `assign`, `tags`, `department`, `delete`, `mark_read`, `mark_unread`; `value`), which
+skips a ticket the action cannot apply to and flashes how many changed. The agent queue posts the
+same body to `POST /escalated/agent/tickets/bulk` (`escalated.agent.tickets.bulk`), on the
+tickets the agent can see; each action needs its permission, and `delete` is skipped for anyone
+but an admin, as escalated-laravel. Its saved views are JSON, called with `fetch`:
 `GET`/`POST /escalated/admin/saved-views`, `PUT`/`DELETE /escalated/admin/saved-views/{id}`
 (`name`, `filters` object, `is_shared`, `is_default`); only a view's owner changes it. Attachments to the pages' writes: `GET
 /escalated/attachments/{id}/download`, with the same access rules as the API's download.

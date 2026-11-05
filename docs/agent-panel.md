@@ -16,7 +16,7 @@ The shared frontend's agent panel (`@escalated-dev/escalated`, `docs/agent-panel
 ## Unread tickets
 
 - A ticket is unread for an agent when the customer was active on it after the agent last opened it, or when the agent marked it unread. Customer activity is a ticket's creation (not an import) and every public reply from the customer side (`author_type` customer, visitor, inbound email, anything but agent and system). Agents' replies, internal notes and system replies are not. Existing tickets have no activity, so none turn unread on upgrade.
-- Opening a ticket in the agent panel marks it read. `POST /escalated/agent/tickets/{ticket}/read` and `/unread` (`escalated.agent.tickets.read` / `.unread`) answer `{"is_unread": bool}`; the admin bulk endpoint takes `mark_read` and `mark_unread` (no value).
+- Opening a ticket in the agent panel marks it read. `POST /escalated/agent/tickets/{ticket}/read` and `/unread` (`escalated.agent.tickets.read` / `.unread`) answer `{"is_unread": bool}`; the agent and admin bulk endpoints (`escalated.agent.tickets.bulk`, `escalated.admin.tickets.bulk`) take `mark_read` and `mark_unread` (no value).
 - `is_unread` is on every `Agent/TicketIndex` row (one query for the page) and on `Agent/TicketShow`'s ticket (`false`). `inbox.unread` is `{mine, unassigned, all}`, counted with `EXISTS` through the list's own filters and the ticket visibility rules, and cached with the rest of `inbox`.
 
 ## Customer presence
