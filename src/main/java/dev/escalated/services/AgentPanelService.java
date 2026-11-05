@@ -73,12 +73,14 @@ public class AgentPanelService {
 
     private static final Logger log = LoggerFactory.getLogger(AgentPanelService.class);
     private static final ObjectMapper JSON = new ObjectMapper();
+    private static final MentionService MENTIONS = new MentionService();
     private static final Duration PRESENCE_THROTTLE = Duration.ofSeconds(30);
     private static final Set<String> STAFF_AUTHORS = Set.of("agent", "admin", "system");
     private static final String UNAVAILABLE = "A ticket you can no longer view";
     private static final Map<String, String> TITLES = Map.of(
             "ticket_assigned", "%s was assigned to you",
             "ticket_reply", "New reply on %s",
+            "mention", "%2$s mentioned you on %1$s",
             "sla_warning", "SLA due soon on %s",
             "sla_breached", "SLA breached on %s",
             "chat_transferred", "A chat was transferred to you (%s)",
@@ -333,7 +335,11 @@ public class AgentPanelService {
     public void onReply(ReplyEvent event) {
         try {
             Reply reply = event.getReply();
-            if (event.getType() != ReplyEvent.Type.CREATED || !customerSide(reply) || reply.getTicket() == null) {
+            if (event.getType() != ReplyEvent.Type.CREATED || reply == null || reply.getTicket() == null) {
+                return;
+            }
+            if (!customerSide(reply)) {
+                mentions(reply);
                 return;
             }
             Ticket ticket = reply.getTicket();
@@ -355,6 +361,54 @@ public class AgentPanelService {
         } catch (RuntimeException failed) {
             log.warn("Escalated agent panel could not handle a reply: {}", failed.getMessage());
         }
+    }
+
+    /**
+     * Mentions of agents in an agent's reply or internal note, as escalated-laravel's
+     * {@code MentionService}: each mentioned agent who may see the ticket gets a {@code mention}
+     * notification. A system reply mentions nobody, and nobody is notified of their own mention.
+     */
+    private void mentions(Reply reply) {
+        String authorType = reply.getAuthorType() == null ? "" : reply.getAuthorType().toLowerCase(Locale.ROOT);
+        if (!Set.of("agent", "admin").contains(authorType) || reply.getBody() == null) {
+            return;
+        }
+        List<AgentProfile> staff = mentionableAgents();
+        List<AgentProfile> mentioned = MENTIONS.mentionedAgents(reply.getBody(), staff);
+        if (mentioned.isEmpty()) {
+            return;
+        }
+        Ticket ticket = reply.getTicket();
+        TicketAccess scope = access.getIfAvailable();
+        Map<String, Object> extra = new LinkedHashMap<>();
+        extra.put("reply_id", reply.getId());
+        extra.put("mentioned_by", reply.getAuthorName() == null ? "Someone" : reply.getAuthorName());
+        for (AgentProfile agent : mentioned) {
+            if (scope != null && scope.enabled() && !scope.canReceiveStaff(ticket.getId(), agent.getId())) {
+                continue;
+            }
+            notify(agent.getId(), "mention", ticket, extra, reply.getAuthorEmail());
+        }
+    }
+
+    /** The staff a mention can name: active agents and admins. */
+    public List<AgentProfile> mentionableAgents() {
+        return agents.findByActiveTrueOrderByName().stream()
+                .filter(agent -> agent.isAgent() || agent.isAdmin())
+                .toList();
+    }
+
+    /** The composer's mention picker: up to 10 agents whose name or email contains {@code q}. */
+    public List<Map<String, Object>> mentionSuggestions(String q) {
+        List<Map<String, Object>> out = new ArrayList<>();
+        for (AgentProfile agent : MENTIONS.suggestions(q, mentionableAgents(), MentionService.SUGGESTIONS_LIMIT)) {
+            Map<String, Object> row = new LinkedHashMap<>();
+            row.put("id", agent.getId());
+            row.put("name", agent.getName());
+            row.put("email", agent.getEmail());
+            out.add(row);
+        }
+        return out;
     }
 
     /** A chat transferred to an agent notifies them. */
@@ -512,7 +566,8 @@ public class AgentPanelService {
             item.put("url", null);
         } else {
             String reference = ticket != null ? ticket.getTicketNumber() : String.valueOf(data.getOrDefault("reference", ""));
-            item.put("title", String.format(TITLES.get(type), reference));
+            item.put("title", String.format(TITLES.get(type), reference,
+                    String.valueOf(data.getOrDefault("mentioned_by", "Someone"))));
             item.put("body", ticket == null ? null : ticket.getSubject());
             if (ticket == null) {
                 item.put("ticket", null);

@@ -33,8 +33,11 @@ The shared frontend's agent panel (`@escalated-dev/escalated`, `docs/agent-panel
 | `sla_warning` | the assignee | an SLA warning |
 | `sla_breached` | the assignee | an SLA breach |
 | `chat_transferred` | the receiving agent | a chat is transferred to them |
+| `mention` | the mentioned agent | an @mention in another agent's reply or internal note |
 
 Nobody is notified of their own action.
+
+Mentions follow escalated-laravel: `@{Full Name}` (what the composer's picker inserts) and `@name` match an active agent or admin by name or email, ignoring case; a customer's or system reply mentions nobody, and an agent who cannot see the ticket is skipped. The picker searches at `GET /escalated/admin/agents/search?q=` (`escalated.admin.agents.search`, admin chain, `ticket.view`): up to 10 `{id, name, email}`.
 
 - `GET /escalated/agent/notifications?page=&per_page=<1..50, default 20>&unread=1` (`escalated.agent.notifications.index`) answers `{data: [{id, type, title, body, ticket: {id, reference, subject} | null, url, created_at, read_at}], meta: {current_page, last_page, per_page, total}}`, newest first. A notification about a ticket the agent can no longer view is redacted: title "A ticket you can no longer view", `body`, `ticket` and `url` null.
 - `POST /escalated/agent/notifications/{id}/read` answers `{"unread_count": n}` (404 for another agent's notification); `POST /escalated/agent/notifications/read-all` answers `{"unread_count": 0}`.
