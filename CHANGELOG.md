@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.11] - 2026-11-04
+
 ### Upgrading
 - **The built-in `PENDING` status is replaced by escalated-laravel's two waiting statuses, `WAITING_ON_CUSTOMER` and `WAITING_ON_AGENT`** (`waiting_on_customer` / `waiting_on_agent` in the API, pages, events and workflow/automation payloads). Both used to be stored as `PENDING`, so "Waiting on me" and "Waiting on customer" showed the same tickets. Migration `V28__waiting_statuses` (PostgreSQL and MySQL; H2 and other `ddl-auto` schemas take the new constants from the entity) maps the data:
   - every ticket with status `PENDING` becomes `WAITING_ON_CUSTOMER` (the old status meant a ticket parked for a reply; nothing set it automatically). Tickets with a custom status in the `pending` category keep it, anchored on `WAITING_ON_CUSTOMER`;
@@ -36,6 +38,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Not sent
 - `is_unread` and `requester_online`: Escalated tracks no per-agent read state or customer presence, so the list rows carry neither.
 - Queue and view names are English: this package sends no translated strings of its own.
+
+### Changed
+- The bundled widget is now `@escalated-dev/escalated` 0.12.8. The widget's source did not change in 0.12.8; the bundle is rebuilt with Vue 3.5.44, so it behaves as before.
 
 ## [0.2.10] - 2026-10-30
 
