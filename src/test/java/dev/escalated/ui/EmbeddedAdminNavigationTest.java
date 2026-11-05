@@ -24,6 +24,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.authority.AuthorityUtils;
+import org.springframework.security.core.context.SecurityContextHolder;
 
 /**
  * {@code escalated.navigation} and {@link AdminNavigation#adminNavigation}: the item shape, the
@@ -159,6 +160,20 @@ class EmbeddedAdminNavigationTest extends EmbedTestSupport {
         AgentProfile agent = profile("agent", true, false);
         assertThat(navigation.adminNavigation(signedInAs(agent), new MockHttpServletRequest())).isEmpty();
         assertThat(navigation.adminNavigation(null, new MockHttpServletRequest())).isEmpty();
+    }
+
+    @Test
+    void theHelperReadsTheSignedInUserForAHostPage() {
+        AgentProfile admin = profile("admin", true, true);
+        SecurityContextHolder.getContext().setAuthentication(signedInAs(admin));
+        try {
+            MockHttpServletRequest hostPage = new MockHttpServletRequest("GET", "/admin/orders");
+            List<Map<String, Object>> items = navigation.adminNavigation(hostPage);
+            assertThat(items).extracting(item -> item.get("url")).contains("/admin/support/tickets");
+            assertThat(items).noneMatch(item -> Boolean.TRUE.equals(item.get("active")));
+        } finally {
+            SecurityContextHolder.clearContext();
+        }
     }
 
     private static UsernamePasswordAuthenticationToken signedInAs(AgentProfile who) {

@@ -115,6 +115,9 @@ escalated.route-prefix=escalated
 # The shared Inertia pages (off by default; Laravel defaults to on). See docs/ui.md
 escalated.ui.enabled=false
 
+# The admin embedded in your own admin panel (off by default). See docs/embedding-admin.md
+escalated.ui.embed.enabled=false
+
 # Debug mode (off by default): a 500 on an Inertia visit reaches Boot's own error handling
 # instead of the generic Error page. Development only; see docs/ui.md
 escalated.debug=false
@@ -167,6 +170,33 @@ spring.datasource.password=secret
 # Escalated runs its own migrations; see Database Setup
 spring.jpa.hibernate.ddl-auto=validate
 ```
+
+## Embedding the admin in your own admin panel (optional)
+
+Escalated's admin is a standalone panel at `/escalated/admin` by default, and
+that needs no setup. If your app already has an admin panel, you can show
+Escalated's admin screens inside it instead, under your own prefix, security
+chain and layout:
+
+```properties
+escalated.ui.enabled=true
+escalated.ui.embed.enabled=true
+escalated.ui.embed.prefix=admin/support
+# Filter beans of yours to run on the embedded admin, after your security chain
+escalated.ui.embed.middleware=hostAdminOnly
+# Your Vue admin layout (frontend `layouts` option), or a Thymeleaf root view
+escalated.ui.embed.layout=Layouts/AdminLayout
+```
+
+The admin pages then answer under `/admin/support` with the same route names
+(the old URLs answer 404), Escalated's admin gate, two-factor, route
+permissions and CSRF still apply, and every page shares `escalated.navigation`
+for your sidebar. A Thymeleaf admin uses `escalated.ui.embed.root-view`; an
+admin on another origin uses `escalated.ui.embed.mode=iframe` with
+`escalated.ui.embed.frame-ancestors`. Also settable with an
+`EscalatedEmbedConfigurer` bean or `ESCALATED_EMBED*` variables. Nothing
+changes unless you configure it. See
+[docs/embedding-admin.md](docs/embedding-admin.md).
 
 ## Ticket subjects
 
