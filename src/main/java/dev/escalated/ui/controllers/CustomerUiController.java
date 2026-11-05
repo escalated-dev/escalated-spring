@@ -55,6 +55,13 @@ public class CustomerUiController {
     private final UiRoutes routes;
     private final TicketCustomFieldValues customFields;
 
+    /** Records the customer as on the site, for the agent pages' presence (ADR 2026-11-05-agent-panel-data). */
+    @org.springframework.beans.factory.annotation.Autowired(required = false)
+    private dev.escalated.services.AgentPanelService agentPanel;
+
+    @org.springframework.beans.factory.annotation.Autowired(required = false)
+    private dev.escalated.security.EscalatedAuthorization authorization;
+
     public CustomerUiController(
             EscalatedUiRenderer renderer,
             Inertia inertia,
@@ -78,6 +85,7 @@ public class CustomerUiController {
 
     @GetMapping({"", "/"})
     public Object index(@RequestParam Map<String, String> query, Authentication authentication) {
+        seen(authentication);
         return renderer.render("Escalated/Customer/Index", pages.index(email(authentication), query));
     }
 
@@ -116,6 +124,7 @@ public class CustomerUiController {
 
     @GetMapping(TICKET)
     public Object show(@PathVariable("ticket") String reference, Authentication authentication) {
+        seen(authentication);
         return renderer.render("Escalated/Customer/Show", pages.show(reference, email(authentication)));
     }
 
@@ -182,6 +191,17 @@ public class CustomerUiController {
         if (request instanceof MultipartHttpServletRequest multipart && !multipart.getMultiFileMap().isEmpty()) {
             throw UiInput.invalid("attachments", "Attachments cannot be uploaded here yet.");
         }
+    }
+
+    /** A signed-in customer (not staff browsing the portal) is on the site. */
+    private void seen(Authentication authentication) {
+        if (agentPanel == null || authentication == null || authentication.getName() == null) {
+            return;
+        }
+        if (authorization != null && (authorization.isAgent(authentication) || authorization.isAdmin(authentication))) {
+            return;
+        }
+        agentPanel.quietlySee(authentication.getName());
     }
 
     private static String email(Authentication authentication) {

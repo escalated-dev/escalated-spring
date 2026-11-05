@@ -46,6 +46,7 @@ public class EscalatedSharedProps implements InertiaSharedProps {
     private AccessFeatures accessFeatures;
     private AccessControl accessControl;
     private dev.escalated.services.TwoFactorService twoFactor;
+    private dev.escalated.services.AgentPanelService agentPanel;
 
     public EscalatedSharedProps(
             EscalatedAuthorization authorization,
@@ -80,6 +81,16 @@ public class EscalatedSharedProps implements InertiaSharedProps {
     public EscalatedSharedProps withAccess(AccessFeatures features, AccessControl control) {
         this.accessFeatures = features;
         this.accessControl = control;
+        return this;
+    }
+
+    /**
+     * Shares the agent panel's data with staff (ADR 2026-11-05-agent-panel-data):
+     * {@code escalated.agent_status}, {@code escalated.agent_statuses} and, while the feed is on,
+     * {@code escalated.notifications.unread_count}.
+     */
+    public EscalatedSharedProps withAgentPanel(dev.escalated.services.AgentPanelService panel) {
+        this.agentPanel = panel;
         return this;
     }
 
@@ -144,6 +155,18 @@ public class EscalatedSharedProps implements InertiaSharedProps {
         escalated.put("knowledge_base_feedback_enabled", setting("knowledge_base_feedback_enabled", true));
         if (signedIn) {
             escalated.put("agent_type", "full");
+        }
+        if (agentPanel != null && (isAgent || isAdmin) && profile.isPresent()) {
+            try {
+                Long agentId = profile.get().getId();
+                escalated.put("agent_status", agentPanel.status(agentId));
+                escalated.put("agent_statuses", dev.escalated.services.AgentPanelService.STATUSES);
+                if (agentPanel.notificationsEnabled()) {
+                    escalated.put("notifications", Map.of("unread_count", agentPanel.unreadCount(agentId)));
+                }
+            } catch (RuntimeException unavailable) {
+                // The agent panel tables may not be migrated yet.
+            }
         }
         escalated.put("plugins", plugins == null ? Map.of() : plugins.uiExtensions(signedIn ? authentication : null));
         shared.put("escalated", escalated);

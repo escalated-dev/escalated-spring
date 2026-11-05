@@ -62,6 +62,10 @@ public class WidgetChatController {
 
     private final GuestVerificationService verification;
 
+    /** Records the customer as on the site, for the agent pages' presence (ADR 2026-11-05-agent-panel-data). */
+    @org.springframework.beans.factory.annotation.Autowired(required = false)
+    private dev.escalated.services.AgentPanelService agentPanel;
+
     @GetMapping("/availability")
     public ResponseEntity<Map<String, Object>> availability(
             @RequestParam(required = false) Long departmentId,
@@ -132,6 +136,9 @@ public class WidgetChatController {
     public ResponseEntity<Map<String, Object>> messages(@PathVariable String token) {
         ChatSession session = chatSessionService.findByWidgetToken(token);
         Ticket ticket = ticketService.findById(session.getTicketId());
+        if (agentPanel != null) {
+            agentPanel.quietlySee(ticket.getRequesterEmail());
+        }
 
         List<Map<String, Object>> messages = new ArrayList<>();
         if (ticket.getBody() != null && !ticket.getBody().isBlank()) {

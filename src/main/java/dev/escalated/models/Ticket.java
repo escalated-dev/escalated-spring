@@ -193,6 +193,14 @@ public class Ticket extends BaseEntity {
     @Column(name = "snoozed_until")
     private Instant snoozedUntil;
 
+    /**
+     * The last time the customer side was active on the ticket: its creation and every public reply
+     * from the customer side (ADR 2026-11-05-agent-panel-data). Agents' unread markers compare
+     * with it.
+     */
+    @Column(name = "last_customer_activity_at")
+    private Instant lastCustomerActivityAt;
+
     @Column(name = "merged_into_ticket_id")
     private Long mergedIntoTicketId;
 
@@ -542,6 +550,14 @@ public class Ticket extends BaseEntity {
     }
 
     @JsonProperty("requester_email")
+    public Instant getLastCustomerActivityAt() {
+        return lastCustomerActivityAt;
+    }
+
+    public void setLastCustomerActivityAt(Instant lastCustomerActivityAt) {
+        this.lastCustomerActivityAt = lastCustomerActivityAt;
+    }
+
     public String getRequesterEmail() {
         return requesterEmail;
     }

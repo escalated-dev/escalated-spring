@@ -50,11 +50,12 @@ public class EscalatedUiConfiguration {
             ObjectProvider<PluginRegistry> plugins,
             dev.escalated.security.AccessFeatures accessFeatures,
             dev.escalated.security.AccessControl accessControl,
-            dev.escalated.services.TwoFactorService twoFactor) {
+            dev.escalated.services.TwoFactorService twoFactor,
+            dev.escalated.services.AgentPanelService agentPanel) {
         TransactionTemplate readOnly = new TransactionTemplate(transactions);
         readOnly.setReadOnly(true);
         return new EscalatedSharedProps(authorization, agents, settings, properties, readOnly, plugins.getIfAvailable())
-                .withAccess(accessFeatures, accessControl).withTwoFactor(twoFactor);
+                .withAccess(accessFeatures, accessControl).withTwoFactor(twoFactor).withAgentPanel(agentPanel);
     }
 
     @Bean

@@ -197,8 +197,15 @@ public class AgentInbox {
         stats.put("sla_at_risk", count(with(queue.filters(), Map.of("sla_at_risk", 1))));
         stats.put("resolved_today", count(with(queue.filters(), Map.of("status", "resolved", "resolved_today", 1))));
 
+        // Of the same open tickets, those unread for this agent (ADR 2026-11-05-agent-panel-data).
+        Map<String, Object> unread = new LinkedHashMap<>();
+        unread.put("mine", agentId == null ? 0L : countUnread(Map.of("assigned_to", agentId), agentId));
+        unread.put("unassigned", countUnread(Map.of("unassigned", 1), agentId));
+        unread.put("all", countUnread(Map.of(), agentId));
+
         Map<String, Object> inbox = new LinkedHashMap<>();
         inbox.put("counts", counts);
+        inbox.put("unread", unread);
         inbox.put("views", views);
         inbox.put("stats", stats);
         return inbox;
@@ -266,6 +273,16 @@ public class AgentInbox {
             return count(with(filters, Map.of("open", 1)));
         }
         return count(filters);
+    }
+
+    /** Of the open tickets {@link #countOpen} counts, those unread for the agent. */
+    private long countUnread(Map<String, Object> filters, Long agentId) {
+        if (agentId == null) {
+            return 0;
+        }
+        Map<String, Object> open = with(filters, Map.of("open", 1));
+        return tickets.count(UiTicketFilters.specification(strings(open), null)
+                .and(dev.escalated.services.AgentPanelService.unreadFor(agentId)));
     }
 
     private long count(Map<String, Object> filters) {

@@ -36,10 +36,17 @@ import org.springframework.transaction.annotation.Transactional;
 public class AdminTicketUiPages {
 
     /** The bulk actions BulkActionBar sends. */
-    public static final Set<String> BULK_ACTIONS = Set.of("status", "priority", "assign", "tags", "department", "delete");
+    public static final Set<String> BULK_ACTIONS =
+            Set.of("status", "priority", "assign", "tags", "department", "delete", "mark_read", "mark_unread");
+
+    /** Actions that take no value: deleting, and the admin's own unread markers (ADR 2026-11-05-agent-panel-data). */
+    private static final Set<String> VALUELESS = Set.of("delete", "mark_read", "mark_unread");
 
     private static final ObjectMapper JSON = new ObjectMapper();
     private static final int BULK_LIMIT = 50;
+
+    @org.springframework.beans.factory.annotation.Autowired(required = false)
+    private dev.escalated.services.AgentPanelService agentPanel;
 
     private final AgentUiPages agentPages;
     private final AgentProfileRepository agents;
@@ -117,7 +124,7 @@ public class AdminTicketUiPages {
             throw UiInput.invalid("action", "The selected action is invalid.");
         }
         Object value = input.raw("value");
-        if (!"delete".equals(action) && (value == null || String.valueOf(value).isBlank())) {
+        if (!VALUELESS.contains(action) && (value == null || String.valueOf(value).isBlank())) {
             throw UiInput.invalid("value", "The value field is required unless action is in delete.");
         }
 
@@ -178,6 +185,17 @@ public class AdminTicketUiPages {
                 tickets.changeDepartment(id, departmentId, actorEmail);
             }
             case "delete" -> tickets.delete(id, actorEmail);
+            case "mark_read", "mark_unread" -> {
+                Long agentId = agents.findByEmail(actorEmail).map(dev.escalated.models.AgentProfile::getId).orElse(null);
+                if (agentId == null || agentPanel == null) {
+                    return false;
+                }
+                if ("mark_read".equals(action)) {
+                    agentPanel.markRead(agentId, id);
+                } else {
+                    agentPanel.markUnread(agentId, id);
+                }
+            }
             default -> {
                 return false;
             }

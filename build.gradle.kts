@@ -161,6 +161,11 @@ val expectedDatabase = providers.gradleProperty("database").getOrElse("h2")
 tasks.withType<Test> {
     useJUnitPlatform()
 
+    // The suite caches a Spring context per test configuration (about 30), each
+    // with its own Hibernate metamodel; past Gradle's 512 MB default heap the
+    // last contexts to load ran out of memory.
+    maxHeapSize = "1g"
+
     // DatabaseEngineTest compares this against what actually answered.
     systemProperty("escalated.test.database", expectedDatabase)
     inputs.property("database", expectedDatabase)

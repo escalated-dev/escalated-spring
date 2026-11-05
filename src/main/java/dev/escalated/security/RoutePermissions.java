@@ -221,6 +221,13 @@ public final class RoutePermissions {
         map.add(e("POST", STAFF + "/tickets/*/actions/*", EDIT));
         map.add(e("POST", STAFF + "/tickets/*/assign", "ticket.assign"));
         map.add(e("POST", STAFF + "/tickets/*/follow", VIEW));
+        // The agent panel's data (ADR 2026-11-05-agent-panel-data): the agent's own read markers,
+        // status and notifications need no more than the agent gate; KB search needs kb.view.
+        map.add(e("POST", G + "/tickets/*/{read,unread}", VIEW));
+        map.add(e("*", G + "/status", List.of()));
+        map.add(e("GET", G + "/kb/search", "kb.view"));
+        map.add(e("*", G + "/notifications", List.of()));
+        map.add(e("*", G + "/notifications/**", List.of()));
         map.add(e("POST", STAFF + "/tickets/*/macro", "macro.view", "ticket.edit"));
         map.add(e("POST", STAFF + "/tickets/*/reply", "reply.create"));
         map.add(e("POST", STAFF + "/tickets/*/note", "reply.create_internal"));

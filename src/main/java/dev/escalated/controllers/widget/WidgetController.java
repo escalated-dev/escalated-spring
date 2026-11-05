@@ -39,6 +39,10 @@ public class WidgetController {
     private final GuestVerificationService verification;
     private final GuestAccessGrants grants;
 
+    /** Records the customer as on the site, for the agent pages' presence (ADR 2026-11-05-agent-panel-data). */
+    @org.springframework.beans.factory.annotation.Autowired(required = false)
+    private dev.escalated.services.AgentPanelService agentPanel;
+
     public WidgetController(TicketService ticketService,
                             KnowledgeBaseService knowledgeBaseService,
                             SatisfactionRatingService ratingService,
@@ -121,6 +125,9 @@ public class WidgetController {
         Optional<Ticket> ticket = grants.resolve(reference, authorization);
         if (ticket.isEmpty()) {
             return GuestResponses.invalidToken();
+        }
+        if (agentPanel != null) {
+            agentPanel.quietlySee(ticket.get().getRequesterEmail());
         }
         if (GuestAccessGrants.bearer(authorization) != null) {
             return GuestResponses.of(200, ticketService.guestStatus(ticket.get().getId()));

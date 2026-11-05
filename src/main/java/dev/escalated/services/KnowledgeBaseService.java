@@ -82,7 +82,8 @@ public class KnowledgeBaseService {
 
     @Transactional(transactionManager = EscalatedTransactionManagers.ESCALATED, readOnly = true)
     public Page<KnowledgeBaseArticle> searchArticles(String query, Pageable pageable) {
-        return articleRepository.searchPublished(query, pageable);
+        // Case-insensitive on every database, % and _ taken literally.
+        return articleRepository.searchPublished(AgentPanelService.likePattern(query), pageable);
     }
 
     @Transactional(transactionManager = EscalatedTransactionManagers.ESCALATED)

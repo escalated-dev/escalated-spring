@@ -442,6 +442,31 @@ public class EscalatedProperties {
          */
         private int agentInboxCacheSeconds = 10;
 
+        /**
+         * The agents' in-app notifications feed and bell (ADR 2026-11-05-agent-panel-data). Off: nothing
+         * is stored, the feed routes answer 404 and the shared unread count is left out.
+         */
+        private boolean agentNotificationsEnabled = true;
+
+        /** Agent pages show a customer as online when the portal or the widget saw them within this many seconds. */
+        private int presenceOnlineWindowSeconds = 120;
+
+        public boolean isAgentNotificationsEnabled() {
+            return agentNotificationsEnabled;
+        }
+
+        public void setAgentNotificationsEnabled(boolean agentNotificationsEnabled) {
+            this.agentNotificationsEnabled = agentNotificationsEnabled;
+        }
+
+        public int getPresenceOnlineWindowSeconds() {
+            return presenceOnlineWindowSeconds;
+        }
+
+        public void setPresenceOnlineWindowSeconds(int presenceOnlineWindowSeconds) {
+            this.presenceOnlineWindowSeconds = Math.max(1, presenceOnlineWindowSeconds);
+        }
+
         public int getAgentInboxCacheSeconds() {
             return agentInboxCacheSeconds;
         }

@@ -55,6 +55,9 @@ public class AgentUiController extends TicketWritesController {
     @Autowired
     private AgentInbox inbox;
 
+    @Autowired
+    private dev.escalated.services.AgentPanelService panel;
+
     public AgentUiController(
             EscalatedUiRenderer renderer,
             Inertia inertia,
@@ -96,6 +99,7 @@ public class AgentUiController extends TicketWritesController {
         inbox.remember(session, queue);
 
         Map<String, Object> props = pages.index(inbox.listFilters(normalised, queue), agentId);
+        withPanelFields(props, agentId);
         props.put("filters", new LinkedHashMap<>(filters));
         props.put("queue", queue.prop());
         props.put("inbox", inbox.inbox(agentId, queue));
@@ -108,7 +112,15 @@ public class AgentUiController extends TicketWritesController {
         Ticket ticket = pages.resolve(reference);
         Long agentId = agentId(authentication);
         AgentInbox.Queue queue = inbox.recalled(session, agentId);
+        // Opening the ticket in the agent panel is reading it.
+        panel.markRead(agentId, ticket.getId());
         Map<String, Object> props = pages.show(ticket.getId(), agentId);
+        if (props.get("ticket") instanceof Map<?, ?> detail) {
+            @SuppressWarnings("unchecked")
+            Map<String, Object> fields = (Map<String, Object>) detail;
+            fields.putAll(panel.rowFields(agentId, java.util.List.of(ticket.getId()))
+                    .getOrDefault(ticket.getId(), Map.of()));
+        }
         props.put("queue", queue.prop());
         props.put("inbox", inbox.inbox(agentId, queue));
         return renderer.render("Escalated/Agent/TicketShow", props);
@@ -161,6 +173,26 @@ public class AgentUiController extends TicketWritesController {
         events.publishEvent(new CustomActionTriggeredEvent(this, tickets.findById(ticket.getId()), action,
                 authentication.getName(), payload, config.getMetadata()));
         return done(ticket, "Custom action dispatched.");
+    }
+
+    /** is_unread and the requester's presence on every row (ADR 2026-11-05-agent-panel-data). */
+    @SuppressWarnings("unchecked")
+    private void withPanelFields(Map<String, Object> props, Long agentId) {
+        if (!(props.get("tickets") instanceof Map<?, ?> paginator) || !(paginator.get("data") instanceof List<?> rows)) {
+            return;
+        }
+        java.util.List<Long> ids = new java.util.ArrayList<>();
+        for (Object row : rows) {
+            if (row instanceof Map<?, ?> map && map.get("id") instanceof Number id) {
+                ids.add(id.longValue());
+            }
+        }
+        Map<Long, Map<String, Object>> fields = panel.rowFields(agentId, ids);
+        for (Object row : rows) {
+            if (row instanceof Map<?, ?> map && map.get("id") instanceof Number id) {
+                ((Map<String, Object>) map).putAll(fields.getOrDefault(id.longValue(), Map.of()));
+            }
+        }
     }
 
     @Override
