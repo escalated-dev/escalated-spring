@@ -1,8 +1,6 @@
 package dev.escalated.services;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.timeout;
-import static org.mockito.Mockito.verify;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -39,7 +37,6 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.TestPropertySource;
-import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.support.TransactionTemplate;
@@ -49,6 +46,9 @@ import org.springframework.transaction.support.TransactionTemplate;
  * where Laravel sets them: an escalation rule's {@code escalate} action escalates the ticket, a
  * reopen reopens it, and a live chat's ticket is live. Each is a status filters, workflow and
  * escalation conditions, and the status pages know.
+ *
+ * <p>The configuration is {@code AgentInboxPropsTest}'s, so the suite reuses its context; the
+ * events these changes announce are checked in {@code EventVocabularyTest}.
  */
 @SpringBootTest(classes = HostApplication.class)
 @AutoConfigureMockMvc
@@ -77,8 +77,6 @@ class LaravelBuiltInStatusesTest {
     @Autowired
     @Qualifier(EscalatedTransactionManagers.ESCALATED)
     private PlatformTransactionManager transactionManager;
-
-    @MockitoBean private WebhookService webhookService;
 
     private String unique;
     private AgentProfile agent;
@@ -126,7 +124,6 @@ class LaravelBuiltInStatusesTest {
         slaScheduler.checkSlaBreaches();
 
         assertThat(statusOf(ticket)).isEqualTo(TicketStatus.ESCALATED);
-        verify(webhookService, timeout(10_000)).dispatchEvent("ticket.status_changed", ticket.getId());
     }
 
     @Test
@@ -155,7 +152,6 @@ class LaravelBuiltInStatusesTest {
         Ticket stored = tickets.findById(ticket.getId()).orElseThrow();
         assertThat(stored.getResolvedAt()).isNull();
         assertThat(stored.getClosedAt()).isNull();
-        verify(webhookService, timeout(10_000)).dispatchEvent("ticket.reopened", ticket.getId());
     }
 
     @Test
