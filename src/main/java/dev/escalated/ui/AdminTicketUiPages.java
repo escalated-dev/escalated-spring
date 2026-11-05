@@ -109,6 +109,17 @@ public class AdminTicketUiPages {
      * action fails on is skipped. Answers how many were changed.
      */
     public int bulk(UiInput input, String actorEmail) {
+        return bulk(input, actorEmail, true);
+    }
+
+    /**
+     * The bulk action, as escalated-laravel's {@code BulkActionController} serves both
+     * {@code escalated.admin.tickets.bulk} and {@code escalated.agent.tickets.bulk}: applied to each
+     * given ticket the actor can see (the request's ticket visibility scope), skipping one it cannot
+     * apply to. {@code delete} is for admins only; for anyone else it is skipped, as Laravel's 403
+     * inside the loop is.
+     */
+    public int bulk(UiInput input, String actorEmail, boolean actorIsAdmin) {
         if (!input.has("ticket_ids") || input.longs("ticket_ids").isEmpty()) {
             throw UiInput.invalid("ticket_ids", "The ticket ids field is required.");
         }
@@ -130,7 +141,7 @@ public class AdminTicketUiPages {
 
         int changed = 0;
         for (Long id : ids) {
-            if (ticketRepository.findById(id).isEmpty()) {
+            if (ticketRepository.findById(id).isEmpty() || ("delete".equals(action) && !actorIsAdmin)) {
                 continue;
             }
             try {

@@ -58,6 +58,12 @@ public class AgentUiController extends TicketWritesController {
     @Autowired
     private dev.escalated.services.AgentPanelService panel;
 
+    @Autowired
+    private dev.escalated.ui.AdminTicketUiPages bulkActions;
+
+    @Autowired
+    private dev.escalated.security.EscalatedAuthorization authorization;
+
     public AgentUiController(
             EscalatedUiRenderer renderer,
             Inertia inertia,
@@ -73,6 +79,20 @@ public class AgentUiController extends TicketWritesController {
         this.renderer = renderer;
         this.ticketActions = ticketActions;
         this.events = events;
+    }
+
+    /**
+     * {@code escalated.agent.tickets.bulk}, the agent queue's bulk bar, as escalated-laravel's
+     * {@code BulkActionController}: {@code ticket_ids}, {@code action} (status, priority, assign,
+     * tags, department, delete, mark_read, mark_unread) and {@code value}, on the tickets the agent
+     * can see. Each action needs its permission (route permissions); delete is admins only.
+     */
+    @PostMapping("/tickets/bulk")
+    public ResponseEntity<Void> bulk(HttpServletRequest request, Authentication authentication) {
+        int changed = bulkActions.bulk(UiInput.of(request), authentication.getName(),
+                authorization.isAdmin(authentication));
+        inertia.flash("success", changed + " ticket(s) updated.");
+        return inertia.back(routes.url("escalated.agent.tickets.index"));
     }
 
     @GetMapping({"", "/"})

@@ -31,6 +31,7 @@ public class UiRoutes {
         // Agent
         register("escalated.agent.dashboard", "/agent");
         register("escalated.agent.tickets.index", "/agent/tickets");
+        register("escalated.agent.tickets.bulk", "/agent/tickets/bulk");
         register("escalated.agent.tickets.show", "/agent/tickets/{ticket}");
         register("escalated.agent.tickets.reply", "/agent/tickets/{ticket}/reply");
         register("escalated.agent.tickets.note", "/agent/tickets/{ticket}/note");

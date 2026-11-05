@@ -16,6 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The test task runs with a 1 GB heap: the suite's cached contexts outgrew Gradle's 512 MB default.
 
 ### Added
+- **The agent bulk endpoint** `POST /escalated/agent/tickets/bulk` (`escalated.agent.tickets.bulk`), which the agent queue's bulk bar posts to, as escalated-laravel's agent bulk route: the admin endpoint's actions (`status`, `priority`, `assign`, `tags`, `department`, `delete`, `mark_read`, `mark_unread`) on the tickets the agent can see, each needing its permission; `delete` is skipped for anyone but an admin. It goes back to the agent queue with the count flashed.
 - **The agent panel's data** (ADR 2026-11-05-agent-panel-data, after escalated-laravel; `docs/agent-panel.md`):
   - agent status: `PUT`/`POST /escalated/agent/status` (`escalated.agent.status`), shared `escalated.agent_status` and `escalated.agent_statuses`;
   - knowledge-base search for agents: `GET /escalated/agent/kb/search` (`escalated.agent.kb.search`, `kb.view`), published articles, title matches first;
