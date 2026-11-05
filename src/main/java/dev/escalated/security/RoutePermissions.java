@@ -215,6 +215,7 @@ public final class RoutePermissions {
         // ---- Tickets: the admin and agent pages ------------------------------
         map.add(e("GET", G, VIEW));
         map.add(e("POST", STAFF + "/tickets/bulk", VIEW)); // plus each action's, see required()
+        map.add(e("GET", A + "/agents/search", VIEW)); // the composer's mention picker, as Laravel
         map.add(e("GET", STAFF + "/tickets", VIEW));
         map.add(e("GET", STAFF + "/tickets/*", VIEW));
         map.add(e("POST", STAFF + "/tickets/*/{status,priority,tags,department,snooze,unsnooze}", EDIT));

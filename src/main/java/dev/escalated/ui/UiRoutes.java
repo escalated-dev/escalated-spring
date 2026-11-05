@@ -102,6 +102,7 @@ public class UiRoutes {
         register("escalated.admin.tags.store", "/admin/tags");
         register("escalated.admin.tags.update", "/admin/tags/{tag}");
         register("escalated.admin.tags.destroy", "/admin/tags/{tag}");
+        register("escalated.admin.agents.search", "/admin/agents/search");
         register("escalated.admin.tickets.index", "/admin/tickets");
         register("escalated.admin.tickets.bulk", "/admin/tickets/bulk");
         register("escalated.admin.tickets.show", "/admin/tickets/{ticket}");
