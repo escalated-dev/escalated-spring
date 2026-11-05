@@ -276,6 +276,40 @@ class EventVocabularyTest {
     }
 
     @Test
+    void anEscalateActionChangesTheStatusAndReopeningAnnouncesTicketReopened() {
+        SlaPolicy policy = new SlaPolicy();
+        policy.setName("Escalate policy " + unique);
+        policy.setFirstResponseHours(java.util.Map.of("low", 1));
+        policy.setResolutionHours(java.util.Map.of("low", 2));
+        // Inactive, so no other test's ticket is put on it.
+        policy.setActive(false);
+        policy = slaPolicies.save(policy);
+        EscalationRule rule = new EscalationRule();
+        rule.setName("Escalate overdue " + unique);
+        rule.setConditions("[{\"field\":\"sla_policy_id\",\"value\":\"" + policy.getId() + "\"},"
+                + "{\"field\":\"sla_breached\",\"value\":\"resolution\"}]");
+        rule.setActions("[{\"type\":\"escalate\"}]");
+        Long ruleId = escalationRules.save(rule).getId();
+        try {
+            Ticket escalated = newTicket();
+            overdue(escalated, Instant.now().minusSeconds(600), policy);
+
+            slaScheduler.checkSlaBreaches();
+
+            verify(webhookService, timeout(WAIT_MS)).dispatchEvent("ticket.status_changed", escalated.getId());
+            verify(webhookService, timeout(WAIT_MS))
+                    .dispatchEvent(eq("ticket.escalated"), eq(escalated.getId()), anyMap());
+        } finally {
+            escalationRules.deleteById(ruleId);
+        }
+
+        Ticket resolved = newTicket();
+        ticketService.changeStatus(resolved.getId(), dev.escalated.models.TicketStatus.RESOLVED, "system");
+        ticketService.changeStatusByName(resolved.getId(), "reopened", "system");
+        verify(webhookService, timeout(WAIT_MS)).dispatchEvent("ticket.reopened", resolved.getId());
+    }
+
+    @Test
     void chatLifecycleEventsReachWebhooksAndWorkflows() throws Exception {
         String marker = "chat-started-" + unique;
         workflow("chat.session_started", marker);

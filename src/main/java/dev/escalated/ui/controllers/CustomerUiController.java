@@ -143,7 +143,10 @@ public class CustomerUiController {
     @PostMapping(TICKET + "/reopen")
     public ResponseEntity<Void> reopen(@PathVariable("ticket") String reference, Authentication authentication) {
         Ticket ticket = pages.own(reference, email(authentication));
-        tickets.changeStatus(ticket.getId(), TicketStatus.OPEN, email(authentication));
+        // escalated-laravel's TicketService::reopen: a resolved or closed ticket becomes reopened.
+        if (ticket.getStatus() == TicketStatus.RESOLVED || ticket.getStatus() == TicketStatus.CLOSED) {
+            tickets.changeStatus(ticket.getId(), TicketStatus.REOPENED, email(authentication));
+        }
         return done(ticket, "success", "Ticket reopened.");
     }
 
