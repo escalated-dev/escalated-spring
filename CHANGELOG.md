@@ -7,16 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-### Optional: embed the admin in your own admin panel (off by default; no change unless configured)
-ADR 2026-11-05-embeddable-admin, after escalated-laravel; [docs/embedding-admin.md](docs/embedding-admin.md).
-- `escalated.ui.embed.*` (`enabled`, `mode`, `prefix`, `middleware`, `replace-admin-gate`, `layout`, `root-view`, `frame-ancestors`), the `ESCALATED_EMBED`, `ESCALATED_EMBED_MODE`, `ESCALATED_EMBED_PREFIX` and `ESCALATED_EMBED_FRAME_ANCESTORS` variables, or an `EscalatedEmbedConfigurer` bean (`embed -> embed.embedAdmin().prefix(...)`).
-- While on, every admin page under `/escalated/admin` (screens, plugin admin and plugin pages, API tokens, import, reports, settings) answers under the prefix with the same handlers and `route()` names: after the host's own security chain and `middleware` filters, through Escalated's chain (CSRF, the admin gate unless `replace-admin-gate`, two-factor, route permissions). The old URLs answer 404; redirects follow the move. The agent panel, customer, guest, KB, widget, JSON API, SSO and two-factor pages do not move.
-- Pages share `escalated.embed` (`enabled` only on embedded pages, `mode`, `layout`, `route`, `base_url`, `allowed_origins`) and `escalated.navigation`, the admin menu filtered by the admin gate, served pages, feature switches and route permissions, with plugin admin items; `AdminNavigation#adminNavigation` returns it for server-rendered layouts.
-- `root-view`: a Thymeleaf view for embedded first visits, given `escalatedNavigation`.
-- iframe mode: `Content-Security-Policy: frame-ancestors 'self' <origins>` and no `X-Frame-Options` on embedded responses only (a host CSP is kept); the `XSRF-TOKEN` cookie goes out `SameSite=None; Secure`.
-- With it off, a test compares every Escalated route, its security chain, filters and gate decisions, the servlet filters and the `route()` names with a snapshot taken before the change.
+## [0.2.12] - 2026-11-05
 
 ### Upgrading
+- **Optional: embed the admin in your own admin panel (off by default; no change unless configured).** See docs/embedding-admin.md. With it off, a test compares every Escalated route, its security chain and the `route()` names with a snapshot taken before this change.
 - **Migration `V30__agent_panel_data`** (PostgreSQL and MySQL; ADR 2026-11-05-agent-panel-data) adds `escalated_tickets.last_customer_activity_at`, `escalated_agent_profiles.chat_status` (default `offline`) and the `escalated_ticket_reads`, `escalated_customer_presence` and `escalated_notifications` tables. Existing tickets get no customer activity, so none turn unread on upgrade.
 - **Agents get in-app notifications** (`escalated.ui.agent-notifications-enabled`, on by default). Assigning a ticket to yourself creates none, and the `ticket_reply` notification is only for customer-side replies. This package sends no notification emails, so no email changes.
 - **Setting an agent status updates `is_available`**: only `online` leaves the agent available for new chats. Agents who never set a status keep their current availability.
@@ -25,6 +19,13 @@ ADR 2026-11-05-embeddable-admin, after escalated-laravel; [docs/embedding-admin.
 - The test task runs with a 1 GB heap: the suite's cached contexts outgrew Gradle's 512 MB default.
 
 ### Added
+- **Optional: embed the admin in your own admin panel (off by default; no change unless configured).** ADR 2026-11-05-embeddable-admin, after escalated-laravel; [docs/embedding-admin.md](docs/embedding-admin.md).
+  - `escalated.ui.embed.*` (`enabled`, `mode`, `prefix`, `middleware`, `replace-admin-gate`, `layout`, `root-view`, `frame-ancestors`), the `ESCALATED_EMBED`, `ESCALATED_EMBED_MODE`, `ESCALATED_EMBED_PREFIX` and `ESCALATED_EMBED_FRAME_ANCESTORS` variables, or an `EscalatedEmbedConfigurer` bean (`embed -> embed.embedAdmin().prefix(...)`).
+  - While on, every admin page under `/escalated/admin` (screens, plugin admin and plugin pages, API tokens, import, reports, settings) answers under the prefix with the same handlers and `route()` names: after the host's own security chain and `middleware` filters, through Escalated's chain (CSRF, the admin gate unless `replace-admin-gate`, two-factor, route permissions). The old URLs answer 404; redirects follow the move. The agent panel, customer, guest, KB, widget, JSON API, SSO and two-factor pages do not move.
+  - Pages share `escalated.embed` (`enabled` only on embedded pages, `mode`, `layout`, `route`, `base_url`, `allowed_origins`) and `escalated.navigation`, the admin menu filtered by the admin gate, served pages, feature switches and route permissions, with plugin admin items; `AdminNavigation#adminNavigation` returns it for server-rendered layouts.
+  - `root-view`: a Thymeleaf view for embedded first visits, given `escalatedNavigation`.
+  - iframe mode: `Content-Security-Policy: frame-ancestors 'self' <origins>` and no `X-Frame-Options` on embedded responses only (a host CSP is kept); the `XSRF-TOKEN` cookie goes out `SameSite=None; Secure`.
+  - With it off, a test compares every Escalated route, its security chain, filters and gate decisions, the servlet filters and the `route()` names with a snapshot taken before the change.
 - **The agent bulk endpoint** `POST /escalated/agent/tickets/bulk` (`escalated.agent.tickets.bulk`), which the agent queue's bulk bar posts to, as escalated-laravel's agent bulk route: the admin endpoint's actions (`status`, `priority`, `assign`, `tags`, `department`, `delete`, `mark_read`, `mark_unread`) on the tickets the agent can see, each needing its permission; `delete` is skipped for anyone but an admin. It goes back to the agent queue with the count flashed.
 - **@mention notifications**, as escalated-laravel: an agent mentioned in an agent's reply or internal note (`@{Full Name}`, what the composer's picker inserts, or `@name`; matched to active agents and admins by name or email, ignoring case) gets a `mention` notification in the feed ("X mentioned you on ESC-...", pushed as `notification.created` while broadcasting is on). Nobody is notified of their own mention; customer and system replies mention nobody. The composer's mention picker searches at `GET /escalated/admin/agents/search?q=` (`escalated.admin.agents.search`, `ticket.view`): up to 10 `{ id, name, email }`. In-app only (this package emails agents nothing for it).
 - **The agent panel's data** (ADR 2026-11-05-agent-panel-data, after escalated-laravel; `docs/agent-panel.md`):
@@ -35,7 +36,7 @@ ADR 2026-11-05-embeddable-admin, after escalated-laravel; [docs/embedding-admin.
   - notifications: `escalated.agent.notifications.index` / `.read` / `.read-all`, shared `escalated.notifications.unread_count`, types `ticket_assigned`, `ticket_reply`, `sla_warning`, `sla_breached`, `chat_transferred`; notifications about tickets the agent can no longer see are redacted; with broadcasting on, `notification.created` to the agent's `/user/queue/escalated.notifications`.
 
 ### Not sent
-- `mention` notifications: this package detects no @mentions in replies yet. Notification titles are English.
+- Notification titles are English.
 
 ## [0.2.11] - 2026-11-04
 
