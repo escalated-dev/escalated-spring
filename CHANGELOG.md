@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Optional: embed the admin in your own admin panel (off by default; no change unless configured)
+ADR 2026-11-05-embeddable-admin, after escalated-laravel; [docs/embedding-admin.md](docs/embedding-admin.md).
+- `escalated.ui.embed.*` (`enabled`, `mode`, `prefix`, `middleware`, `replace-admin-gate`, `layout`, `root-view`, `frame-ancestors`), the `ESCALATED_EMBED`, `ESCALATED_EMBED_MODE`, `ESCALATED_EMBED_PREFIX` and `ESCALATED_EMBED_FRAME_ANCESTORS` variables, or an `EscalatedEmbedConfigurer` bean (`embed -> embed.embedAdmin().prefix(...)`).
+- While on, every admin page under `/escalated/admin` (screens, plugin admin and plugin pages, API tokens, import, reports, settings) answers under the prefix with the same handlers and `route()` names: after the host's own security chain and `middleware` filters, through Escalated's chain (CSRF, the admin gate unless `replace-admin-gate`, two-factor, route permissions). The old URLs answer 404; redirects follow the move. The agent panel, customer, guest, KB, widget, JSON API, SSO and two-factor pages do not move.
+- Pages share `escalated.embed` (`enabled` only on embedded pages, `mode`, `layout`, `route`, `base_url`, `allowed_origins`) and `escalated.navigation`, the admin menu filtered by the admin gate, served pages, feature switches and route permissions, with plugin admin items; `AdminNavigation#adminNavigation` returns it for server-rendered layouts.
+- `root-view`: a Thymeleaf view for embedded first visits, given `escalatedNavigation`.
+- iframe mode: `Content-Security-Policy: frame-ancestors 'self' <origins>` and no `X-Frame-Options` on embedded responses only (a host CSP is kept); the `XSRF-TOKEN` cookie goes out `SameSite=None; Secure`.
+- With it off, a test compares every Escalated route, its security chain, filters and gate decisions, the servlet filters and the `route()` names with a snapshot taken before the change.
+
 ### Upgrading
 - **Migration `V30__agent_panel_data`** (PostgreSQL and MySQL; ADR 2026-11-05-agent-panel-data) adds `escalated_tickets.last_customer_activity_at`, `escalated_agent_profiles.chat_status` (default `offline`) and the `escalated_ticket_reads`, `escalated_customer_presence` and `escalated_notifications` tables. Existing tickets get no customer activity, so none turn unread on upgrade.
 - **Agents get in-app notifications** (`escalated.ui.agent-notifications-enabled`, on by default). Assigning a ticket to yourself creates none, and the `ticket_reply` notification is only for customer-side replies. This package sends no notification emails, so no email changes.

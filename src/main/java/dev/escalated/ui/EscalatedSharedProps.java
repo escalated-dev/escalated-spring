@@ -47,6 +47,9 @@ public class EscalatedSharedProps implements InertiaSharedProps {
     private AccessControl accessControl;
     private dev.escalated.services.TwoFactorService twoFactor;
     private dev.escalated.services.AgentPanelService agentPanel;
+    private EscalatedEmbed embed;
+    private AdminNavigation navigation;
+    private UiRoutes routes;
 
     public EscalatedSharedProps(
             EscalatedAuthorization authorization,
@@ -91,6 +94,18 @@ public class EscalatedSharedProps implements InertiaSharedProps {
      */
     public EscalatedSharedProps withAgentPanel(dev.escalated.services.AgentPanelService panel) {
         this.agentPanel = panel;
+        return this;
+    }
+
+    /**
+     * While the admin is embedded in the host's admin panel (ADR 2026-11-05-embeddable-admin),
+     * shares {@code escalated.embed} and {@code escalated.navigation} on every page, and points the
+     * plugins' admin menu items under the embed prefix. Nothing is added while embedding is off.
+     */
+    public EscalatedSharedProps withEmbed(EscalatedEmbed embed, AdminNavigation navigation, UiRoutes routes) {
+        this.embed = embed;
+        this.navigation = navigation;
+        this.routes = routes;
         return this;
     }
 
@@ -168,9 +183,26 @@ public class EscalatedSharedProps implements InertiaSharedProps {
                 // The agent panel tables may not be migrated yet.
             }
         }
-        escalated.put("plugins", plugins == null ? Map.of() : plugins.uiExtensions(signedIn ? authentication : null));
+        Map<String, Object> extensions = plugins == null ? Map.of() : plugins.uiExtensions(signedIn ? authentication : null);
+        if (embed != null && embed.enabled()) {
+            movePluginMenu(extensions);
+            escalated.put("embed", embed.prop(request, routes));
+            escalated.put("navigation", navigation.adminNavigation(signedIn ? authentication : null, request));
+        }
+        escalated.put("plugins", extensions);
         shared.put("escalated", escalated);
         return shared;
+    }
+
+    @SuppressWarnings("unchecked")
+    private void movePluginMenu(Map<String, Object> extensions) {
+        if (extensions.get("menuItems") instanceof List<?> items) {
+            for (Object item : items) {
+                if (item instanceof Map<?, ?> map && map.get("route") instanceof String url) {
+                    ((Map<String, Object>) map).put("route", embed.toEmbedded(url));
+                }
+            }
+        }
     }
 
     private static Map<String, Object> user(Authentication authentication, AgentProfile profile) {

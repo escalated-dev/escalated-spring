@@ -208,7 +208,7 @@ public class TwoFactorUiController {
         }
         return authorization.isAgent(user)
                 ? routes.url("escalated.agent.dashboard")
-                : UiRoutes.PREFIX + "/admin/reports";
+                : routes.url("escalated.admin.reports");
     }
 
     private ResponseEntity<Void> back() {

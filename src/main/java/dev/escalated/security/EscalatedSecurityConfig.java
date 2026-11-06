@@ -1,6 +1,7 @@
 package dev.escalated.security;
 
 import dev.escalated.config.EscalatedProperties;
+import dev.escalated.ui.EscalatedEmbed;
 import dev.escalated.services.TicketStatuses;
 import dev.escalated.services.TwoFactorService;
 import org.springframework.beans.factory.ObjectProvider;
@@ -12,7 +13,12 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.authentication.AnonymousAuthenticationToken;
+import org.springframework.security.authorization.AuthorizationDecision;
+import org.springframework.security.authorization.AuthorizationManager;
 import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.web.access.intercept.RequestAuthorizationContext;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
@@ -28,6 +34,7 @@ public class EscalatedSecurityConfig {
     private final EnsureAccessFeaturesFilter accessFeaturesFilter;
     private final EnforceRoutePermissionsFilter routePermissionsFilter;
     private final RequireTwoFactorFilter twoFactorFilter;
+    private final ObjectProvider<EscalatedEmbed> embed;
 
     public EscalatedSecurityConfig(
             ApiTokenAuthenticationFilter apiTokenFilter,
@@ -37,7 +44,9 @@ public class EscalatedSecurityConfig {
             AccessFeatures accessFeatures,
             AccessControl accessControl,
             ObjectProvider<TicketStatuses> ticketStatuses,
-            TwoFactorService twoFactor) {
+            TwoFactorService twoFactor,
+            ObjectProvider<EscalatedEmbed> embed) {
+        this.embed = embed;
         this.ticketVisibilityFilter = new TicketVisibilityFilter(ticketAccess);
         this.apiTokenFilter = apiTokenFilter;
         this.authorization = authorization;
@@ -56,6 +65,41 @@ public class EscalatedSecurityConfig {
         return http.addFilterBefore(accessFeaturesFilter, AuthorizationFilter.class)
                 .addFilterAfter(twoFactorFilter, AuthorizationFilter.class)
                 .addFilterAfter(routePermissionsFilter, AuthorizationFilter.class);
+    }
+
+    /**
+     * The admin pages' gate: Escalated's admin gate, except on an embedded admin request whose host
+     * replaces it (ADR 2026-11-05-embeddable-admin, {@code escalated.ui.embed.replace-admin-gate}).
+     * The host's own security chain and middleware have then already decided; a signed-in user is
+     * still required, and two-factor and route permissions still apply.
+     */
+    private AuthorizationManager<RequestAuthorizationContext> adminPages() {
+        AuthorizationManager<RequestAuthorizationContext> admin = authorization.admin();
+        return (authentication, context) -> {
+            EscalatedEmbed embed = this.embed.getIfAvailable();
+            if (embed != null && embed.replacesAdminGate() && EscalatedEmbed.isEmbedded(context.getRequest())) {
+                Authentication user = authentication.get();
+                return new AuthorizationDecision(user != null && user.isAuthenticated()
+                        && !(user instanceof AnonymousAuthenticationToken));
+            }
+            return admin.authorize(authentication, context);
+        };
+    }
+
+    /**
+     * The {@code XSRF-TOKEN} cookie. While the admin is embedded in iframe mode (ADR
+     * 2026-11-05-embeddable-admin) it goes out {@code SameSite=None; Secure}, so a frame on another
+     * site still sends it back; otherwise exactly as before.
+     */
+    private CookieCsrfTokenRepository csrfCookies() {
+        CookieCsrfTokenRepository repository = CookieCsrfTokenRepository.withHttpOnlyFalse();
+        repository.setCookieCustomizer(cookie -> {
+            EscalatedEmbed current = embed.getIfAvailable();
+            if (current != null && current.iframe()) {
+                cookie.sameSite("None").secure(true);
+            }
+        });
+        return repository;
     }
 
     /**
@@ -171,7 +215,7 @@ public class EscalatedSecurityConfig {
                                 // Inertia's client (axios) echoes the XSRF-TOKEN cookie back as
                                 // X-XSRF-TOKEN, unmasked, as on Laravel; the pages' fetch calls
                                 // send the csrf-token meta tag as X-CSRF-TOKEN.
-                                csrf.csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
+                                csrf.csrfTokenRepository(csrfCookies())
                                         .csrfTokenRequestHandler(new InertiaCsrfTokenRequestHandler());
                             }
                         })
@@ -188,7 +232,7 @@ public class EscalatedSecurityConfig {
                                                 "/escalated/admin/settings/two-factor/**", "/escalated/two-factor/**")
                                         .access(authorization.agent())
                                         .requestMatchers("/escalated/admin", "/escalated/admin/**")
-                                        .access(authorization.admin())
+                                        .access(adminPages())
                                         // The guest pages: no sign-in, a verified email or a grant instead.
                                         .requestMatchers("/escalated/guest", "/escalated/guest/**")
                                         .permitAll()
