@@ -13,6 +13,11 @@ updates:
       interval: "weekly"
     labels:
       - "dependencies"
+    ignore:
+      # Spring Boot 4.1.x manages Jackson 3.1; 3.2 fails MockMvc request
+      # handling with ClassNotFoundException (#148). Move with the Boot line.
+      - dependency-name: "tools.jackson:jackson-bom"
+        versions: [">=3.2.0"]
 
   - package-ecosystem: "gradle"
     directory: "/docker/host-app"

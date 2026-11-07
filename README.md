@@ -63,7 +63,7 @@ To serve the shared agent, customer and admin screens (`@escalated-dev/escalated
 ## Requirements
 
 - Java 17+
-- Spring Boot 4.1.x (the current build uses 4.1.1)
+- Spring Boot 4.1.x (the current build uses 4.1.2)
 - A relational database (PostgreSQL, MySQL, or H2 for development)
 
 ## Installation
