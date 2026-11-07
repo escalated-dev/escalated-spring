@@ -11,7 +11,7 @@ buildscript {
 
 plugins {
     `java-library`
-    id("org.springframework.boot") version "4.1.1"
+    id("org.springframework.boot") version "4.1.2"
     id("io.spring.dependency-management") version "1.1.7"
     `maven-publish`
     signing
@@ -21,9 +21,9 @@ plugins {
 group = "dev.escalated"
 version = "0.2.12"
 
-// Security patches within the release lines managed by Boot 4.1.1. Keep each
+// Security patches within the release lines managed by Boot 4.1.2. Keep each
 // Jackson family aligned rather than overriding only core or databind.
-extra["jackson-2-bom.version"] = "2.21.8"
+extra["jackson-2-bom.version"] = "2.22.4"
 extra["jackson-bom.version"] = "3.1.8"
 extra["tomcat.version"] = "11.0.27"
 
@@ -50,7 +50,7 @@ repositories {
 
 dependencies {
     // Export patched families to Gradle consumers as well as the generated POM.
-    api(platform("com.fasterxml.jackson:jackson-bom:2.21.8"))
+    api(platform("com.fasterxml.jackson:jackson-bom:2.22.4"))
     api(platform("tools.jackson:jackson-bom:3.1.8"))
     // These types occur in public controllers, repository interfaces,
     // constructors and annotations, so hosts need them on the compile classpath.
@@ -125,10 +125,10 @@ dependencies {
         add("checkstyle", "commons-beanutils:commons-beanutils:1.11.0") {
             because("GHSA-wxr5-93ph-8wr9")
         }
-        add("checkstyle", "org.codehaus.plexus:plexus-utils:3.6.2") {
+        add("checkstyle", "org.codehaus.plexus:plexus-utils:4.1.0") {
             because("GHSA-6fmv-xxpf-w3cw")
         }
-        add("checkstyle", "com.google.guava:guava:33.7.2-jre") {
+        add("checkstyle", "com.google.guava:guava:33.8.0-jre") {
             because("GHSA-xxph-c9ww-hj94")
         }
     }

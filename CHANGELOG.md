@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- **Dependencies:** Spring Boot 4.1.2, Jackson 2 BOM 2.22.4, Gradle 9.8.2, and the Checkstyle-only plexus-utils 4.1.0 and Guava 33.8.0 pins. The Jackson 3 BOM stays on 3.1.8 (the latest 3.1.x) because Boot 4.1 manages the 3.1 line.
+
 ## [0.2.12] - 2026-11-05
 
 ### Upgrading
