@@ -83,7 +83,7 @@ dependencies {
     //   implementation("dev.escalated:escalated-locale:<version>")
 
     // TOTP (RFC 6238) for two-factor authentication, and the base32 its secrets are written in.
-    implementation("com.eatthepath:java-otp:0.4.0")
+    implementation("com.eatthepath:java-otp:1.0.0")
     implementation("commons-codec:commons-codec:1.21.0")
     // Single sign-on: XML signatures for SAML (Apache Santuario), JWT (Nimbus JOSE), and the
     // OAuth 2 / OIDC authorization-code exchange with PKCE (Nimbus OAuth 2.0 SDK).
