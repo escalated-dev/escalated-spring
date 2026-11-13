@@ -1,69 +1,162 @@
-<p align="center">
-  <a href="README.ar.md">العربية</a> •
-  <a href="README.de.md">Deutsch</a> •
-  <a href="../../README.md">English</a> •
-  <a href="README.es.md">Español</a> •
-  <a href="README.fr.md">Français</a> •
-  <a href="README.it.md">Italiano</a> •
-  <b>日本語</b> •
-  <a href="README.ko.md">한국어</a> •
-  <a href="README.nl.md">Nederlands</a> •
-  <a href="README.pl.md">Polski</a> •
-  <a href="README.pt-BR.md">Português (BR)</a> •
-  <a href="README.ru.md">Русский</a> •
-  <a href="README.tr.md">Türkçe</a> •
+<p align="center"><sub>
+  <a href="README.ar.md">العربية</a> ·
+  <a href="README.de.md">Deutsch</a> ·
+  <a href="../../README.md">English</a> ·
+  <a href="README.es.md">Español</a> ·
+  <a href="README.fr.md">Français</a> ·
+  <a href="README.it.md">Italiano</a> ·
+  <b>日本語</b> ·
+  <a href="README.ko.md">한국어</a> ·
+  <a href="README.nl.md">Nederlands</a> ·
+  <a href="README.pl.md">Polski</a> ·
+  <a href="README.pt-BR.md">Português (BR)</a> ·
+  <a href="README.ru.md">Русский</a> ·
+  <a href="README.tr.md">Türkçe</a> ·
   <a href="README.zh-CN.md">简体中文</a>
+</sub></p>
+
+<p align="center">
+  <a href="https://escalated.dev"><img src="https://raw.githubusercontent.com/escalated-dev/escalated/main/docs/assets/readme/logo.png" width="72" height="72" alt="Escalated"></a>
 </p>
 
-# Escalated Spring
+<h1 align="center">Escalated for Spring</h1>
 
-Spring Bootアプリケーション向けの組み込み可能なヘルプデスクシステム。単一の依存関係でフル機能のサポートデスクを任意のJavaアプリケーションに追加できます。
+<p align="center">
+  Spring Boot アプリに本格的なヘルプデスクを追加できます。<br>
+  チケット、SLA、エスカレーションルール、ナレッジベース、サポートウィジェットを、あなた自身のデータベース上で動く 1 つの依存関係として提供します。
+</p>
+
+<p align="center">
+  <a href="https://escalated.dev"><b>ウェブサイト</b></a> ·
+  <a href="https://escalated.dev/docs"><b>ドキュメント</b></a> ·
+  <a href="https://escalated.dev/cloud"><b>Cloud</b></a> ·
+  <a href="../../CHANGELOG.md"><b>変更履歴</b></a>
+</p>
+
+<br>
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/escalated-dev/escalated/main/docs/assets/readme/inbox-dark.png">
+  <img src="https://raw.githubusercontent.com/escalated-dev/escalated/main/docs/assets/readme/inbox-light.png" alt="Escalated のエージェント受信トレイ: 件数付きの保存済みビュー、各チケットの SLA カウントダウンと優先度" width="100%">
+</picture>
+
+## できること
+
+<table>
+  <tr>
+    <td width="40%">
+      <h3>エージェントが一日中作業できる受信トレイ</h3>
+      会話、内部メモ、定型返信、SLA タイマーを 1 つの画面にまとめています。チケットは Postmark、Mailgun、AWS SES 経由のメールでも届きます。
+    </td>
+    <td width="60%">
+      <picture>
+        <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/escalated-dev/escalated/main/docs/assets/readme/ticket-dark.png">
+        <img src="https://raw.githubusercontent.com/escalated-dev/escalated/main/docs/assets/readme/ticket-light.png" alt="エージェントのワークスペースで開いたチケットと返信エディター">
+      </picture>
+    </td>
+  </tr>
+  <tr>
+    <td width="60%">
+      <picture>
+        <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/escalated-dev/escalated/main/docs/assets/readme/dashboard-dark.png">
+        <img src="https://raw.githubusercontent.com/escalated-dev/escalated/main/docs/assets/readme/dashboard-light.png" alt="応答時間、CSAT、SLA 違反を表示する管理者向けレポートページ">
+      </picture>
+    </td>
+    <td width="40%">
+      <h3>ひと目でわかる SLA とエスカレーションルール</h3>
+      営業時間と休日を考慮した応答・解決目標、違反時にエスカレーションや再割り当てを行うルール、SLA レポートを備えています。
+    </td>
+  </tr>
+</table>
 
 ## 機能
 
-1. **Ticket CRUD** -- ステータス、優先度、割り当てによる完全なライフサイクル管理
-2. **SLA Policies** -- 営業時間サポートと休日カレンダーを備えた設定可能なSLA
-3. **Automations** -- 解決済みチケットの自動クローズと自動割り当てのための時間ベースのルール
-4. **Escalation Rules** -- SLA違反時の再割り当てと通知による自動エスカレーション
-5. **Macros & Canned Responses** -- エージェント向けの定義済みアクションと応答テンプレート
-6. **Custom Fields** -- 複数のフィールドタイプによる拡張可能なチケットデータ
-7. **Knowledge Base** -- 検索、閲覧数、フィードバック付きの記事とカテゴリ
-8. **Webhooks** -- リトライロジック付きHMAC署名Webhook配信
-9. **API Tokens** -- APIアクセス用のSHA-256ハッシュトークン認証
-10. **Roles & Permissions** -- きめ細かなロールベースのアクセス制御
-11. **Audit Logging** -- すべてのアクションの完全な監査証跡
-12. **Import System** -- 構造化データからのチケット一括インポート
-13. **Side Conversations** -- チケット内のプライベートスレッド会話
-14. **Ticket Merging & Linking** -- 重複チケットの統合と関連チケットのリンク
-15. **Ticket Splitting** -- 複雑なチケットを個別の問題に分割
-16. **Ticket Snooze** -- `@Scheduled`による自動ウェイクアップ付きチケットスヌーズ
-17. **Email Threading** -- ThymeleafによるブランドHTMLメールテンプレートと正しいMessage-IDスレッディング
-18. **Saved Views** -- エージェントごとのカスタムフィルター/ソート済みチケットビュー
-19. **Widget API** -- サポートウィジェット埋め込み用のパブリックRESTエンドポイント
-20. **Real-time Broadcasting** -- STOMP/SockJS経由のWebSocket（オプトイン）
-21. **Capacity Management** -- エージェントのワークロード制限の追跡と適用
-22. **Skill-based Routing** -- マッチするスキルを持つエージェントへのチケットルーティング
-23. **CSAT Ratings** -- トークンベースのアクセスによる顧客満足度調査
-24. **2FA (TOTP)** -- エージェントアカウント用の時間ベースワンタイムパスワードサポート
-25. **Guest Access** -- 認証不要のトークンベースチケットアクセス
+<table>
+<tr>
+<td width="33%" valign="top">
 
-## 要件
+**チケットと受信トレイ**
+- ステータス、優先度、担当の割り当て
+- マクロと定型返信
+- チケット上のサイド会話
+- チケットの統合、リンク、分割
+- 自動で再開するスヌーズ
+- エージェントごとの保存済みビュー
+- 複数の型に対応したカスタムフィールド
 
-- Java 17+
-- Spring Boot 4.1.x
-- リレーショナルデータベース（PostgreSQL、MySQL、または開発用H2）
+</td>
+<td width="33%" valign="top">
 
-## インストール
+**SLA とルーティング**
+- 営業時間と休日に対応した SLA ポリシー
+- 違反、経過時間、無応答でのエスカレーション
+- 再割り当て、優先度の変更、部門の移動
+- 自動クローズと自動割り当てのルール
+- スキルベースのルーティング
+- エージェントの作業量の上限
 
-最初に、現在のソースをローカル Maven リポジトリにビルドします。
+</td>
+<td width="33%" valign="top">
+
+**メール**
+- Postmark、Mailgun、AWS SES からの受信
+- 署名付き Reply-To によるチケットの特定
+- 依頼者からの返信のみ受け付け
+- Thymeleaf によるブランド付き HTML メール
+- Message-ID によるスレッド化
+
+</td>
+</tr>
+<tr>
+<td width="33%" valign="top">
+
+**顧客**
+- 公開ウィジェット API
+- トークンによるゲストのチケットアクセス
+- トークンでアクセスする CSAT アンケート
+- 検索とフィードバックに対応したナレッジベース
+
+</td>
+<td width="33%" valign="top">
+
+**管理とセキュリティ**
+- ロールと権限
+- スタッフ向け TOTP 二要素認証
+- SAML 2、OAuth 2 / OIDC、JWT によるサインイン
+- すべての操作の監査ログ
+- ハッシュ化された API トークン
+
+</td>
+<td width="33%" valign="top">
+
+**拡張と連携**
+- 再試行付きの HMAC 署名 Webhook
+- チケットの一括インポート
+- ネイティブ Java プラグインと SDK プラグイン
+- STOMP/SockJS 経由の WebSocket (オプトイン)
+- 共通の Vue 3 + Inertia UI (オプトイン)
+
+</td>
+</tr>
+</table>
+
+<p align="center"><sub><a href="../features.md">すべての機能の詳細</a></sub></p>
+
+<p align="center">
+  <a href="https://spring.io/projects/spring-boot"><img src="https://img.shields.io/badge/Spring_Boot-6DB33F?style=for-the-badge&logo=springboot&logoColor=white" alt="Spring Boot"></a>
+  <a href="https://openjdk.org"><img src="https://img.shields.io/badge/Java-ED8B00?style=for-the-badge&logo=openjdk&logoColor=white" alt="Java"></a>
+  <a href="https://vuejs.org"><img src="https://img.shields.io/badge/Vue.js-4FC08D?style=for-the-badge&logo=vuedotjs&logoColor=white" alt="Vue.js"></a>
+  <a href="https://inertiajs.com"><img src="https://img.shields.io/badge/Inertia.js-9553E9?style=for-the-badge&logo=inertia&logoColor=white" alt="Inertia.js"></a>
+  <a href="https://www.postgresql.org"><img src="https://img.shields.io/badge/PostgreSQL-4169E1?style=for-the-badge&logo=postgresql&logoColor=white" alt="PostgreSQL"></a>
+</p>
+
+## 機能一覧
 
 ```bash
 git clone https://github.com/escalated-dev/escalated-spring.git
 cd escalated-spring
 ./gradlew publishToMavenLocal
 ```
-
-`build.gradle.kts`に依存関係を追加します：
 
 ```kotlin
 repositories {
@@ -76,167 +169,19 @@ dependencies {
 }
 ```
 
-または`pom.xml`：
+その後、`mavenLocal()` とあわせて `implementation("dev.escalated:escalated-spring:0.2.13")` をアプリに追加し、`escalated.enabled=true` を設定します。Java 17 以上と Spring Boot 4.1 が必要です。設定、データベース、サインインについては[スタートガイド](../getting-started.md)を、`escalated.ui.enabled=true` で共通画面を有効にする方法は [Inertia ページ](../ui.md)を参照してください。
 
-```xml
-<dependency>
-    <groupId>dev.escalated</groupId>
-    <artifactId>escalated-spring</artifactId>
-    <version>0.2.13</version>
-</dependency>
-```
+## グ、添付ファイル、アクティビティタイムライン
 
-## 設定
+- [すべての機能](../features.md) · [はじめに](../getting-started.md) · [Inertia ページ](../ui.md)
+- [カスタマイズ、ローカライズ、リアルタイム](../customization.md) · [アーキテクチャ](../architecture.md) · [API エンドポイント](../api-endpoints.md)
+- [アクセス制御](../access-control.md) · [チケットのアクセスとルーティング](../ticket-access-and-routing.md) · [カスタムフィールド](../custom-fields.md)
+- [受信メール](../inbound-email.md) · [ゲストアクセス](../guest-access.md) · [ウィジェットの埋め込み](../embedding-the-widget.md)
+- [管理画面の埋め込み](../embedding-admin.md) · [エージェントパネル](../agent-panel.md) · [プラグイン](../plugins.md)
+- [ニュースレター](../newsletters.md) · [開発](../development.md)
 
-`application.properties`または`application.yml`に追加します：
+Escalated は [Laravel](https://github.com/escalated-dev/escalated-laravel)、[Rails](https://github.com/escalated-dev/escalated-rails)、[Django](https://github.com/escalated-dev/escalated-django)、[NestJS](https://github.com/escalated-dev/escalated-nestjs)、[AdonisJS](https://github.com/escalated-dev/escalated-adonis)、[Symfony](https://github.com/escalated-dev/escalated-symfony)、[Phoenix](https://github.com/escalated-dev/escalated-phoenix)、[Go](https://github.com/escalated-dev/escalated-go)、[.NET](https://github.com/escalated-dev/escalated-dotnet)、[WordPress](https://github.com/escalated-dev/escalated-wordpress)、[Filament](https://github.com/escalated-dev/escalated-filament) 向けにも提供しています。UI は [escalated](https://github.com/escalated-dev/escalated) にあります。
 
-```properties
-# Enable/disable the helpdesk
-escalated.enabled=true
+## 
 
-# Route prefix (default: escalated)
-escalated.route-prefix=escalated
-
-# Feature toggles
-escalated.knowledge-base.enabled=true
-escalated.broadcasting.enabled=false
-escalated.two-factor.enabled=true
-escalated.widget.enabled=true
-escalated.guest-access.enabled=true
-
-# SLA checking interval
-escalated.sla.check-interval-seconds=60
-
-# Snooze wake-up interval
-escalated.snooze.check-interval-seconds=60
-
-# Webhook settings
-escalated.webhook.max-retries=3
-
-# Database (example for PostgreSQL)
-spring.datasource.url=jdbc:postgresql://localhost:5432/myapp
-spring.datasource.username=user
-spring.datasource.password=secret
-spring.jpa.hibernate.ddl-auto=validate
-spring.flyway.enabled=true
-```
-
-## データベースセットアップ
-
-Flywayマイグレーションが含まれており、自動的に実行されます。マイグレーションは`escalated_`プレフィックス付きのすべてのテーブルを作成し、デフォルトのロールと権限をシードします。
-
-## APIエンドポイント
-
-### Admin (`/escalated/api/admin/`)
-| メソッド | パス | 説明 |
-|--------|------|-------------|
-| GET | `/tickets` | チケット一覧（ページネーション、フィルター可能） |
-| POST | `/tickets` | チケット作成 |
-| GET | `/tickets/{id}` | チケット取得 |
-| PUT | `/tickets/{id}` | チケット更新 |
-| POST | `/tickets/{id}/assign` | チケット割り当て |
-| POST | `/tickets/{id}/status` | ステータス変更 |
-| POST | `/tickets/{id}/snooze` | チケットスヌーズ |
-| POST | `/tickets/{id}/merge` | チケット統合 |
-| POST | `/tickets/{id}/split` | チケット分割 |
-| DELETE | `/tickets/{id}` | チケット削除 |
-| GET/POST | `/departments` | 部門管理 |
-| GET/POST | `/agents` | エージェント管理 |
-| GET/POST | `/webhooks` | Webhook管理 |
-| GET/POST | `/roles` | ロール管理 |
-| GET/POST | `/custom-fields` | カスタムフィールド管理 |
-| GET/POST | `/settings` | 設定管理 |
-| GET | `/audit-logs` | 監査ログ表示 |
-| POST | `/import/tickets` | チケットインポート |
-| GET/POST | `/kb/categories` | KBカテゴリ管理 |
-| GET/POST | `/kb/articles` | KB記事管理 |
-
-### Agent (`/escalated/api/agent/`)
-| メソッド | パス | 説明 |
-|--------|------|-------------|
-| GET | `/tickets` | 割り当て済み/フィルター済みチケット一覧 |
-| GET | `/tickets/{id}` | チケット表示 |
-| POST | `/tickets/{id}/replies` | 返信追加 |
-| POST | `/tickets/{id}/macro/{macroId}` | マクロ適用 |
-| POST | `/tickets/{id}/side-conversations` | サイドカンバセーション作成 |
-| POST | `/tickets/{id}/links` | チケットリンク |
-| GET/POST | `/saved-views` | 保存済みビュー管理 |
-| GET/POST | `/canned-responses` | 定型応答管理 |
-
-### Customer (`/escalated/api/customer/`)
-| メソッド | パス | 説明 |
-|--------|------|-------------|
-| GET | `/tickets?email=` | 顧客チケット一覧 |
-| POST | `/tickets` | チケット作成 |
-| POST | `/tickets/{id}/replies` | 返信追加 |
-
-### Widget (`/escalated/api/widget/`)
-| メソッド | パス | 説明 |
-|--------|------|-------------|
-| POST | `/tickets` | チケット作成（公開） |
-| GET | `/tickets/{token}` | ゲストトークンでチケット表示 |
-| POST | `/tickets/{token}/replies` | ゲストトークンで返信 |
-| GET | `/kb/search?query=` | ナレッジベース検索 |
-| POST | `/csat/{token}` | 満足度評価送信 |
-
-### Guest (`/escalated/api/guest/`)
-| メソッド | パス | 説明 |
-|--------|------|-------------|
-| GET | `/tickets/{token}` | チケット表示 |
-| GET | `/tickets/{token}/replies` | 返信表示 |
-| POST | `/tickets/{token}/replies` | 返信追加 |
-
-## アーキテクチャ
-
-```
-dev.escalated/
-  config/              自動設定、プロパティ、WebSocket設定
-  models/              完全なリレーション付きJPAエンティティ
-  repositories/        Spring Data JPAリポジトリ
-  services/            ビジネスロジック（トランザクション）
-  controllers/
-    admin/             管理者REST API
-    agent/             エージェントREST API
-    customer/          顧客REST API
-    widget/            公開ウィジェットAPI
-  events/              Springアプリケーションイベント + Webhookリスナー
-  security/            APIトークン認証フィルター、セキュリティ設定、2FA
-  scheduling/          @Scheduledタスク（スヌーズ、SLA、自動化）
-```
-
-## 認証
-
-APIエンドポイントはBearerトークン認証を使用します。管理者APIでトークンを作成します：
-
-```bash
-curl -X POST /escalated/api/admin/tokens \
-  -H "Content-Type: application/json" \
-  -d '{"name": "My API Token", "agent_id": 1}'
-```
-
-レスポンスにはプレーンテキストのトークンが含まれます（一度だけ表示）。後続のリクエストで使用します：
-
-```bash
-curl -H "Authorization: Bearer <token>" /escalated/api/agent/tickets
-```
-
-## WebSocket（リアルタイム）
-
-`escalated.broadcasting.enabled=true`で有効化します。SockJS/STOMP経由で`/escalated/ws`に接続します。
-
-## 開発
-
-```bash
-# Build
-./gradlew build
-
-# Run tests
-./gradlew test
-
-# Run checkstyle
-./gradlew checkstyleMain checkstyleTest
-```
-
-## ライセンス
-
-MITライセンス。詳細は[LICENSE](LICENSE)を参照してください。
+MIT。Copyright (c) 2026 Escalated.dev。詳細は [LICENSE](../../LICENSE) を参照してください。

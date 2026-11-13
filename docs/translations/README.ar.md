@@ -1,69 +1,162 @@
-<p align="center">
-  <b>العربية</b> •
-  <a href="README.de.md">Deutsch</a> •
-  <a href="../../README.md">English</a> •
-  <a href="README.es.md">Español</a> •
-  <a href="README.fr.md">Français</a> •
-  <a href="README.it.md">Italiano</a> •
-  <a href="README.ja.md">日本語</a> •
-  <a href="README.ko.md">한국어</a> •
-  <a href="README.nl.md">Nederlands</a> •
-  <a href="README.pl.md">Polski</a> •
-  <a href="README.pt-BR.md">Português (BR)</a> •
-  <a href="README.ru.md">Русский</a> •
-  <a href="README.tr.md">Türkçe</a> •
+<p align="center"><sub>
+  <b>العربية</b> ·
+  <a href="README.de.md">Deutsch</a> ·
+  <a href="../../README.md">English</a> ·
+  <a href="README.es.md">Español</a> ·
+  <a href="README.fr.md">Français</a> ·
+  <a href="README.it.md">Italiano</a> ·
+  <a href="README.ja.md">日本語</a> ·
+  <a href="README.ko.md">한국어</a> ·
+  <a href="README.nl.md">Nederlands</a> ·
+  <a href="README.pl.md">Polski</a> ·
+  <a href="README.pt-BR.md">Português (BR)</a> ·
+  <a href="README.ru.md">Русский</a> ·
+  <a href="README.tr.md">Türkçe</a> ·
   <a href="README.zh-CN.md">简体中文</a>
+</sub></p>
+
+<p align="center">
+  <a href="https://escalated.dev"><img src="https://raw.githubusercontent.com/escalated-dev/escalated/main/docs/assets/readme/logo.png" width="72" height="72" alt="Escalated"></a>
 </p>
 
-# Escalated Spring
+<h1 align="center">Escalated for Spring</h1>
 
-نظام مكتب مساعدة قابل للتضمين لتطبيقات Spring Boot. أضف مكتب دعم كامل الميزات إلى أي تطبيق Java بتبعية واحدة.
+<p align="center">
+  أضف مكتب دعم متكاملًا إلى تطبيق Spring Boot الخاص بك.<br>
+  تذاكر، واتفاقيات مستوى الخدمة (SLA)، وقواعد تصعيد، وقاعدة معرفة، وأداة دعم، كتبعية واحدة تعمل على قاعدة بياناتك الخاصة.
+</p>
+
+<p align="center">
+  <a href="https://escalated.dev"><b>الموقع</b></a> ·
+  <a href="https://escalated.dev/docs"><b>التوثيق</b></a> ·
+  <a href="https://escalated.dev/cloud"><b>Cloud</b></a> ·
+  <a href="../../CHANGELOG.md"><b>سجل التغييرات</b></a>
+</p>
+
+<br>
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/escalated-dev/escalated/main/docs/assets/readme/inbox-dark.png">
+  <img src="https://raw.githubusercontent.com/escalated-dev/escalated/main/docs/assets/readme/inbox-light.png" alt="صندوق الوارد للوكلاء في Escalated: عروض محفوظة مع أعدادها، وعدّاد تنازلي لـ SLA وأولوية على كل تذكرة" width="100%">
+</picture>
+
+## ما الذي يقدمه
+
+<table>
+  <tr>
+    <td width="40%">
+      <h3>صندوق وارد يمكن لوكلائك العمل فيه طوال اليوم</h3>
+      المحادثة والملاحظات الداخلية والردود الجاهزة ومؤقتات SLA في شاشة واحدة. تصل التذاكر أيضًا عبر البريد الإلكتروني من خلال Postmark أو Mailgun أو AWS SES.
+    </td>
+    <td width="60%">
+      <picture>
+        <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/escalated-dev/escalated/main/docs/assets/readme/ticket-dark.png">
+        <img src="https://raw.githubusercontent.com/escalated-dev/escalated/main/docs/assets/readme/ticket-light.png" alt="تذكرة مفتوحة في مساحة عمل الوكيل مع محرر الرد">
+      </picture>
+    </td>
+  </tr>
+  <tr>
+    <td width="60%">
+      <picture>
+        <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/escalated-dev/escalated/main/docs/assets/readme/dashboard-dark.png">
+        <img src="https://raw.githubusercontent.com/escalated-dev/escalated/main/docs/assets/readme/dashboard-light.png" alt="صفحة التقارير في لوحة الإدارة مع أوقات الاستجابة وCSAT وحالات خرق SLA">
+      </picture>
+    </td>
+    <td width="40%">
+      <h3>اتفاقيات SLA وقواعد تصعيد واضحة أمامك</h3>
+      أهداف للاستجابة والحل مع مراعاة ساعات العمل والعطلات، وقواعد تصعّد التذكرة أو تعيد إسنادها عند الخرق، وتقارير SLA.
+    </td>
+  </tr>
+</table>
 
 ## الميزات
 
-1. **Ticket CRUD** -- إدارة كاملة لدورة الحياة مع الحالات والأولويات والتعيينات
-2. **SLA Policies** -- اتفاقيات مستوى خدمة قابلة للتكوين مع دعم ساعات العمل وتقويمات العطلات
-3. **Automations** -- قواعد مبنية على الوقت لإغلاق التذاكر المحلولة تلقائياً والتعيين التلقائي
-4. **Escalation Rules** -- تصعيد تلقائي عند انتهاك SLA مع إعادة التعيين والإشعارات
-5. **Macros & Canned Responses** -- إجراءات محددة مسبقاً وقوالب استجابة للوكلاء
-6. **Custom Fields** -- بيانات تذاكر قابلة للتوسيع مع أنواع حقول متعددة
-7. **Knowledge Base** -- مقالات وفئات مع البحث وعدد المشاهدات والتعليقات
-8. **Webhooks** -- تسليم Webhook موقّع بـ HMAC مع منطق إعادة المحاولة
-9. **API Tokens** -- مصادقة بالرمز المميز المجزأ بـ SHA-256 للوصول إلى API
-10. **Roles & Permissions** -- تحكم دقيق في الوصول قائم على الأدوار
-11. **Audit Logging** -- سجل تدقيق كامل لجميع الإجراءات
-12. **Import System** -- استيراد جماعي للتذاكر من بيانات منظمة
-13. **Side Conversations** -- محادثات خاصة مترابطة داخل التذاكر
-14. **Ticket Merging & Linking** -- دمج التذاكر المكررة وربط التذاكر ذات الصلة
-15. **Ticket Splitting** -- تقسيم التذاكر المعقدة إلى مشكلات منفصلة
-16. **Ticket Snooze** -- تأجيل التذاكر مع إيقاظ تلقائي عبر `@Scheduled`
-17. **Email Threading** -- قوالب بريد إلكتروني HTML ذات علامة تجارية عبر Thymeleaf مع ترابط Message-ID صحيح
-18. **Saved Views** -- عروض تذاكر مخصصة مفلترة/مرتبة لكل وكيل
-19. **Widget API** -- نقاط نهاية REST عامة لتضمين أداة الدعم
-20. **Real-time Broadcasting** -- WebSocket عبر STOMP/SockJS (اختياري)
-21. **Capacity Management** -- تتبع وفرض حدود أعباء عمل الوكلاء
-22. **Skill-based Routing** -- توجيه التذاكر إلى وكلاء ذوي مهارات مطابقة
-23. **CSAT Ratings** -- استبيانات رضا العملاء مع وصول قائم على الرمز المميز
-24. **2FA (TOTP)** -- دعم كلمة مرور لمرة واحدة مبنية على الوقت لحسابات الوكلاء
-25. **Guest Access** -- وصول إلى التذاكر قائم على الرمز المميز بدون مصادقة
+<table>
+<tr>
+<td width="33%" valign="top">
 
-## المتطلبات
+**التذاكر وصندوق الوارد**
+- الحالات والأولويات والإسناد
+- وحدات الماكرو والردود الجاهزة
+- محادثات جانبية داخل التذاكر
+- دمج التذاكر وربطها وتقسيمها
+- تأجيل مع إعادة تنشيط تلقائية
+- عروض محفوظة لكل وكيل
+- حقول مخصصة بأنواع متعددة
 
-- Java 17+
-- Spring Boot 4.1.x
-- قاعدة بيانات علائقية (PostgreSQL أو MySQL أو H2 للتطوير)
+</td>
+<td width="33%" valign="top">
 
-## التثبيت
+**SLA والتوجيه**
+- سياسات SLA مع ساعات العمل والعطلات
+- التصعيد عند الخرق أو التقادم أو عدم الرد
+- إعادة الإسناد أو تغيير الأولوية أو نقل القسم
+- قواعد الإغلاق التلقائي والإسناد التلقائي
+- توجيه حسب المهارات
+- حدود لعبء العمل لكل وكيل
 
-ابنِ المصدر الحالي في مستودع Maven المحلي أولاً:
+</td>
+<td width="33%" valign="top">
+
+**البريد الإلكتروني**
+- بريد وارد من Postmark وMailgun وAWS SES
+- تحديد التذكرة عبر Reply-To موقّع
+- قبول الردود من مقدم الطلب فقط
+- رسائل HTML بهوية علامتك التجارية عبر Thymeleaf
+- تسلسل الرسائل حسب Message-ID
+
+</td>
+</tr>
+<tr>
+<td width="33%" valign="top">
+
+**العملاء**
+- واجهة API عامة للأداة
+- وصول الضيوف إلى التذاكر عبر رمز
+- استطلاعات CSAT مع وصول عبر رمز
+- قاعدة معرفة مع بحث وتقييمات
+
+</td>
+<td width="33%" valign="top">
+
+**الإدارة والأمان**
+- الأدوار والصلاحيات
+- مصادقة ثنائية TOTP للموظفين
+- تسجيل الدخول عبر SAML 2 وOAuth 2 / OIDC وJWT
+- سجل تدقيق لكل إجراء
+- رموز API مُجزّأة (hashed)
+
+</td>
+<td width="33%" valign="top">
+
+**التوسيع والتكامل**
+- Webhooks موقّعة بـ HMAC مع إعادة المحاولة
+- استيراد التذاكر بالجملة
+- إضافات Java أصلية وإضافات SDK
+- WebSocket عبر STOMP/SockJS (اختياري)
+- واجهة Vue 3 + Inertia مشتركة (اختيارية)
+
+</td>
+</tr>
+</table>
+
+<p align="center"><sub><a href="../features.md">كل الميزات بالتفصيل</a></sub></p>
+
+<p align="center">
+  <a href="https://spring.io/projects/spring-boot"><img src="https://img.shields.io/badge/Spring_Boot-6DB33F?style=for-the-badge&logo=springboot&logoColor=white" alt="Spring Boot"></a>
+  <a href="https://openjdk.org"><img src="https://img.shields.io/badge/Java-ED8B00?style=for-the-badge&logo=openjdk&logoColor=white" alt="Java"></a>
+  <a href="https://vuejs.org"><img src="https://img.shields.io/badge/Vue.js-4FC08D?style=for-the-badge&logo=vuedotjs&logoColor=white" alt="Vue.js"></a>
+  <a href="https://inertiajs.com"><img src="https://img.shields.io/badge/Inertia.js-9553E9?style=for-the-badge&logo=inertia&logoColor=white" alt="Inertia.js"></a>
+  <a href="https://www.postgresql.org"><img src="https://img.shields.io/badge/PostgreSQL-4169E1?style=for-the-badge&logo=postgresql&logoColor=white" alt="PostgreSQL"></a>
+</p>
+
+## الميزات
 
 ```bash
 git clone https://github.com/escalated-dev/escalated-spring.git
 cd escalated-spring
 ./gradlew publishToMavenLocal
 ```
-
-أضف التبعية إلى ملف `build.gradle.kts` الخاص بك:
 
 ```kotlin
 repositories {
@@ -76,167 +169,19 @@ dependencies {
 }
 ```
 
-أو `pom.xml`:
+ثم أضف `implementation("dev.escalated:escalated-spring:0.2.13")` مع `mavenLocal()` إلى تطبيقك واضبط `escalated.enabled=true`. يتطلب Java 17+ وSpring Boot 4.1. يشرح [دليل البدء](../getting-started.md) الإعدادات وقاعدة البيانات وتسجيل الدخول، وتُفعّل [صفحات Inertia](../ui.md) الشاشات المشتركة عبر `escalated.ui.enabled=true`.
 
-```xml
-<dependency>
-    <groupId>dev.escalated</groupId>
-    <artifactId>escalated-spring</artifactId>
-    <version>0.2.13</version>
-</dependency>
-```
+## لوسوم والمرفقات وسجل النشاط
 
-## الإعدادات
+- [كل الميزات](../features.md) · [البدء](../getting-started.md) · [صفحات Inertia](../ui.md)
+- [التخصيص والترجمة والتحديثات الفورية](../customization.md) · [البنية](../architecture.md) · [نقاط نهاية API](../api-endpoints.md)
+- [التحكم في الوصول](../access-control.md) · [الوصول إلى التذاكر وتوجيهها](../ticket-access-and-routing.md) · [الحقول المخصصة](../custom-fields.md)
+- [البريد الوارد](../inbound-email.md) · [وصول الضيوف](../guest-access.md) · [تضمين الأداة](../embedding-the-widget.md)
+- [تضمين لوحة الإدارة](../embedding-admin.md) · [لوحة الوكيل](../agent-panel.md) · [الإضافات](../plugins.md)
+- [النشرات البريدية](../newsletters.md) · [التطوير](../development.md)
 
-أضف إلى ملف `application.properties` أو `application.yml` الخاص بك:
+يتوفر Escalated أيضًا لـ [Laravel](https://github.com/escalated-dev/escalated-laravel)، [Rails](https://github.com/escalated-dev/escalated-rails)، [Django](https://github.com/escalated-dev/escalated-django)، [NestJS](https://github.com/escalated-dev/escalated-nestjs)، [AdonisJS](https://github.com/escalated-dev/escalated-adonis)، [Symfony](https://github.com/escalated-dev/escalated-symfony)، [Phoenix](https://github.com/escalated-dev/escalated-phoenix)، [Go](https://github.com/escalated-dev/escalated-go)، [.NET](https://github.com/escalated-dev/escalated-dotnet)، [WordPress](https://github.com/escalated-dev/escalated-wordpress) و[Filament](https://github.com/escalated-dev/escalated-filament). توجد الواجهة في [escalated](https://github.com/escalated-dev/escalated).
 
-```properties
-# Enable/disable the helpdesk
-escalated.enabled=true
+## 
 
-# Route prefix (default: escalated)
-escalated.route-prefix=escalated
-
-# Feature toggles
-escalated.knowledge-base.enabled=true
-escalated.broadcasting.enabled=false
-escalated.two-factor.enabled=true
-escalated.widget.enabled=true
-escalated.guest-access.enabled=true
-
-# SLA checking interval
-escalated.sla.check-interval-seconds=60
-
-# Snooze wake-up interval
-escalated.snooze.check-interval-seconds=60
-
-# Webhook settings
-escalated.webhook.max-retries=3
-
-# Database (example for PostgreSQL)
-spring.datasource.url=jdbc:postgresql://localhost:5432/myapp
-spring.datasource.username=user
-spring.datasource.password=secret
-spring.jpa.hibernate.ddl-auto=validate
-spring.flyway.enabled=true
-```
-
-## إعداد قاعدة البيانات
-
-ترحيلات Flyway مضمنة وتعمل تلقائياً. يقوم الترحيل بإنشاء جميع الجداول مع البادئة `escalated_` ويزرع الأدوار والأذونات الافتراضية.
-
-## نقاط نهاية API
-
-### Admin (`/escalated/api/admin/`)
-| الطريقة | المسار | الوصف |
-|--------|------|-------------|
-| GET | `/tickets` | عرض التذاكر (مع ترقيم وتصفية) |
-| POST | `/tickets` | إنشاء تذكرة |
-| GET | `/tickets/{id}` | الحصول على تذكرة |
-| PUT | `/tickets/{id}` | تحديث تذكرة |
-| POST | `/tickets/{id}/assign` | تعيين تذكرة |
-| POST | `/tickets/{id}/status` | تغيير الحالة |
-| POST | `/tickets/{id}/snooze` | تأجيل تذكرة |
-| POST | `/tickets/{id}/merge` | دمج التذاكر |
-| POST | `/tickets/{id}/split` | تقسيم تذكرة |
-| DELETE | `/tickets/{id}` | حذف تذكرة |
-| GET/POST | `/departments` | إدارة الأقسام |
-| GET/POST | `/agents` | إدارة الوكلاء |
-| GET/POST | `/webhooks` | إدارة Webhooks |
-| GET/POST | `/roles` | إدارة الأدوار |
-| GET/POST | `/custom-fields` | إدارة الحقول المخصصة |
-| GET/POST | `/settings` | إدارة الإعدادات |
-| GET | `/audit-logs` | عرض سجلات التدقيق |
-| POST | `/import/tickets` | استيراد التذاكر |
-| GET/POST | `/kb/categories` | إدارة فئات قاعدة المعرفة |
-| GET/POST | `/kb/articles` | إدارة مقالات قاعدة المعرفة |
-
-### Agent (`/escalated/api/agent/`)
-| الطريقة | المسار | الوصف |
-|--------|------|-------------|
-| GET | `/tickets` | عرض التذاكر المعينة/المفلترة |
-| GET | `/tickets/{id}` | عرض التذكرة |
-| POST | `/tickets/{id}/replies` | إضافة رد |
-| POST | `/tickets/{id}/macro/{macroId}` | تطبيق ماكرو |
-| POST | `/tickets/{id}/side-conversations` | إنشاء محادثة جانبية |
-| POST | `/tickets/{id}/links` | ربط التذاكر |
-| GET/POST | `/saved-views` | إدارة العروض المحفوظة |
-| GET/POST | `/canned-responses` | إدارة الردود الجاهزة |
-
-### Customer (`/escalated/api/customer/`)
-| الطريقة | المسار | الوصف |
-|--------|------|-------------|
-| GET | `/tickets?email=` | عرض تذاكر العميل |
-| POST | `/tickets` | إنشاء تذكرة |
-| POST | `/tickets/{id}/replies` | إضافة رد |
-
-### Widget (`/escalated/api/widget/`)
-| الطريقة | المسار | الوصف |
-|--------|------|-------------|
-| POST | `/tickets` | إنشاء تذكرة (عامة) |
-| GET | `/tickets/{token}` | عرض التذكرة برمز الضيف |
-| POST | `/tickets/{token}/replies` | الرد عبر رمز الضيف |
-| GET | `/kb/search?query=` | البحث في قاعدة المعرفة |
-| POST | `/csat/{token}` | إرسال تقييم الرضا |
-
-### Guest (`/escalated/api/guest/`)
-| الطريقة | المسار | الوصف |
-|--------|------|-------------|
-| GET | `/tickets/{token}` | عرض التذكرة |
-| GET | `/tickets/{token}/replies` | عرض الردود |
-| POST | `/tickets/{token}/replies` | إضافة رد |
-
-## البنية
-
-```
-dev.escalated/
-  config/              التكوين التلقائي، الخصائص، إعدادات WebSocket
-  models/              كيانات JPA مع العلاقات الكاملة
-  repositories/        مستودعات Spring Data JPA
-  services/            منطق الأعمال (معاملاتي)
-  controllers/
-    admin/             واجهة REST للمسؤول
-    agent/             واجهة REST للوكيل
-    customer/          واجهة REST للعميل
-    widget/            واجهة الأداة العامة
-  events/              أحداث تطبيق Spring + مستمع webhook
-  security/            مرشح مصادقة رمز API، إعدادات الأمان، 2FA
-  scheduling/          مهام @Scheduled (تأجيل، SLA، أتمتة)
-```
-
-## المصادقة
-
-تستخدم نقاط نهاية API مصادقة رمز Bearer. أنشئ الرموز عبر واجهة المسؤول:
-
-```bash
-curl -X POST /escalated/api/admin/tokens \
-  -H "Content-Type: application/json" \
-  -d '{"name": "My API Token", "agent_id": 1}'
-```
-
-يتضمن الرد الرمز بنص عادي (يُعرض مرة واحدة فقط). استخدمه في الطلبات اللاحقة:
-
-```bash
-curl -H "Authorization: Bearer <token>" /escalated/api/agent/tickets
-```
-
-## WebSocket (الوقت الحقيقي)
-
-فعّل بـ `escalated.broadcasting.enabled=true`. اتصل بـ `/escalated/ws` عبر SockJS/STOMP.
-
-## التطوير
-
-```bash
-# Build
-./gradlew build
-
-# Run tests
-./gradlew test
-
-# Run checkstyle
-./gradlew checkstyleMain checkstyleTest
-```
-
-## الترخيص
-
-رخصة MIT. انظر [LICENSE](LICENSE) للتفاصيل.
+MIT. Copyright (c) 2026 Escalated.dev. راجع [LICENSE](../../LICENSE).
