@@ -89,7 +89,7 @@ dependencies {
     // OAuth 2 / OIDC authorization-code exchange with PKCE (Nimbus OAuth 2.0 SDK).
     implementation("org.apache.santuario:xmlsec:4.0.4")
     implementation("com.nimbusds:nimbus-jose-jwt:10.10")
-    implementation("com.nimbusds:oauth2-oidc-sdk:11.38.2")
+    implementation("com.nimbusds:oauth2-oidc-sdk:11.39")
 
     implementation("org.flywaydb:flyway-core")
     // Flyway 10 moved database support out of core. Without these, core
