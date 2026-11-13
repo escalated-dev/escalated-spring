@@ -1,61 +1,156 @@
-<p align="center">
-  <a href="README.ar.md">العربية</a> •
-  <a href="README.de.md">Deutsch</a> •
-  <a href="../../README.md">English</a> •
-  <a href="README.es.md">Español</a> •
-  <a href="README.fr.md">Français</a> •
-  <a href="README.it.md">Italiano</a> •
-  <a href="README.ja.md">日本語</a> •
-  <a href="README.ko.md">한국어</a> •
-  <a href="README.nl.md">Nederlands</a> •
-  <a href="README.pl.md">Polski</a> •
-  <a href="README.pt-BR.md">Português (BR)</a> •
-  <a href="README.ru.md">Русский</a> •
-  <b>Türkçe</b> •
+<p align="center"><sub>
+  <a href="README.ar.md">العربية</a> ·
+  <a href="README.de.md">Deutsch</a> ·
+  <a href="../../README.md">English</a> ·
+  <a href="README.es.md">Español</a> ·
+  <a href="README.fr.md">Français</a> ·
+  <a href="README.it.md">Italiano</a> ·
+  <a href="README.ja.md">日本語</a> ·
+  <a href="README.ko.md">한국어</a> ·
+  <a href="README.nl.md">Nederlands</a> ·
+  <a href="README.pl.md">Polski</a> ·
+  <a href="README.pt-BR.md">Português (BR)</a> ·
+  <a href="README.ru.md">Русский</a> ·
+  <b>Türkçe</b> ·
   <a href="README.zh-CN.md">简体中文</a>
+</sub></p>
+
+<p align="center">
+  <a href="https://escalated.dev"><img src="https://raw.githubusercontent.com/escalated-dev/escalated/main/docs/assets/readme/logo.png" width="72" height="72" alt="Escalated"></a>
 </p>
 
-# Escalated Spring
+<h1 align="center">Escalated for Spring</h1>
 
-Spring Boot uygulamaları için gömülebilir yardım masası sistemi. Tek bir bağımlılıkla herhangi bir Java uygulamasına tam özellikli bir destek masası ekleyin.
+<p align="center">
+  Spring Boot uygulamanıza eksiksiz bir yardım masası ekleyin.<br>
+  Talepler, SLA'lar, eskalasyon kuralları, bir bilgi bankası ve bir destek widget'ı, kendi veritabanınızda tek bir bağımlılık olarak.
+</p>
+
+<p align="center">
+  <a href="https://escalated.dev"><b>Web sitesi</b></a> ·
+  <a href="https://escalated.dev/docs"><b>Dokümantasyon</b></a> ·
+  <a href="https://escalated.dev/cloud"><b>Cloud</b></a> ·
+  <a href="../../CHANGELOG.md"><b>Değişiklik günlüğü</b></a>
+</p>
+
+<br>
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/escalated-dev/escalated/main/docs/assets/readme/inbox-dark.png">
+  <img src="https://raw.githubusercontent.com/escalated-dev/escalated/main/docs/assets/readme/inbox-light.png" alt="Escalated temsilci gelen kutusu: sayılarıyla kayıtlı görünümler, her talepte SLA geri sayımları ve öncelikler" width="100%">
+</picture>
+
+## Neler yapar
+
+<table>
+  <tr>
+    <td width="40%">
+      <h3>Temsilcilerinizin gün boyu çalışabileceği bir gelen kutusu</h3>
+      Yazışma, dahili notlar, hazır yanıtlar ve SLA sayaçları tek ekranda. Talepler Postmark, Mailgun veya AWS SES üzerinden e-postayla da gelir.
+    </td>
+    <td width="60%">
+      <picture>
+        <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/escalated-dev/escalated/main/docs/assets/readme/ticket-dark.png">
+        <img src="https://raw.githubusercontent.com/escalated-dev/escalated/main/docs/assets/readme/ticket-light.png" alt="Temsilci çalışma alanında yanıt düzenleyicisiyle açık bir talep">
+      </picture>
+    </td>
+  </tr>
+  <tr>
+    <td width="60%">
+      <picture>
+        <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/escalated-dev/escalated/main/docs/assets/readme/dashboard-dark.png">
+        <img src="https://raw.githubusercontent.com/escalated-dev/escalated/main/docs/assets/readme/dashboard-light.png" alt="Yanıt sürelerini, CSAT'i ve SLA ihlallerini gösteren yönetici rapor sayfası">
+      </picture>
+    </td>
+    <td width="40%">
+      <h3>Görebildiğiniz SLA'lar ve eskalasyon kuralları</h3>
+      Mesai saatlerini ve tatilleri dikkate alan yanıt ve çözüm hedefleri, ihlal olduğunda eskalasyon yapan veya talebi yeniden atayan kurallar ve SLA raporları.
+    </td>
+  </tr>
+</table>
 
 ## Özellikler
 
-1. **Ticket CRUD** -- Durumlar, öncelikler ve atamalarla tam yaşam döngüsü yönetimi
-2. **SLA Policies** -- Çalışma saatleri desteği ve tatil takvimleri ile yapılandırılabilir SLA'lar
-3. **Automations** -- Çözülmüş taleplerin otomatik kapatılması ve otomatik atama için zaman tabanlı kurallar
-4. **Escalation Rules** -- SLA ihlalinde yeniden atama ve bildirimlerle otomatik yükseltme
-5. **Macros & Canned Responses** -- Temsilciler için önceden tanımlanmış eylemler ve yanıt şablonları
-6. **Custom Fields** -- Birden fazla alan türüyle genişletilebilir talep verileri
-7. **Knowledge Base** -- Arama, görüntüleme sayacı ve geri bildirimli makaleler ve kategoriler
-8. **Webhooks** -- Yeniden deneme mantığıyla HMAC imzalı webhook teslimatı
-9. **API Tokens** -- API erişimi için SHA-256 hashlenmiş token kimlik doğrulaması
-10. **Roles & Permissions** -- Ayrıntılı rol tabanlı erişim kontrolü
-11. **Audit Logging** -- Tüm eylemler için eksiksiz denetim izi
-12. **Import System** -- Yapılandırılmış verilerden toplu talep içe aktarma
-13. **Side Conversations** -- Talepler içinde özel iş parçacıklı konuşmalar
-14. **Ticket Merging & Linking** -- Yinelenen talepleri birleştirme ve ilişkileri bağlama
-15. **Ticket Splitting** -- Karmaşık talepleri ayrı sorunlara bölme
-16. **Ticket Snooze** -- `@Scheduled` ile otomatik uyandırmalı talep erteleme
-17. **Email Threading** -- Thymeleaf ile markalı HTML e-posta şablonları ve doğru Message-ID zincirleme
-18. **Saved Views** -- Temsilci başına özelleştirilmiş filtrelenmiş/sıralanmış talep görünümleri
-19. **Widget API** -- Destek widget'ı gömmek için genel REST uç noktaları
-20. **Real-time Broadcasting** -- STOMP/SockJS üzerinden WebSocket (isteğe bağlı)
-21. **Capacity Management** -- Temsilci iş yükü sınırlarını izleme ve uygulama
-22. **Skill-based Routing** -- Talepleri eşleşen becerilere sahip temsilcilere yönlendirme
-23. **CSAT Ratings** -- Token tabanlı erişimle müşteri memnuniyeti anketleri
-24. **2FA (TOTP)** -- Temsilci hesapları için zamana dayalı tek kullanımlık şifre desteği
-25. **Guest Access** -- Kimlik doğrulaması olmadan token tabanlı talep erişimi
+<table>
+<tr>
+<td width="33%" valign="top">
 
-## Gereksinimler
+**Talepler ve gelen kutusu**
+- Durumlar, öncelikler ve atama
+- Makrolar ve hazır yanıtlar
+- Taleplerde yan yazışmalar
+- Talepleri birleştirme, bağlama ve bölme
+- Otomatik uyandırmalı erteleme
+- Temsilci başına kayıtlı görünümler
+- Farklı türlerde özel alanlar
 
-- Java 17+
-- Spring Boot 4.1.x
-- İlişkisel bir veritabanı (PostgreSQL, MySQL veya geliştirme için H2)
+</td>
+<td width="33%" valign="top">
 
-## Kurulum
+**SLA'lar ve yönlendirme**
+- Mesai saatleri ve tatiller içeren SLA politikaları
+- İhlal, yaş veya yanıtsızlık durumunda eskalasyon
+- Yeniden atama, öncelik değiştirme veya departman taşıma
+- Otomatik kapatma ve otomatik atama kuralları
+- Yetkinliğe dayalı yönlendirme
+- Temsilci iş yükü sınırları
 
-Önce güncel kaynak kodunu yerel Maven deponuza derleyin:
+</td>
+<td width="33%" valign="top">
+
+**E-posta**
+- Postmark, Mailgun ve AWS SES üzerinden gelen e-posta
+- İmzalı Reply-To ile talep eşleştirme
+- Yalnızca talep sahibinden gelen yanıtlar kabul edilir
+- Thymeleaf ile markalı HTML e-postalar
+- Message-ID ile ileti dizileri
+
+</td>
+</tr>
+<tr>
+<td width="33%" valign="top">
+
+**Müşteriler**
+- Herkese açık widget API'si
+- Token ile misafir talep erişimi
+- Token erişimli CSAT anketleri
+- Arama ve geri bildirim içeren bilgi bankası
+
+</td>
+<td width="33%" valign="top">
+
+**Yönetim ve güvenlik**
+- Roller ve izinler
+- Personel için TOTP iki faktörlü doğrulama
+- SAML 2, OAuth 2 / OIDC ve JWT ile oturum açma
+- Her işlem için denetim kaydı
+- Hash'lenmiş API token'ları
+
+</td>
+<td width="33%" valign="top">
+
+**Genişletme ve entegrasyon**
+- Yeniden denemeli, HMAC imzalı webhook'lar
+- Toplu talep içe aktarma
+- Yerel Java ve SDK eklentileri
+- STOMP/SockJS üzerinden WebSocket (isteğe bağlı)
+- Ortak Vue 3 + Inertia arayüzü (isteğe bağlı)
+
+</td>
+</tr>
+</table>
+
+<p align="center"><sub><a href="../features.md">Tüm özellikler ayrıntılı olarak</a></sub></p>
+
+<p align="center">
+  <a href="https://spring.io/projects/spring-boot"><img src="https://img.shields.io/badge/Spring_Boot-6DB33F?style=for-the-badge&logo=springboot&logoColor=white" alt="Spring Boot"></a>
+  <a href="https://openjdk.org"><img src="https://img.shields.io/badge/Java-ED8B00?style=for-the-badge&logo=openjdk&logoColor=white" alt="Java"></a>
+  <a href="https://vuejs.org"><img src="https://img.shields.io/badge/Vue.js-4FC08D?style=for-the-badge&logo=vuedotjs&logoColor=white" alt="Vue.js"></a>
+  <a href="https://inertiajs.com"><img src="https://img.shields.io/badge/Inertia.js-9553E9?style=for-the-badge&logo=inertia&logoColor=white" alt="Inertia.js"></a>
+  <a href="https://www.postgresql.org"><img src="https://img.shields.io/badge/PostgreSQL-4169E1?style=for-the-badge&logo=postgresql&logoColor=white" alt="PostgreSQL"></a>
+</p>
+
+## Özellikler
 
 ```bash
 git clone https://github.com/escalated-dev/escalated-spring.git
@@ -63,180 +158,19 @@ cd escalated-spring
 ./gradlew publishToMavenLocal
 ```
 
-Bağımlılığı `build.gradle.kts` dosyanıza ekleyin:
+Ardından `implementation("dev.escalated:escalated-spring:0.2.13")` satırını `mavenLocal()` ile birlikte uygulamanıza ekleyin ve `escalated.enabled=true` ayarını yapın. Java 17+ ve Spring Boot 4.1 gerekir. [Başlangıç kılavuzu](../getting-started.md) yapılandırmayı, veritabanını ve oturum açmayı anlatır; [Inertia sayfaları](../ui.md) ise `escalated.ui.enabled=true` ile ortak ekranları açar.
 
-```kotlin
-repositories {
-    mavenLocal()
-    mavenCentral()
-}
+## tiketler, ekler, etkinlik zaman çizelgesi
 
-dependencies {
-    implementation("dev.escalated:escalated-spring:0.2.13")
-}
-```
+- [Tüm özellikler](../features.md) · [Başlarken](../getting-started.md) · [Inertia sayfaları](../ui.md)
+- [Özelleştirme, yerelleştirme ve gerçek zamanlı güncellemeler](../customization.md) · [Mimari](../architecture.md) · [API uç noktaları](../api-endpoints.md)
+- [Erişim denetimi](../access-control.md) · [Talep erişimi ve yönlendirme](../ticket-access-and-routing.md) · [Özel alanlar](../custom-fields.md)
+- [Gelen e-posta](../inbound-email.md) · [Misafir erişimi](../guest-access.md) · [Widget'ı yerleştirme](../embedding-the-widget.md)
+- [Yönetim panelini yerleştirme](../embedding-admin.md) · [Temsilci paneli](../agent-panel.md) · [Eklentiler](../plugins.md)
+- [Bültenler](../newsletters.md) · [Geliştirme](../development.md)
 
-Veya `pom.xml`:
+Escalated, [Laravel](https://github.com/escalated-dev/escalated-laravel), [Rails](https://github.com/escalated-dev/escalated-rails), [Django](https://github.com/escalated-dev/escalated-django), [NestJS](https://github.com/escalated-dev/escalated-nestjs), [AdonisJS](https://github.com/escalated-dev/escalated-adonis), [Symfony](https://github.com/escalated-dev/escalated-symfony), [Phoenix](https://github.com/escalated-dev/escalated-phoenix), [Go](https://github.com/escalated-dev/escalated-go), [.NET](https://github.com/escalated-dev/escalated-dotnet), [WordPress](https://github.com/escalated-dev/escalated-wordpress) ve [Filament](https://github.com/escalated-dev/escalated-filament) için de kullanılabilir. Arayüz [escalated](https://github.com/escalated-dev/escalated) deposunda bulunur.
 
-```xml
-<dependency>
-    <groupId>dev.escalated</groupId>
-    <artifactId>escalated-spring</artifactId>
-    <version>0.2.13</version>
-</dependency>
-```
+## 
 
-## Yapılandırma
-
-`application.properties` veya `application.yml` dosyanıza ekleyin:
-
-```properties
-# Enable/disable the helpdesk
-escalated.enabled=true
-
-# Route prefix (default: escalated)
-escalated.route-prefix=escalated
-
-# Feature toggles
-escalated.knowledge-base.enabled=true
-escalated.broadcasting.enabled=false
-escalated.two-factor.enabled=true
-escalated.widget.enabled=true
-escalated.guest-access.enabled=true
-
-# SLA checking interval
-escalated.sla.check-interval-seconds=60
-
-# Snooze wake-up interval
-escalated.snooze.check-interval-seconds=60
-
-# Webhook settings
-escalated.webhook.max-retries=3
-
-# Database (example for PostgreSQL)
-spring.datasource.url=jdbc:postgresql://localhost:5432/myapp
-spring.datasource.username=user
-spring.datasource.password=secret
-spring.jpa.hibernate.ddl-auto=validate
-spring.flyway.enabled=true
-```
-
-## Veritabanı Kurulumu
-
-Flyway göçleri dahildir ve otomatik olarak çalışır. Göç, `escalated_` önekiyle tüm tabloları oluşturur ve varsayılan rolleri ve izinleri başlatır.
-
-## API Uç Noktaları
-
-### Admin (`/escalated/api/admin/`)
-| Yöntem | Yol | Açıklama |
-|--------|------|-------------|
-| GET | `/tickets` | Talepleri listele (sayfalanmış, filtrelenebilir) |
-| POST | `/tickets` | Talep oluştur |
-| GET | `/tickets/{id}` | Talep getir |
-| PUT | `/tickets/{id}` | Talep güncelle |
-| POST | `/tickets/{id}/assign` | Talep ata |
-| POST | `/tickets/{id}/status` | Durum değiştir |
-| POST | `/tickets/{id}/snooze` | Talebi ertele |
-| POST | `/tickets/{id}/merge` | Talepleri birleştir |
-| POST | `/tickets/{id}/split` | Talebi böl |
-| DELETE | `/tickets/{id}` | Talebi sil |
-| GET/POST | `/departments` | Departmanları yönet |
-| GET/POST | `/agents` | Temsilcileri yönet |
-| GET/POST | `/webhooks` | Webhook'ları yönet |
-| GET/POST | `/roles` | Rolleri yönet |
-| GET/POST | `/custom-fields` | Özel alanları yönet |
-| GET/POST | `/settings` | Ayarları yönet |
-| GET | `/audit-logs` | Denetim günlüklerini görüntüle |
-| POST | `/import/tickets` | Talepleri içe aktar |
-| GET/POST | `/kb/categories` | KB kategorilerini yönet |
-| GET/POST | `/kb/articles` | KB makalelerini yönet |
-
-### Agent (`/escalated/api/agent/`)
-| Yöntem | Yol | Açıklama |
-|--------|------|-------------|
-| GET | `/tickets` | Atanmış/filtrelenmiş talepleri listele |
-| GET | `/tickets/{id}` | Talebi görüntüle |
-| POST | `/tickets/{id}/replies` | Yanıt ekle |
-| POST | `/tickets/{id}/macro/{macroId}` | Makro uygula |
-| POST | `/tickets/{id}/side-conversations` | Yan konuşma oluştur |
-| POST | `/tickets/{id}/links` | Talepleri bağla |
-| GET/POST | `/saved-views` | Kaydedilmiş görünümleri yönet |
-| GET/POST | `/canned-responses` | Hazır yanıtları yönet |
-
-### Customer (`/escalated/api/customer/`)
-| Yöntem | Yol | Açıklama |
-|--------|------|-------------|
-| GET | `/tickets?email=` | Müşteri taleplerini listele |
-| POST | `/tickets` | Talep oluştur |
-| POST | `/tickets/{id}/replies` | Yanıt ekle |
-
-### Widget (`/escalated/api/widget/`)
-| Yöntem | Yol | Açıklama |
-|--------|------|-------------|
-| POST | `/tickets` | Talep oluştur (genel) |
-| GET | `/tickets/{token}` | Misafir tokeniyle talebi görüntüle |
-| POST | `/tickets/{token}/replies` | Misafir tokeniyle yanıtla |
-| GET | `/kb/search?query=` | Bilgi tabanında ara |
-| POST | `/csat/{token}` | Memnuniyet değerlendirmesi gönder |
-
-### Guest (`/escalated/api/guest/`)
-| Yöntem | Yol | Açıklama |
-|--------|------|-------------|
-| GET | `/tickets/{token}` | Talebi görüntüle |
-| GET | `/tickets/{token}/replies` | Yanıtları görüntüle |
-| POST | `/tickets/{token}/replies` | Yanıt ekle |
-
-## Mimari
-
-```
-dev.escalated/
-  config/              Otomatik yapılandırma, özellikler, WebSocket yapılandırması
-  models/              Tam ilişkilere sahip JPA varlıkları
-  repositories/        Spring Data JPA depoları
-  services/            İş mantığı (işlemsel)
-  controllers/
-    admin/             Yönetici REST API
-    agent/             Temsilci REST API
-    customer/          Müşteri REST API
-    widget/            Genel widget API
-  events/              Spring uygulama olayları + webhook dinleyicisi
-  security/            API token kimlik doğrulama filtresi, güvenlik yapılandırması, 2FA
-  scheduling/          @Scheduled görevleri (erteleme, SLA, otomasyonlar)
-```
-
-## Kimlik Doğrulama
-
-API uç noktaları Bearer token kimlik doğrulaması kullanır. Yönetici API'si aracılığıyla token oluşturun:
-
-```bash
-curl -X POST /escalated/api/admin/tokens \
-  -H "Content-Type: application/json" \
-  -d '{"name": "My API Token", "agent_id": 1}'
-```
-
-Yanıt, düz metin tokeni içerir (yalnızca bir kez gösterilir). Sonraki isteklerde kullanın:
-
-```bash
-curl -H "Authorization: Bearer <token>" /escalated/api/agent/tickets
-```
-
-## WebSocket (Gerçek zamanlı)
-
-`escalated.broadcasting.enabled=true` ile etkinleştirin. SockJS/STOMP aracılığıyla `/escalated/ws`'ye bağlanın.
-
-## Geliştirme
-
-```bash
-# Build
-./gradlew build
-
-# Run tests
-./gradlew test
-
-# Run checkstyle
-./gradlew checkstyleMain checkstyleTest
-```
-
-## Lisans
-
-MIT Lisansı. Ayrıntılar için [LICENSE](LICENSE) dosyasına bakın.
+MIT. Copyright (c) 2026 Escalated.dev. Ayrıntılar için [LICENSE](../../LICENSE) dosyasına bakın.

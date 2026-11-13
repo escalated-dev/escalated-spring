@@ -1,61 +1,156 @@
-<p align="center">
-  <a href="README.ar.md">العربية</a> •
-  <a href="README.de.md">Deutsch</a> •
-  <a href="../../README.md">English</a> •
-  <a href="README.es.md">Español</a> •
-  <a href="README.fr.md">Français</a> •
-  <a href="README.it.md">Italiano</a> •
-  <a href="README.ja.md">日本語</a> •
-  <a href="README.ko.md">한국어</a> •
-  <b>Nederlands</b> •
-  <a href="README.pl.md">Polski</a> •
-  <a href="README.pt-BR.md">Português (BR)</a> •
-  <a href="README.ru.md">Русский</a> •
-  <a href="README.tr.md">Türkçe</a> •
+<p align="center"><sub>
+  <a href="README.ar.md">العربية</a> ·
+  <a href="README.de.md">Deutsch</a> ·
+  <a href="../../README.md">English</a> ·
+  <a href="README.es.md">Español</a> ·
+  <a href="README.fr.md">Français</a> ·
+  <a href="README.it.md">Italiano</a> ·
+  <a href="README.ja.md">日本語</a> ·
+  <a href="README.ko.md">한국어</a> ·
+  <b>Nederlands</b> ·
+  <a href="README.pl.md">Polski</a> ·
+  <a href="README.pt-BR.md">Português (BR)</a> ·
+  <a href="README.ru.md">Русский</a> ·
+  <a href="README.tr.md">Türkçe</a> ·
   <a href="README.zh-CN.md">简体中文</a>
+</sub></p>
+
+<p align="center">
+  <a href="https://escalated.dev"><img src="https://raw.githubusercontent.com/escalated-dev/escalated/main/docs/assets/readme/logo.png" width="72" height="72" alt="Escalated"></a>
 </p>
 
-# Escalated Spring
+<h1 align="center">Escalated for Spring</h1>
 
-Een inbedbaar helpdesksysteem voor Spring Boot-applicaties. Voeg een volledig uitgerust supportbureau toe aan elke Java-applicatie met een enkele afhankelijkheid.
+<p align="center">
+  Voeg een complete helpdesk toe aan je Spring Boot-app.<br>
+  Tickets, SLA's, escalatieregels, een kennisbank en een supportwidget, als één dependency op je eigen database.
+</p>
+
+<p align="center">
+  <a href="https://escalated.dev"><b>Website</b></a> ·
+  <a href="https://escalated.dev/docs"><b>Documentatie</b></a> ·
+  <a href="https://escalated.dev/cloud"><b>Cloud</b></a> ·
+  <a href="../../CHANGELOG.md"><b>Wijzigingslog</b></a>
+</p>
+
+<br>
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/escalated-dev/escalated/main/docs/assets/readme/inbox-dark.png">
+  <img src="https://raw.githubusercontent.com/escalated-dev/escalated/main/docs/assets/readme/inbox-light.png" alt="De agent-inbox van Escalated: opgeslagen weergaven met aantallen, SLA-afteltimers en prioriteiten op elk ticket" width="100%">
+</picture>
+
+## Wat het doet
+
+<table>
+  <tr>
+    <td width="40%">
+      <h3>Een inbox waarin je agents de hele dag kunnen werken</h3>
+      Gesprek, interne notities, standaardantwoorden en SLA-timers op één scherm. Tickets komen ook binnen per e-mail via Postmark, Mailgun of AWS SES.
+    </td>
+    <td width="60%">
+      <picture>
+        <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/escalated-dev/escalated/main/docs/assets/readme/ticket-dark.png">
+        <img src="https://raw.githubusercontent.com/escalated-dev/escalated/main/docs/assets/readme/ticket-light.png" alt="Een geopend ticket in de werkruimte van de agent met de antwoordeditor">
+      </picture>
+    </td>
+  </tr>
+  <tr>
+    <td width="60%">
+      <picture>
+        <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/escalated-dev/escalated/main/docs/assets/readme/dashboard-dark.png">
+        <img src="https://raw.githubusercontent.com/escalated-dev/escalated/main/docs/assets/readme/dashboard-light.png" alt="De rapportagepagina voor beheerders met reactietijden, CSAT en SLA-overschrijdingen">
+      </picture>
+    </td>
+    <td width="40%">
+      <h3>SLA's en escalatieregels die je kunt zien</h3>
+      Reactie- en oplosdoelen met kantooruren en feestdagen, regels die escaleren of opnieuw toewijzen bij een overschrijding, en SLA-rapporten.
+    </td>
+  </tr>
+</table>
 
 ## Functies
 
-1. **Ticket CRUD** -- Volledig levenscyclusbeheer met statussen, prioriteiten en toewijzingen
-2. **SLA Policies** -- Configureerbare SLA's met ondersteuning voor kantooruren en vakantiekalenders
-3. **Automations** -- Tijdgebaseerde regels voor automatisch sluiten van opgeloste tickets en automatische toewijzing
-4. **Escalation Rules** -- Automatische escalatie bij SLA-schending met hertoewijzing en notificaties
-5. **Macros & Canned Responses** -- Voorgedefinieerde acties en antwoordsjablonen voor agenten
-6. **Custom Fields** -- Uitbreidbare ticketgegevens met meerdere veldtypen
-7. **Knowledge Base** -- Artikelen en categorieën met zoeken, weergavetellers en feedback
-8. **Webhooks** -- HMAC-ondertekende webhook-bezorging met herhalingslogica
-9. **API Tokens** -- SHA-256 gehashte tokenauthenticatie voor API-toegang
-10. **Roles & Permissions** -- Gedetailleerde rolgebaseerde toegangscontrole
-11. **Audit Logging** -- Volledige audit trail voor alle acties
-12. **Import System** -- Bulk import van tickets uit gestructureerde gegevens
-13. **Side Conversations** -- Privé thread-gesprekken binnen tickets
-14. **Ticket Merging & Linking** -- Dubbele tickets samenvoegen en gerelateerde koppelen
-15. **Ticket Splitting** -- Complexe tickets opsplitsen in afzonderlijke problemen
-16. **Ticket Snooze** -- Tickets snoozen met automatisch wekken via `@Scheduled`
-17. **Email Threading** -- Merkgebonden HTML e-mailsjablonen via Thymeleaf met correcte Message-ID-threading
-18. **Saved Views** -- Aangepaste gefilterde/gesorteerde ticketweergaven per agent
-19. **Widget API** -- Openbare REST-endpoints voor het inbedden van een supportwidget
-20. **Real-time Broadcasting** -- WebSocket via STOMP/SockJS (optioneel)
-21. **Capacity Management** -- Werkbelastingslimieten van agenten bijhouden en afdwingen
-22. **Skill-based Routing** -- Tickets routeren naar agenten met overeenkomende vaardigheden
-23. **CSAT Ratings** -- Klanttevredenheidsonderzoeken met tokengebaseerde toegang
-24. **2FA (TOTP)** -- Tijdgebaseerde eenmalige wachtwoordondersteuning voor agentaccounts
-25. **Guest Access** -- Tokengebaseerde tickettoegang zonder authenticatie
+<table>
+<tr>
+<td width="33%" valign="top">
 
-## Vereisten
+**Tickets en inbox**
+- Statussen, prioriteiten en toewijzing
+- Macro's en standaardantwoorden
+- Zijgesprekken bij tickets
+- Tickets samenvoegen, koppelen en splitsen
+- Uitstellen met automatisch terugkomen
+- Opgeslagen weergaven per agent
+- Aangepaste velden van verschillende typen
 
-- Java 17+
-- Spring Boot 4.1.x
-- Een relationele database (PostgreSQL, MySQL of H2 voor ontwikkeling)
+</td>
+<td width="33%" valign="top">
 
-## Installatie
+**SLA's en routering**
+- SLA-beleid met kantooruren en feestdagen
+- Escaleren bij overschrijding, leeftijd of geen reactie
+- Opnieuw toewijzen, prioriteit wijzigen of naar een andere afdeling
+- Regels voor automatisch sluiten en toewijzen
+- Routering op basis van vaardigheden
+- Werklastlimieten per agent
 
-Bouw eerst de huidige broncode naar je lokale Maven-repository:
+</td>
+<td width="33%" valign="top">
+
+**E-mail**
+- Inkomend via Postmark, Mailgun en AWS SES
+- Ticketkoppeling via ondertekend Reply-To
+- Antwoorden alleen geaccepteerd van de aanvrager
+- HTML-e-mails in eigen huisstijl met Thymeleaf
+- Threading via Message-ID
+
+</td>
+</tr>
+<tr>
+<td width="33%" valign="top">
+
+**Klanten**
+- Publieke widget-API
+- Gasttoegang tot tickets via token
+- CSAT-enquêtes met toegang via token
+- Kennisbank met zoeken en feedback
+
+</td>
+<td width="33%" valign="top">
+
+**Beheer en beveiliging**
+- Rollen en rechten
+- TOTP-tweestapsverificatie voor medewerkers
+- Inloggen met SAML 2, OAuth 2 / OIDC en JWT
+- Auditlog voor elke actie
+- Gehashte API-tokens
+
+</td>
+<td width="33%" valign="top">
+
+**Uitbreiden en integreren**
+- HMAC-ondertekende webhooks met nieuwe pogingen
+- Tickets in bulk importeren
+- Native Java- en SDK-plugins
+- WebSocket via STOMP/SockJS (optioneel)
+- Gedeelde Vue 3 + Inertia-UI (optioneel)
+
+</td>
+</tr>
+</table>
+
+<p align="center"><sub><a href="../features.md">Alle functies in detail</a></sub></p>
+
+<p align="center">
+  <a href="https://spring.io/projects/spring-boot"><img src="https://img.shields.io/badge/Spring_Boot-6DB33F?style=for-the-badge&logo=springboot&logoColor=white" alt="Spring Boot"></a>
+  <a href="https://openjdk.org"><img src="https://img.shields.io/badge/Java-ED8B00?style=for-the-badge&logo=openjdk&logoColor=white" alt="Java"></a>
+  <a href="https://vuejs.org"><img src="https://img.shields.io/badge/Vue.js-4FC08D?style=for-the-badge&logo=vuedotjs&logoColor=white" alt="Vue.js"></a>
+  <a href="https://inertiajs.com"><img src="https://img.shields.io/badge/Inertia.js-9553E9?style=for-the-badge&logo=inertia&logoColor=white" alt="Inertia.js"></a>
+  <a href="https://www.postgresql.org"><img src="https://img.shields.io/badge/PostgreSQL-4169E1?style=for-the-badge&logo=postgresql&logoColor=white" alt="PostgreSQL"></a>
+</p>
+
+## Functies
 
 ```bash
 git clone https://github.com/escalated-dev/escalated-spring.git
@@ -63,180 +158,19 @@ cd escalated-spring
 ./gradlew publishToMavenLocal
 ```
 
-Voeg de afhankelijkheid toe aan uw `build.gradle.kts`:
+Voeg daarna `implementation("dev.escalated:escalated-spring:0.2.13")` met `mavenLocal()` toe aan je app en stel `escalated.enabled=true` in. Vereist Java 17+ en Spring Boot 4.1. De [handleiding om te beginnen](../getting-started.md) behandelt configuratie, de database en inloggen, en [de Inertia-pagina's](../ui.md) zetten de gedeelde schermen aan met `escalated.ui.enabled=true`.
 
-```kotlin
-repositories {
-    mavenLocal()
-    mavenCentral()
-}
+## ags, bijlagen, activiteitentijdlijn
 
-dependencies {
-    implementation("dev.escalated:escalated-spring:0.2.13")
-}
-```
+- [Alle functies](../features.md) · [Aan de slag](../getting-started.md) · [De Inertia-pagina's](../ui.md)
+- [Aanpassing, lokalisatie en realtime](../customization.md) · [Architectuur](../architecture.md) · [API-endpoints](../api-endpoints.md)
+- [Toegangsbeheer](../access-control.md) · [Tickettoegang en routering](../ticket-access-and-routing.md) · [Aangepaste velden](../custom-fields.md)
+- [Inkomende e-mail](../inbound-email.md) · [Gasttoegang](../guest-access.md) · [De widget insluiten](../embedding-the-widget.md)
+- [De beheeromgeving insluiten](../embedding-admin.md) · [Agentpaneel](../agent-panel.md) · [Plugins](../plugins.md)
+- [Nieuwsbrieven](../newsletters.md) · [Ontwikkeling](../development.md)
 
-Of `pom.xml`:
+Escalated is ook beschikbaar voor [Laravel](https://github.com/escalated-dev/escalated-laravel), [Rails](https://github.com/escalated-dev/escalated-rails), [Django](https://github.com/escalated-dev/escalated-django), [NestJS](https://github.com/escalated-dev/escalated-nestjs), [AdonisJS](https://github.com/escalated-dev/escalated-adonis), [Symfony](https://github.com/escalated-dev/escalated-symfony), [Phoenix](https://github.com/escalated-dev/escalated-phoenix), [Go](https://github.com/escalated-dev/escalated-go), [.NET](https://github.com/escalated-dev/escalated-dotnet), [WordPress](https://github.com/escalated-dev/escalated-wordpress) en [Filament](https://github.com/escalated-dev/escalated-filament). De UI staat in [escalated](https://github.com/escalated-dev/escalated).
 
-```xml
-<dependency>
-    <groupId>dev.escalated</groupId>
-    <artifactId>escalated-spring</artifactId>
-    <version>0.2.13</version>
-</dependency>
-```
+## 
 
-## Configuratie
-
-Voeg toe aan uw `application.properties` of `application.yml`:
-
-```properties
-# Enable/disable the helpdesk
-escalated.enabled=true
-
-# Route prefix (default: escalated)
-escalated.route-prefix=escalated
-
-# Feature toggles
-escalated.knowledge-base.enabled=true
-escalated.broadcasting.enabled=false
-escalated.two-factor.enabled=true
-escalated.widget.enabled=true
-escalated.guest-access.enabled=true
-
-# SLA checking interval
-escalated.sla.check-interval-seconds=60
-
-# Snooze wake-up interval
-escalated.snooze.check-interval-seconds=60
-
-# Webhook settings
-escalated.webhook.max-retries=3
-
-# Database (example for PostgreSQL)
-spring.datasource.url=jdbc:postgresql://localhost:5432/myapp
-spring.datasource.username=user
-spring.datasource.password=secret
-spring.jpa.hibernate.ddl-auto=validate
-spring.flyway.enabled=true
-```
-
-## Database-installatie
-
-Flyway-migraties zijn inbegrepen en worden automatisch uitgevoerd. De migratie maakt alle tabellen aan met het voorvoegsel `escalated_` en vult standaardrollen en -machtigingen in.
-
-## API-endpoints
-
-### Admin (`/escalated/api/admin/`)
-| Methode | Pad | Beschrijving |
-|--------|------|-------------|
-| GET | `/tickets` | Tickets weergeven (gepagineerd, filterbaar) |
-| POST | `/tickets` | Ticket aanmaken |
-| GET | `/tickets/{id}` | Ticket ophalen |
-| PUT | `/tickets/{id}` | Ticket bijwerken |
-| POST | `/tickets/{id}/assign` | Ticket toewijzen |
-| POST | `/tickets/{id}/status` | Status wijzigen |
-| POST | `/tickets/{id}/snooze` | Ticket snoozen |
-| POST | `/tickets/{id}/merge` | Tickets samenvoegen |
-| POST | `/tickets/{id}/split` | Ticket opsplitsen |
-| DELETE | `/tickets/{id}` | Ticket verwijderen |
-| GET/POST | `/departments` | Afdelingen beheren |
-| GET/POST | `/agents` | Agenten beheren |
-| GET/POST | `/webhooks` | Webhooks beheren |
-| GET/POST | `/roles` | Rollen beheren |
-| GET/POST | `/custom-fields` | Aangepaste velden beheren |
-| GET/POST | `/settings` | Instellingen beheren |
-| GET | `/audit-logs` | Auditlogs bekijken |
-| POST | `/import/tickets` | Tickets importeren |
-| GET/POST | `/kb/categories` | KB-categorieën beheren |
-| GET/POST | `/kb/articles` | KB-artikelen beheren |
-
-### Agent (`/escalated/api/agent/`)
-| Methode | Pad | Beschrijving |
-|--------|------|-------------|
-| GET | `/tickets` | Toegewezen/gefilterde tickets weergeven |
-| GET | `/tickets/{id}` | Ticket bekijken |
-| POST | `/tickets/{id}/replies` | Antwoord toevoegen |
-| POST | `/tickets/{id}/macro/{macroId}` | Macro toepassen |
-| POST | `/tickets/{id}/side-conversations` | Zijgesprek aanmaken |
-| POST | `/tickets/{id}/links` | Tickets koppelen |
-| GET/POST | `/saved-views` | Opgeslagen weergaven beheren |
-| GET/POST | `/canned-responses` | Standaardantwoorden beheren |
-
-### Customer (`/escalated/api/customer/`)
-| Methode | Pad | Beschrijving |
-|--------|------|-------------|
-| GET | `/tickets?email=` | Klanttickets weergeven |
-| POST | `/tickets` | Ticket aanmaken |
-| POST | `/tickets/{id}/replies` | Antwoord toevoegen |
-
-### Widget (`/escalated/api/widget/`)
-| Methode | Pad | Beschrijving |
-|--------|------|-------------|
-| POST | `/tickets` | Ticket aanmaken (openbaar) |
-| GET | `/tickets/{token}` | Ticket bekijken via gasttoken |
-| POST | `/tickets/{token}/replies` | Antwoorden via gasttoken |
-| GET | `/kb/search?query=` | Kennisbank doorzoeken |
-| POST | `/csat/{token}` | Tevredenheidsbeoordeling indienen |
-
-### Guest (`/escalated/api/guest/`)
-| Methode | Pad | Beschrijving |
-|--------|------|-------------|
-| GET | `/tickets/{token}` | Ticket bekijken |
-| GET | `/tickets/{token}/replies` | Antwoorden bekijken |
-| POST | `/tickets/{token}/replies` | Antwoord toevoegen |
-
-## Architectuur
-
-```
-dev.escalated/
-  config/              Auto-configuratie, eigenschappen, WebSocket-configuratie
-  models/              JPA-entiteiten met volledige relaties
-  repositories/        Spring Data JPA-repositories
-  services/            Bedrijfslogica (transactioneel)
-  controllers/
-    admin/             Admin REST API
-    agent/             Agent REST API
-    customer/          Klant REST API
-    widget/            Openbare widget-API
-  events/              Spring-applicatiegebeurtenissen + webhook-listener
-  security/            API-tokenauthenticatiefilter, beveiligingsconfiguratie, 2FA
-  scheduling/          @Scheduled-taken (snooze, SLA, automatiseringen)
-```
-
-## Authenticatie
-
-API-endpoints gebruiken Bearer-tokenauthenticatie. Maak tokens aan via de admin-API:
-
-```bash
-curl -X POST /escalated/api/admin/tokens \
-  -H "Content-Type: application/json" \
-  -d '{"name": "My API Token", "agent_id": 1}'
-```
-
-Het antwoord bevat het token in platte tekst (wordt slechts eenmaal getoond). Gebruik het in volgende verzoeken:
-
-```bash
-curl -H "Authorization: Bearer <token>" /escalated/api/agent/tickets
-```
-
-## WebSocket (Realtime)
-
-Activeer met `escalated.broadcasting.enabled=true`. Verbind met `/escalated/ws` via SockJS/STOMP.
-
-## Ontwikkeling
-
-```bash
-# Build
-./gradlew build
-
-# Run tests
-./gradlew test
-
-# Run checkstyle
-./gradlew checkstyleMain checkstyleTest
-```
-
-## Licentie
-
-MIT-licentie. Zie [LICENSE](LICENSE) voor details.
+MIT. Copyright (c) 2026 Escalated.dev. Zie [LICENSE](../../LICENSE).

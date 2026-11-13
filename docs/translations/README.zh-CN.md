@@ -1,61 +1,156 @@
-<p align="center">
-  <a href="README.ar.md">العربية</a> •
-  <a href="README.de.md">Deutsch</a> •
-  <a href="../../README.md">English</a> •
-  <a href="README.es.md">Español</a> •
-  <a href="README.fr.md">Français</a> •
-  <a href="README.it.md">Italiano</a> •
-  <a href="README.ja.md">日本語</a> •
-  <a href="README.ko.md">한국어</a> •
-  <a href="README.nl.md">Nederlands</a> •
-  <a href="README.pl.md">Polski</a> •
-  <a href="README.pt-BR.md">Português (BR)</a> •
-  <a href="README.ru.md">Русский</a> •
-  <a href="README.tr.md">Türkçe</a> •
+<p align="center"><sub>
+  <a href="README.ar.md">العربية</a> ·
+  <a href="README.de.md">Deutsch</a> ·
+  <a href="../../README.md">English</a> ·
+  <a href="README.es.md">Español</a> ·
+  <a href="README.fr.md">Français</a> ·
+  <a href="README.it.md">Italiano</a> ·
+  <a href="README.ja.md">日本語</a> ·
+  <a href="README.ko.md">한국어</a> ·
+  <a href="README.nl.md">Nederlands</a> ·
+  <a href="README.pl.md">Polski</a> ·
+  <a href="README.pt-BR.md">Português (BR)</a> ·
+  <a href="README.ru.md">Русский</a> ·
+  <a href="README.tr.md">Türkçe</a> ·
   <b>简体中文</b>
+</sub></p>
+
+<p align="center">
+  <a href="https://escalated.dev"><img src="https://raw.githubusercontent.com/escalated-dev/escalated/main/docs/assets/readme/logo.png" width="72" height="72" alt="Escalated"></a>
 </p>
 
-# Escalated Spring
+<h1 align="center">Escalated for Spring</h1>
 
-适用于 Spring Boot 应用程序的可嵌入式帮助台系统。通过单个依赖项为任何 Java 应用程序添加功能齐全的支持台。
+<p align="center">
+  为你的 Spring Boot 应用添加一套完整的帮助台。<br>
+  工单、SLA、升级规则、知识库和支持小部件，作为一个依赖运行在你自己的数据库上。
+</p>
+
+<p align="center">
+  <a href="https://escalated.dev"><b>官网</b></a> ·
+  <a href="https://escalated.dev/docs"><b>文档</b></a> ·
+  <a href="https://escalated.dev/cloud"><b>Cloud</b></a> ·
+  <a href="../../CHANGELOG.md"><b>更新日志</b></a>
+</p>
+
+<br>
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/escalated-dev/escalated/main/docs/assets/readme/inbox-dark.png">
+  <img src="https://raw.githubusercontent.com/escalated-dev/escalated/main/docs/assets/readme/inbox-light.png" alt="Escalated 客服收件箱：带计数的已保存视图，每个工单上都有 SLA 倒计时和优先级" width="100%">
+</picture>
+
+## 它能做什么
+
+<table>
+  <tr>
+    <td width="40%">
+      <h3>客服可以整天使用的收件箱</h3>
+      对话、内部备注、预设回复和 SLA 计时器都在同一个界面上。工单也可以通过 Postmark、Mailgun 或 AWS SES 以邮件形式进入。
+    </td>
+    <td width="60%">
+      <picture>
+        <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/escalated-dev/escalated/main/docs/assets/readme/ticket-dark.png">
+        <img src="https://raw.githubusercontent.com/escalated-dev/escalated/main/docs/assets/readme/ticket-light.png" alt="在客服工作区中打开的工单和回复编辑器">
+      </picture>
+    </td>
+  </tr>
+  <tr>
+    <td width="60%">
+      <picture>
+        <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/escalated-dev/escalated/main/docs/assets/readme/dashboard-dark.png">
+        <img src="https://raw.githubusercontent.com/escalated-dev/escalated/main/docs/assets/readme/dashboard-light.png" alt="管理后台的报表页面，显示响应时间、CSAT 和 SLA 违约情况">
+      </picture>
+    </td>
+    <td width="40%">
+      <h3>清晰可见的 SLA 和升级规则</h3>
+      支持工作时间和节假日的响应与解决目标，违约时升级或重新分配的规则，以及 SLA 报表。
+    </td>
+  </tr>
+</table>
 
 ## 功能
 
-1. **Ticket CRUD** -- 通过状态、优先级和分配实现完整的生命周期管理
-2. **SLA Policies** -- 可配置的 SLA，支持工作时间和假日日历
-3. **Automations** -- 基于时间的规则，用于自动关闭已解决的工单和自动分配
-4. **Escalation Rules** -- SLA 违规时自动升级，包含重新分配和通知
-5. **Macros & Canned Responses** -- 为客服人员提供预定义操作和响应模板
-6. **Custom Fields** -- 支持多种字段类型的可扩展工单数据
-7. **Knowledge Base** -- 包含搜索、浏览计数和反馈的文章和分类
-8. **Webhooks** -- 带重试逻辑的 HMAC 签名 Webhook 交付
-9. **API Tokens** -- 用于 API 访问的 SHA-256 哈希令牌认证
-10. **Roles & Permissions** -- 细粒度的基于角色的访问控制
-11. **Audit Logging** -- 所有操作的完整审计跟踪
-12. **Import System** -- 从结构化数据批量导入工单
-13. **Side Conversations** -- 工单内的私密线程对话
-14. **Ticket Merging & Linking** -- 合并重复工单并链接相关工单
-15. **Ticket Splitting** -- 将复杂工单拆分为独立问题
-16. **Ticket Snooze** -- 通过 `@Scheduled` 自动唤醒的工单休眠
-17. **Email Threading** -- 通过 Thymeleaf 实现品牌化 HTML 邮件模板和正确的 Message-ID 线程
-18. **Saved Views** -- 每个客服人员的自定义过滤/排序工单视图
-19. **Widget API** -- 用于嵌入支持小部件的公共 REST 端点
-20. **Real-time Broadcasting** -- 通过 STOMP/SockJS 的 WebSocket（可选启用）
-21. **Capacity Management** -- 跟踪和执行客服人员工作负载限制
-22. **Skill-based Routing** -- 将工单路由到具有匹配技能的客服人员
-23. **CSAT Ratings** -- 基于令牌访问的客户满意度调查
-24. **2FA (TOTP)** -- 客服人员账户的基于时间的一次性密码支持
-25. **Guest Access** -- 无需认证的基于令牌的工单访问
+<table>
+<tr>
+<td width="33%" valign="top">
 
-## 要求
+**工单与收件箱**
+- 状态、优先级和分配
+- 宏和预设回复
+- 工单内的旁路对话
+- 合并、关联和拆分工单
+- 暂缓并自动唤醒
+- 每个客服的已保存视图
+- 多种类型的自定义字段
 
-- Java 17+
-- Spring Boot 4.1.x
-- 关系型数据库（PostgreSQL、MySQL 或用于开发的 H2）
+</td>
+<td width="33%" valign="top">
 
-## 安装
+**SLA 与路由**
+- 支持工作时间和节假日的 SLA 策略
+- 按违约、时长或无回复进行升级
+- 重新分配、调整优先级或转移部门
+- 自动关闭和自动分配规则
+- 基于技能的路由
+- 客服工作量上限
 
-首先将当前源码构建到本地 Maven 仓库：
+</td>
+<td width="33%" valign="top">
+
+**邮件**
+- 通过 Postmark、Mailgun 和 AWS SES 接收邮件
+- 通过签名的 Reply-To 识别工单
+- 只接受请求人的回复
+- 使用 Thymeleaf 的品牌化 HTML 邮件
+- 基于 Message-ID 的邮件串联
+
+</td>
+</tr>
+<tr>
+<td width="33%" valign="top">
+
+**客户**
+- 公开的小部件 API
+- 通过令牌访问访客工单
+- 通过令牌访问的 CSAT 调查
+- 支持搜索和反馈的知识库
+
+</td>
+<td width="33%" valign="top">
+
+**管理与安全**
+- 角色和权限
+- 面向员工的 TOTP 双因素认证
+- SAML 2、OAuth 2 / OIDC 和 JWT 登录
+- 每个操作的审计记录
+- 哈希存储的 API 令牌
+
+</td>
+<td width="33%" valign="top">
+
+**扩展与集成**
+- 带重试的 HMAC 签名 Webhook
+- 批量导入工单
+- 原生 Java 插件和 SDK 插件
+- 基于 STOMP/SockJS 的 WebSocket（可选）
+- 共享的 Vue 3 + Inertia 界面（可选）
+
+</td>
+</tr>
+</table>
+
+<p align="center"><sub><a href="../features.md">查看全部功能详情</a></sub></p>
+
+<p align="center">
+  <a href="https://spring.io/projects/spring-boot"><img src="https://img.shields.io/badge/Spring_Boot-6DB33F?style=for-the-badge&logo=springboot&logoColor=white" alt="Spring Boot"></a>
+  <a href="https://openjdk.org"><img src="https://img.shields.io/badge/Java-ED8B00?style=for-the-badge&logo=openjdk&logoColor=white" alt="Java"></a>
+  <a href="https://vuejs.org"><img src="https://img.shields.io/badge/Vue.js-4FC08D?style=for-the-badge&logo=vuedotjs&logoColor=white" alt="Vue.js"></a>
+  <a href="https://inertiajs.com"><img src="https://img.shields.io/badge/Inertia.js-9553E9?style=for-the-badge&logo=inertia&logoColor=white" alt="Inertia.js"></a>
+  <a href="https://www.postgresql.org"><img src="https://img.shields.io/badge/PostgreSQL-4169E1?style=for-the-badge&logo=postgresql&logoColor=white" alt="PostgreSQL"></a>
+</p>
+
+## 功能列表
 
 ```bash
 git clone https://github.com/escalated-dev/escalated-spring.git
@@ -63,180 +158,19 @@ cd escalated-spring
 ./gradlew publishToMavenLocal
 ```
 
-将依赖项添加到 `build.gradle.kts`：
+然后在你的应用中添加 `implementation("dev.escalated:escalated-spring:0.2.13")` 和 `mavenLocal()`，并设置 `escalated.enabled=true`。需要 Java 17+ 和 Spring Boot 4.1。[入门指南](../getting-started.md)介绍了配置、数据库和登录，[Inertia 页面](../ui.md)说明如何用 `escalated.ui.enabled=true` 启用共享界面。
 
-```kotlin
-repositories {
-    mavenLocal()
-    mavenCentral()
-}
+## 签、附件、活动时间线
 
-dependencies {
-    implementation("dev.escalated:escalated-spring:0.2.13")
-}
-```
+- [全部功能](../features.md) · [入门](../getting-started.md) · [Inertia 页面](../ui.md)
+- [自定义、本地化与实时更新](../customization.md) · [架构](../architecture.md) · [API 端点](../api-endpoints.md)
+- [访问控制](../access-control.md) · [工单访问与路由](../ticket-access-and-routing.md) · [自定义字段](../custom-fields.md)
+- [入站邮件](../inbound-email.md) · [访客访问](../guest-access.md) · [嵌入小部件](../embedding-the-widget.md)
+- [嵌入管理后台](../embedding-admin.md) · [客服面板](../agent-panel.md) · [插件](../plugins.md)
+- [邮件通讯](../newsletters.md) · [开发](../development.md)
 
-或 `pom.xml`：
+Escalated 也提供 [Laravel](https://github.com/escalated-dev/escalated-laravel)、[Rails](https://github.com/escalated-dev/escalated-rails)、[Django](https://github.com/escalated-dev/escalated-django)、[NestJS](https://github.com/escalated-dev/escalated-nestjs)、[AdonisJS](https://github.com/escalated-dev/escalated-adonis)、[Symfony](https://github.com/escalated-dev/escalated-symfony)、[Phoenix](https://github.com/escalated-dev/escalated-phoenix)、[Go](https://github.com/escalated-dev/escalated-go)、[.NET](https://github.com/escalated-dev/escalated-dotnet)、[WordPress](https://github.com/escalated-dev/escalated-wordpress) 和 [Filament](https://github.com/escalated-dev/escalated-filament) 版本。界面代码位于 [escalated](https://github.com/escalated-dev/escalated)。
 
-```xml
-<dependency>
-    <groupId>dev.escalated</groupId>
-    <artifactId>escalated-spring</artifactId>
-    <version>0.2.13</version>
-</dependency>
-```
+## 
 
-## 配置
-
-添加到 `application.properties` 或 `application.yml`：
-
-```properties
-# Enable/disable the helpdesk
-escalated.enabled=true
-
-# Route prefix (default: escalated)
-escalated.route-prefix=escalated
-
-# Feature toggles
-escalated.knowledge-base.enabled=true
-escalated.broadcasting.enabled=false
-escalated.two-factor.enabled=true
-escalated.widget.enabled=true
-escalated.guest-access.enabled=true
-
-# SLA checking interval
-escalated.sla.check-interval-seconds=60
-
-# Snooze wake-up interval
-escalated.snooze.check-interval-seconds=60
-
-# Webhook settings
-escalated.webhook.max-retries=3
-
-# Database (example for PostgreSQL)
-spring.datasource.url=jdbc:postgresql://localhost:5432/myapp
-spring.datasource.username=user
-spring.datasource.password=secret
-spring.jpa.hibernate.ddl-auto=validate
-spring.flyway.enabled=true
-```
-
-## 数据库设置
-
-Flyway 迁移已包含并自动运行。迁移会创建所有带有 `escalated_` 前缀的表，并初始化默认角色和权限。
-
-## API 端点
-
-### Admin (`/escalated/api/admin/`)
-| 方法 | 路径 | 描述 |
-|--------|------|-------------|
-| GET | `/tickets` | 列出工单（分页、可过滤） |
-| POST | `/tickets` | 创建工单 |
-| GET | `/tickets/{id}` | 获取工单 |
-| PUT | `/tickets/{id}` | 更新工单 |
-| POST | `/tickets/{id}/assign` | 分配工单 |
-| POST | `/tickets/{id}/status` | 更改状态 |
-| POST | `/tickets/{id}/snooze` | 休眠工单 |
-| POST | `/tickets/{id}/merge` | 合并工单 |
-| POST | `/tickets/{id}/split` | 拆分工单 |
-| DELETE | `/tickets/{id}` | 删除工单 |
-| GET/POST | `/departments` | 管理部门 |
-| GET/POST | `/agents` | 管理客服人员 |
-| GET/POST | `/webhooks` | 管理 Webhooks |
-| GET/POST | `/roles` | 管理角色 |
-| GET/POST | `/custom-fields` | 管理自定义字段 |
-| GET/POST | `/settings` | 管理设置 |
-| GET | `/audit-logs` | 查看审计日志 |
-| POST | `/import/tickets` | 导入工单 |
-| GET/POST | `/kb/categories` | 管理知识库分类 |
-| GET/POST | `/kb/articles` | 管理知识库文章 |
-
-### Agent (`/escalated/api/agent/`)
-| 方法 | 路径 | 描述 |
-|--------|------|-------------|
-| GET | `/tickets` | 列出已分配/已过滤的工单 |
-| GET | `/tickets/{id}` | 查看工单 |
-| POST | `/tickets/{id}/replies` | 添加回复 |
-| POST | `/tickets/{id}/macro/{macroId}` | 应用宏 |
-| POST | `/tickets/{id}/side-conversations` | 创建侧边对话 |
-| POST | `/tickets/{id}/links` | 链接工单 |
-| GET/POST | `/saved-views` | 管理已保存的视图 |
-| GET/POST | `/canned-responses` | 管理预设回复 |
-
-### Customer (`/escalated/api/customer/`)
-| 方法 | 路径 | 描述 |
-|--------|------|-------------|
-| GET | `/tickets?email=` | 列出客户工单 |
-| POST | `/tickets` | 创建工单 |
-| POST | `/tickets/{id}/replies` | 添加回复 |
-
-### Widget (`/escalated/api/widget/`)
-| 方法 | 路径 | 描述 |
-|--------|------|-------------|
-| POST | `/tickets` | 创建工单（公开） |
-| GET | `/tickets/{token}` | 通过访客令牌查看工单 |
-| POST | `/tickets/{token}/replies` | 通过访客令牌回复 |
-| GET | `/kb/search?query=` | 搜索知识库 |
-| POST | `/csat/{token}` | 提交满意度评分 |
-
-### Guest (`/escalated/api/guest/`)
-| 方法 | 路径 | 描述 |
-|--------|------|-------------|
-| GET | `/tickets/{token}` | 查看工单 |
-| GET | `/tickets/{token}/replies` | 查看回复 |
-| POST | `/tickets/{token}/replies` | 添加回复 |
-
-## 架构
-
-```
-dev.escalated/
-  config/              自动配置、属性、WebSocket 配置
-  models/              具有完整关系的 JPA 实体
-  repositories/        Spring Data JPA 仓库
-  services/            业务逻辑（事务性）
-  controllers/
-    admin/             管理员 REST API
-    agent/             客服人员 REST API
-    customer/          客户 REST API
-    widget/            公共小部件 API
-  events/              Spring 应用程序事件 + Webhook 监听器
-  security/            API 令牌认证过滤器、安全配置、2FA
-  scheduling/          @Scheduled 任务（休眠、SLA、自动化）
-```
-
-## 认证
-
-API 端点使用 Bearer 令牌认证。通过管理员 API 创建令牌：
-
-```bash
-curl -X POST /escalated/api/admin/tokens \
-  -H "Content-Type: application/json" \
-  -d '{"name": "My API Token", "agent_id": 1}'
-```
-
-响应包含明文令牌（仅显示一次）。在后续请求中使用：
-
-```bash
-curl -H "Authorization: Bearer <token>" /escalated/api/agent/tickets
-```
-
-## WebSocket（实时）
-
-使用 `escalated.broadcasting.enabled=true` 启用。通过 SockJS/STOMP 连接到 `/escalated/ws`。
-
-## 开发
-
-```bash
-# Build
-./gradlew build
-
-# Run tests
-./gradlew test
-
-# Run checkstyle
-./gradlew checkstyleMain checkstyleTest
-```
-
-## 许可证
-
-MIT 许可证。详情请参阅 [LICENSE](LICENSE)。
+MIT。Copyright (c) 2026 Escalated.dev。详见 [LICENSE](../../LICENSE)。

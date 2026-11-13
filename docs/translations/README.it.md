@@ -1,61 +1,156 @@
-<p align="center">
-  <a href="README.ar.md">العربية</a> •
-  <a href="README.de.md">Deutsch</a> •
-  <a href="../../README.md">English</a> •
-  <a href="README.es.md">Español</a> •
-  <a href="README.fr.md">Français</a> •
-  <b>Italiano</b> •
-  <a href="README.ja.md">日本語</a> •
-  <a href="README.ko.md">한국어</a> •
-  <a href="README.nl.md">Nederlands</a> •
-  <a href="README.pl.md">Polski</a> •
-  <a href="README.pt-BR.md">Português (BR)</a> •
-  <a href="README.ru.md">Русский</a> •
-  <a href="README.tr.md">Türkçe</a> •
+<p align="center"><sub>
+  <a href="README.ar.md">العربية</a> ·
+  <a href="README.de.md">Deutsch</a> ·
+  <a href="../../README.md">English</a> ·
+  <a href="README.es.md">Español</a> ·
+  <a href="README.fr.md">Français</a> ·
+  <b>Italiano</b> ·
+  <a href="README.ja.md">日本語</a> ·
+  <a href="README.ko.md">한국어</a> ·
+  <a href="README.nl.md">Nederlands</a> ·
+  <a href="README.pl.md">Polski</a> ·
+  <a href="README.pt-BR.md">Português (BR)</a> ·
+  <a href="README.ru.md">Русский</a> ·
+  <a href="README.tr.md">Türkçe</a> ·
   <a href="README.zh-CN.md">简体中文</a>
+</sub></p>
+
+<p align="center">
+  <a href="https://escalated.dev"><img src="https://raw.githubusercontent.com/escalated-dev/escalated/main/docs/assets/readme/logo.png" width="72" height="72" alt="Escalated"></a>
 </p>
 
-# Escalated Spring
+<h1 align="center">Escalated for Spring</h1>
 
-Un sistema di helpdesk integrabile per applicazioni Spring Boot. Aggiungi un desk di supporto completo a qualsiasi applicazione Java con una singola dipendenza.
+<p align="center">
+  Aggiungi un helpdesk completo alla tua app Spring Boot.<br>
+  Ticket, SLA, regole di escalation, una knowledge base e un widget di supporto, come un'unica dipendenza sul tuo database.
+</p>
+
+<p align="center">
+  <a href="https://escalated.dev"><b>Sito web</b></a> ·
+  <a href="https://escalated.dev/docs"><b>Documentazione</b></a> ·
+  <a href="https://escalated.dev/cloud"><b>Cloud</b></a> ·
+  <a href="../../CHANGELOG.md"><b>Registro delle modifiche</b></a>
+</p>
+
+<br>
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/escalated-dev/escalated/main/docs/assets/readme/inbox-dark.png">
+  <img src="https://raw.githubusercontent.com/escalated-dev/escalated/main/docs/assets/readme/inbox-light.png" alt="La inbox degli agenti di Escalated: viste salvate con conteggi, conti alla rovescia SLA e priorità su ogni ticket" width="100%">
+</picture>
+
+## Cosa fa
+
+<table>
+  <tr>
+    <td width="40%">
+      <h3>Una inbox in cui i tuoi agenti possono lavorare tutto il giorno</h3>
+      Conversazione, note interne, risposte predefinite e timer SLA in un'unica schermata. I ticket arrivano anche via email tramite Postmark, Mailgun o AWS SES.
+    </td>
+    <td width="60%">
+      <picture>
+        <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/escalated-dev/escalated/main/docs/assets/readme/ticket-dark.png">
+        <img src="https://raw.githubusercontent.com/escalated-dev/escalated/main/docs/assets/readme/ticket-light.png" alt="Un ticket aperto nell'area di lavoro dell'agente con l'editor di risposta">
+      </picture>
+    </td>
+  </tr>
+  <tr>
+    <td width="60%">
+      <picture>
+        <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/escalated-dev/escalated/main/docs/assets/readme/dashboard-dark.png">
+        <img src="https://raw.githubusercontent.com/escalated-dev/escalated/main/docs/assets/readme/dashboard-light.png" alt="La pagina dei report di amministrazione con tempi di risposta, CSAT e violazioni degli SLA">
+      </picture>
+    </td>
+    <td width="40%">
+      <h3>SLA e regole di escalation sempre visibili</h3>
+      Obiettivi di risposta e risoluzione con orari lavorativi e festività, regole che eseguono l'escalation o riassegnano in caso di violazione, e report SLA.
+    </td>
+  </tr>
+</table>
 
 ## Funzionalità
 
-1. **Ticket CRUD** -- Gestione completa del ciclo di vita con stati, priorità e assegnazioni
-2. **SLA Policies** -- SLA configurabili con supporto orari lavorativi e calendari festività
-3. **Automations** -- Regole temporali per la chiusura automatica dei ticket risolti e assegnazione automatica
-4. **Escalation Rules** -- Escalation automatica in caso di violazione SLA con riassegnazione e notifiche
-5. **Macros & Canned Responses** -- Azioni predefinite e modelli di risposta per gli agenti
-6. **Custom Fields** -- Dati ticket estensibili con molteplici tipi di campo
-7. **Knowledge Base** -- Articoli e categorie con ricerca, conteggio visualizzazioni e feedback
-8. **Webhooks** -- Consegna webhook firmati HMAC con logica di ripetizione
-9. **API Tokens** -- Autenticazione con token hashato SHA-256 per accesso API
-10. **Roles & Permissions** -- Controllo degli accessi granulare basato sui ruoli
-11. **Audit Logging** -- Traccia di audit completa per tutte le azioni
-12. **Import System** -- Importazione massiva di ticket da dati strutturati
-13. **Side Conversations** -- Conversazioni private con thread all'interno dei ticket
-14. **Ticket Merging & Linking** -- Unire ticket duplicati e collegare quelli correlati
-15. **Ticket Splitting** -- Dividere ticket complessi in problemi separati
-16. **Ticket Snooze** -- Posticipare ticket con risveglio automatico tramite `@Scheduled`
-17. **Email Threading** -- Modelli email HTML personalizzati tramite Thymeleaf con threading corretto di Message-ID
-18. **Saved Views** -- Viste ticket personalizzate filtrate/ordinate per agente
-19. **Widget API** -- Endpoint REST pubblici per incorporare un widget di supporto
-20. **Real-time Broadcasting** -- WebSocket tramite STOMP/SockJS (opzionale)
-21. **Capacity Management** -- Monitoraggio e applicazione dei limiti di carico di lavoro degli agenti
-22. **Skill-based Routing** -- Instradamento ticket verso agenti con competenze corrispondenti
-23. **CSAT Ratings** -- Sondaggi di soddisfazione clienti con accesso basato su token
-24. **2FA (TOTP)** -- Supporto password monouso basata sul tempo per account agente
-25. **Guest Access** -- Accesso ai ticket basato su token senza autenticazione
+<table>
+<tr>
+<td width="33%" valign="top">
 
-## Requisiti
+**Ticket e inbox**
+- Stati, priorità e assegnazione
+- Macro e risposte predefinite
+- Conversazioni laterali sui ticket
+- Unire, collegare e dividere i ticket
+- Posticipo con riattivazione automatica
+- Viste salvate per agente
+- Campi personalizzati di diversi tipi
 
-- Java 17+
-- Spring Boot 4.1.x
-- Un database relazionale (PostgreSQL, MySQL o H2 per lo sviluppo)
+</td>
+<td width="33%" valign="top">
 
-## Installazione
+**SLA e instradamento**
+- Policy SLA con orari lavorativi e festività
+- Escalation per violazione, anzianità o mancata risposta
+- Riassegnare, cambiare priorità o reparto
+- Regole di chiusura e assegnazione automatiche
+- Instradamento in base alle competenze
+- Limiti di carico per agente
 
-Compila prima il sorgente attuale nel repository Maven locale:
+</td>
+<td width="33%" valign="top">
+
+**Email**
+- In entrata da Postmark, Mailgun e AWS SES
+- Abbinamento al ticket tramite Reply-To firmato
+- Risposte accettate solo dal richiedente
+- Email HTML con il tuo marchio tramite Thymeleaf
+- Thread tramite Message-ID
+
+</td>
+</tr>
+<tr>
+<td width="33%" valign="top">
+
+**Clienti**
+- API pubblica del widget
+- Accesso ospite ai ticket tramite token
+- Sondaggi CSAT con accesso tramite token
+- Knowledge base con ricerca e feedback
+
+</td>
+<td width="33%" valign="top">
+
+**Amministrazione e sicurezza**
+- Ruoli e permessi
+- Autenticazione a due fattori TOTP per lo staff
+- Accesso con SAML 2, OAuth 2 / OIDC e JWT
+- Registro di audit per ogni azione
+- Token API con hash
+
+</td>
+<td width="33%" valign="top">
+
+**Estendere e integrare**
+- Webhook firmati HMAC con nuovi tentativi
+- Importazione massiva di ticket
+- Plugin Java nativi e tramite SDK
+- WebSocket su STOMP/SockJS (opzionale)
+- Interfaccia condivisa Vue 3 + Inertia (opzionale)
+
+</td>
+</tr>
+</table>
+
+<p align="center"><sub><a href="../features.md">Tutte le funzionalità nel dettaglio</a></sub></p>
+
+<p align="center">
+  <a href="https://spring.io/projects/spring-boot"><img src="https://img.shields.io/badge/Spring_Boot-6DB33F?style=for-the-badge&logo=springboot&logoColor=white" alt="Spring Boot"></a>
+  <a href="https://openjdk.org"><img src="https://img.shields.io/badge/Java-ED8B00?style=for-the-badge&logo=openjdk&logoColor=white" alt="Java"></a>
+  <a href="https://vuejs.org"><img src="https://img.shields.io/badge/Vue.js-4FC08D?style=for-the-badge&logo=vuedotjs&logoColor=white" alt="Vue.js"></a>
+  <a href="https://inertiajs.com"><img src="https://img.shields.io/badge/Inertia.js-9553E9?style=for-the-badge&logo=inertia&logoColor=white" alt="Inertia.js"></a>
+  <a href="https://www.postgresql.org"><img src="https://img.shields.io/badge/PostgreSQL-4169E1?style=for-the-badge&logo=postgresql&logoColor=white" alt="PostgreSQL"></a>
+</p>
+
+## Funzionalità
 
 ```bash
 git clone https://github.com/escalated-dev/escalated-spring.git
@@ -63,180 +158,19 @@ cd escalated-spring
 ./gradlew publishToMavenLocal
 ```
 
-Aggiungi la dipendenza al tuo `build.gradle.kts`:
+Poi aggiungi `implementation("dev.escalated:escalated-spring:0.2.13")` con `mavenLocal()` alla tua app e imposta `escalated.enabled=true`. Richiede Java 17+ e Spring Boot 4.1. La [guida introduttiva](../getting-started.md) spiega configurazione, database e accesso, e [le pagine Inertia](../ui.md) attivano le schermate condivise con `escalated.ui.enabled=true`.
 
-```kotlin
-repositories {
-    mavenLocal()
-    mavenCentral()
-}
+## ag, allegati, cronologia delle attività
 
-dependencies {
-    implementation("dev.escalated:escalated-spring:0.2.13")
-}
-```
+- [Tutte le funzionalità](../features.md) · [Per iniziare](../getting-started.md) · [Le pagine Inertia](../ui.md)
+- [Personalizzazione, localizzazione e tempo reale](../customization.md) · [Architettura](../architecture.md) · [Endpoint API](../api-endpoints.md)
+- [Controllo degli accessi](../access-control.md) · [Accesso ai ticket e instradamento](../ticket-access-and-routing.md) · [Campi personalizzati](../custom-fields.md)
+- [Email in entrata](../inbound-email.md) · [Accesso ospite](../guest-access.md) · [Incorporare il widget](../embedding-the-widget.md)
+- [Incorporare l'amministrazione](../embedding-admin.md) · [Pannello agente](../agent-panel.md) · [Plugin](../plugins.md)
+- [Newsletter](../newsletters.md) · [Sviluppo](../development.md)
 
-O `pom.xml`:
+Escalated è disponibile anche per [Laravel](https://github.com/escalated-dev/escalated-laravel), [Rails](https://github.com/escalated-dev/escalated-rails), [Django](https://github.com/escalated-dev/escalated-django), [NestJS](https://github.com/escalated-dev/escalated-nestjs), [AdonisJS](https://github.com/escalated-dev/escalated-adonis), [Symfony](https://github.com/escalated-dev/escalated-symfony), [Phoenix](https://github.com/escalated-dev/escalated-phoenix), [Go](https://github.com/escalated-dev/escalated-go), [.NET](https://github.com/escalated-dev/escalated-dotnet), [WordPress](https://github.com/escalated-dev/escalated-wordpress) e [Filament](https://github.com/escalated-dev/escalated-filament). L'interfaccia si trova in [escalated](https://github.com/escalated-dev/escalated).
 
-```xml
-<dependency>
-    <groupId>dev.escalated</groupId>
-    <artifactId>escalated-spring</artifactId>
-    <version>0.2.13</version>
-</dependency>
-```
+## 
 
-## Configurazione
-
-Aggiungi al tuo `application.properties` o `application.yml`:
-
-```properties
-# Enable/disable the helpdesk
-escalated.enabled=true
-
-# Route prefix (default: escalated)
-escalated.route-prefix=escalated
-
-# Feature toggles
-escalated.knowledge-base.enabled=true
-escalated.broadcasting.enabled=false
-escalated.two-factor.enabled=true
-escalated.widget.enabled=true
-escalated.guest-access.enabled=true
-
-# SLA checking interval
-escalated.sla.check-interval-seconds=60
-
-# Snooze wake-up interval
-escalated.snooze.check-interval-seconds=60
-
-# Webhook settings
-escalated.webhook.max-retries=3
-
-# Database (example for PostgreSQL)
-spring.datasource.url=jdbc:postgresql://localhost:5432/myapp
-spring.datasource.username=user
-spring.datasource.password=secret
-spring.jpa.hibernate.ddl-auto=validate
-spring.flyway.enabled=true
-```
-
-## Configurazione del database
-
-Le migrazioni Flyway sono incluse e vengono eseguite automaticamente. La migrazione crea tutte le tabelle con il prefisso `escalated_` e inizializza ruoli e permessi predefiniti.
-
-## Endpoint API
-
-### Admin (`/escalated/api/admin/`)
-| Metodo | Percorso | Descrizione |
-|--------|------|-------------|
-| GET | `/tickets` | Elenco ticket (paginato, filtrabile) |
-| POST | `/tickets` | Crea ticket |
-| GET | `/tickets/{id}` | Ottieni ticket |
-| PUT | `/tickets/{id}` | Aggiorna ticket |
-| POST | `/tickets/{id}/assign` | Assegna ticket |
-| POST | `/tickets/{id}/status` | Cambia stato |
-| POST | `/tickets/{id}/snooze` | Posticipa ticket |
-| POST | `/tickets/{id}/merge` | Unisci ticket |
-| POST | `/tickets/{id}/split` | Dividi ticket |
-| DELETE | `/tickets/{id}` | Elimina ticket |
-| GET/POST | `/departments` | Gestisci dipartimenti |
-| GET/POST | `/agents` | Gestisci agenti |
-| GET/POST | `/webhooks` | Gestisci webhook |
-| GET/POST | `/roles` | Gestisci ruoli |
-| GET/POST | `/custom-fields` | Gestisci campi personalizzati |
-| GET/POST | `/settings` | Gestisci impostazioni |
-| GET | `/audit-logs` | Visualizza log di audit |
-| POST | `/import/tickets` | Importa ticket |
-| GET/POST | `/kb/categories` | Gestisci categorie KB |
-| GET/POST | `/kb/articles` | Gestisci articoli KB |
-
-### Agent (`/escalated/api/agent/`)
-| Metodo | Percorso | Descrizione |
-|--------|------|-------------|
-| GET | `/tickets` | Elenco ticket assegnati/filtrati |
-| GET | `/tickets/{id}` | Visualizza ticket |
-| POST | `/tickets/{id}/replies` | Aggiungi risposta |
-| POST | `/tickets/{id}/macro/{macroId}` | Applica macro |
-| POST | `/tickets/{id}/side-conversations` | Crea conversazione laterale |
-| POST | `/tickets/{id}/links` | Collega ticket |
-| GET/POST | `/saved-views` | Gestisci viste salvate |
-| GET/POST | `/canned-responses` | Gestisci risposte predefinite |
-
-### Customer (`/escalated/api/customer/`)
-| Metodo | Percorso | Descrizione |
-|--------|------|-------------|
-| GET | `/tickets?email=` | Elenco ticket del cliente |
-| POST | `/tickets` | Crea ticket |
-| POST | `/tickets/{id}/replies` | Aggiungi risposta |
-
-### Widget (`/escalated/api/widget/`)
-| Metodo | Percorso | Descrizione |
-|--------|------|-------------|
-| POST | `/tickets` | Crea ticket (pubblico) |
-| GET | `/tickets/{token}` | Visualizza ticket tramite token ospite |
-| POST | `/tickets/{token}/replies` | Rispondi tramite token ospite |
-| GET | `/kb/search?query=` | Cerca nella base di conoscenza |
-| POST | `/csat/{token}` | Invia valutazione soddisfazione |
-
-### Guest (`/escalated/api/guest/`)
-| Metodo | Percorso | Descrizione |
-|--------|------|-------------|
-| GET | `/tickets/{token}` | Visualizza ticket |
-| GET | `/tickets/{token}/replies` | Visualizza risposte |
-| POST | `/tickets/{token}/replies` | Aggiungi risposta |
-
-## Architettura
-
-```
-dev.escalated/
-  config/              Auto-configurazione, proprietà, configurazione WebSocket
-  models/              Entità JPA con relazioni complete
-  repositories/        Repository Spring Data JPA
-  services/            Logica di business (transazionale)
-  controllers/
-    admin/             API REST amministratore
-    agent/             API REST agente
-    customer/          API REST cliente
-    widget/            API widget pubblica
-  events/              Eventi applicazione Spring + listener webhook
-  security/            Filtro autenticazione token API, configurazione sicurezza, 2FA
-  scheduling/          Attività @Scheduled (posticipo, SLA, automatizzazioni)
-```
-
-## Autenticazione
-
-Gli endpoint API utilizzano l'autenticazione con token Bearer. Crea token tramite l'API amministratore:
-
-```bash
-curl -X POST /escalated/api/admin/tokens \
-  -H "Content-Type: application/json" \
-  -d '{"name": "My API Token", "agent_id": 1}'
-```
-
-La risposta include il token in testo semplice (mostrato solo una volta). Usalo nelle richieste successive:
-
-```bash
-curl -H "Authorization: Bearer <token>" /escalated/api/agent/tickets
-```
-
-## WebSocket (Tempo reale)
-
-Attiva con `escalated.broadcasting.enabled=true`. Connettiti a `/escalated/ws` tramite SockJS/STOMP.
-
-## Sviluppo
-
-```bash
-# Build
-./gradlew build
-
-# Run tests
-./gradlew test
-
-# Run checkstyle
-./gradlew checkstyleMain checkstyleTest
-```
-
-## Licenza
-
-Licenza MIT. Vedi [LICENSE](LICENSE) per i dettagli.
+MIT. Copyright (c) 2026 Escalated.dev. Vedi [LICENSE](../../LICENSE).

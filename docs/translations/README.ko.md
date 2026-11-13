@@ -1,61 +1,156 @@
-<p align="center">
-  <a href="README.ar.md">العربية</a> •
-  <a href="README.de.md">Deutsch</a> •
-  <a href="../../README.md">English</a> •
-  <a href="README.es.md">Español</a> •
-  <a href="README.fr.md">Français</a> •
-  <a href="README.it.md">Italiano</a> •
-  <a href="README.ja.md">日本語</a> •
-  <b>한국어</b> •
-  <a href="README.nl.md">Nederlands</a> •
-  <a href="README.pl.md">Polski</a> •
-  <a href="README.pt-BR.md">Português (BR)</a> •
-  <a href="README.ru.md">Русский</a> •
-  <a href="README.tr.md">Türkçe</a> •
+<p align="center"><sub>
+  <a href="README.ar.md">العربية</a> ·
+  <a href="README.de.md">Deutsch</a> ·
+  <a href="../../README.md">English</a> ·
+  <a href="README.es.md">Español</a> ·
+  <a href="README.fr.md">Français</a> ·
+  <a href="README.it.md">Italiano</a> ·
+  <a href="README.ja.md">日本語</a> ·
+  <b>한국어</b> ·
+  <a href="README.nl.md">Nederlands</a> ·
+  <a href="README.pl.md">Polski</a> ·
+  <a href="README.pt-BR.md">Português (BR)</a> ·
+  <a href="README.ru.md">Русский</a> ·
+  <a href="README.tr.md">Türkçe</a> ·
   <a href="README.zh-CN.md">简体中文</a>
+</sub></p>
+
+<p align="center">
+  <a href="https://escalated.dev"><img src="https://raw.githubusercontent.com/escalated-dev/escalated/main/docs/assets/readme/logo.png" width="72" height="72" alt="Escalated"></a>
 </p>
 
-# Escalated Spring
+<h1 align="center">Escalated for Spring</h1>
 
-Spring Boot 애플리케이션을 위한 내장 가능한 헬프데스크 시스템. 단일 종속성으로 모든 Java 애플리케이션에 완전한 기능의 지원 데스크를 추가합니다.
+<p align="center">
+  Spring Boot 앱에 완전한 헬프데스크를 추가하세요.<br>
+  티켓, SLA, 에스컬레이션 규칙, 지식 베이스, 지원 위젯을 여러분의 데이터베이스에서 동작하는 하나의 의존성으로 제공합니다.
+</p>
+
+<p align="center">
+  <a href="https://escalated.dev"><b>웹사이트</b></a> ·
+  <a href="https://escalated.dev/docs"><b>문서</b></a> ·
+  <a href="https://escalated.dev/cloud"><b>Cloud</b></a> ·
+  <a href="../../CHANGELOG.md"><b>변경 내역</b></a>
+</p>
+
+<br>
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/escalated-dev/escalated/main/docs/assets/readme/inbox-dark.png">
+  <img src="https://raw.githubusercontent.com/escalated-dev/escalated/main/docs/assets/readme/inbox-light.png" alt="Escalated 상담원 받은편지함: 개수가 표시된 저장된 보기, 모든 티켓의 SLA 카운트다운과 우선순위" width="100%">
+</picture>
+
+## 주요 기능
+
+<table>
+  <tr>
+    <td width="40%">
+      <h3>상담원이 하루 종일 일할 수 있는 받은편지함</h3>
+      대화, 내부 메모, 상용구 답변, SLA 타이머를 한 화면에서 볼 수 있습니다. 티켓은 Postmark, Mailgun 또는 AWS SES를 통해 이메일로도 들어옵니다.
+    </td>
+    <td width="60%">
+      <picture>
+        <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/escalated-dev/escalated/main/docs/assets/readme/ticket-dark.png">
+        <img src="https://raw.githubusercontent.com/escalated-dev/escalated/main/docs/assets/readme/ticket-light.png" alt="답장 작성기가 표시된 상담원 작업 공간에서 열린 티켓">
+      </picture>
+    </td>
+  </tr>
+  <tr>
+    <td width="60%">
+      <picture>
+        <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/escalated-dev/escalated/main/docs/assets/readme/dashboard-dark.png">
+        <img src="https://raw.githubusercontent.com/escalated-dev/escalated/main/docs/assets/readme/dashboard-light.png" alt="응답 시간, CSAT, SLA 위반을 보여주는 관리자 보고서 페이지">
+      </picture>
+    </td>
+    <td width="40%">
+      <h3>한눈에 보이는 SLA와 에스컬레이션 규칙</h3>
+      영업시간과 휴일을 반영한 응답 및 해결 목표, 위반 시 에스컬레이션하거나 재할당하는 규칙, SLA 보고서를 제공합니다.
+    </td>
+  </tr>
+</table>
 
 ## 기능
 
-1. **Ticket CRUD** -- 상태, 우선순위, 할당을 통한 전체 라이프사이클 관리
-2. **SLA Policies** -- 영업 시간 지원 및 휴일 캘린더를 갖춘 구성 가능한 SLA
-3. **Automations** -- 해결된 티켓 자동 닫기 및 자동 할당을 위한 시간 기반 규칙
-4. **Escalation Rules** -- SLA 위반 시 재할당 및 알림을 통한 자동 에스컬레이션
-5. **Macros & Canned Responses** -- 에이전트를 위한 사전 정의된 작업 및 응답 템플릿
-6. **Custom Fields** -- 다양한 필드 유형의 확장 가능한 티켓 데이터
-7. **Knowledge Base** -- 검색, 조회수, 피드백이 포함된 기사 및 카테고리
-8. **Webhooks** -- 재시도 로직을 갖춘 HMAC 서명 Webhook 전달
-9. **API Tokens** -- API 접근을 위한 SHA-256 해시 토큰 인증
-10. **Roles & Permissions** -- 세분화된 역할 기반 접근 제어
-11. **Audit Logging** -- 모든 작업에 대한 완전한 감사 추적
-12. **Import System** -- 구조화된 데이터에서 티켓 대량 가져오기
-13. **Side Conversations** -- 티켓 내 비공개 스레드 대화
-14. **Ticket Merging & Linking** -- 중복 티켓 병합 및 관련 티켓 연결
-15. **Ticket Splitting** -- 복잡한 티켓을 별도의 이슈로 분할
-16. **Ticket Snooze** -- `@Scheduled`를 통한 자동 깨우기 티켓 스누즈
-17. **Email Threading** -- Thymeleaf를 통한 브랜드 HTML 이메일 템플릿과 올바른 Message-ID 스레딩
-18. **Saved Views** -- 에이전트별 사용자 정의 필터/정렬 티켓 뷰
-19. **Widget API** -- 지원 위젯 임베딩을 위한 공개 REST 엔드포인트
-20. **Real-time Broadcasting** -- STOMP/SockJS를 통한 WebSocket (옵트인)
-21. **Capacity Management** -- 에이전트 워크로드 제한 추적 및 적용
-22. **Skill-based Routing** -- 매칭되는 스킬을 가진 에이전트에게 티켓 라우팅
-23. **CSAT Ratings** -- 토큰 기반 접근을 통한 고객 만족도 설문조사
-24. **2FA (TOTP)** -- 에이전트 계정을 위한 시간 기반 일회용 비밀번호 지원
-25. **Guest Access** -- 인증 없는 토큰 기반 티켓 접근
+<table>
+<tr>
+<td width="33%" valign="top">
 
-## 요구 사항
+**티켓과 받은편지함**
+- 상태, 우선순위, 담당자 지정
+- 매크로와 상용구 답변
+- 티켓 내 사이드 대화
+- 티켓 병합, 연결, 분할
+- 자동으로 다시 열리는 스누즈
+- 상담원별 저장된 보기
+- 여러 유형의 사용자 정의 필드
 
-- Java 17+
-- Spring Boot 4.1.x
-- 관계형 데이터베이스 (PostgreSQL, MySQL 또는 개발용 H2)
+</td>
+<td width="33%" valign="top">
 
-## 설치
+**SLA와 라우팅**
+- 영업시간과 휴일을 반영한 SLA 정책
+- 위반, 경과 시간, 무응답 시 에스컬레이션
+- 재할당, 우선순위 변경, 부서 이동
+- 자동 종료 및 자동 할당 규칙
+- 스킬 기반 라우팅
+- 상담원 업무량 한도
 
-먼저 현재 소스를 로컬 Maven 저장소에 빌드하세요:
+</td>
+<td width="33%" valign="top">
+
+**이메일**
+- Postmark, Mailgun, AWS SES를 통한 수신
+- 서명된 Reply-To로 티켓 식별
+- 요청자의 답장만 수락
+- Thymeleaf로 만드는 브랜드 HTML 이메일
+- Message-ID 기반 스레딩
+
+</td>
+</tr>
+<tr>
+<td width="33%" valign="top">
+
+**고객**
+- 공개 위젯 API
+- 토큰을 통한 게스트 티켓 접근
+- 토큰으로 접근하는 CSAT 설문
+- 검색과 피드백을 지원하는 지식 베이스
+
+</td>
+<td width="33%" valign="top">
+
+**관리와 보안**
+- 역할과 권한
+- 직원용 TOTP 2단계 인증
+- SAML 2, OAuth 2 / OIDC, JWT 로그인
+- 모든 작업의 감사 기록
+- 해시 처리된 API 토큰
+
+</td>
+<td width="33%" valign="top">
+
+**확장과 연동**
+- 재시도를 지원하는 HMAC 서명 웹훅
+- 티켓 일괄 가져오기
+- 네이티브 Java 플러그인과 SDK 플러그인
+- STOMP/SockJS 기반 WebSocket (선택 사항)
+- 공용 Vue 3 + Inertia UI (선택 사항)
+
+</td>
+</tr>
+</table>
+
+<p align="center"><sub><a href="../features.md">모든 기능 자세히 보기</a></sub></p>
+
+<p align="center">
+  <a href="https://spring.io/projects/spring-boot"><img src="https://img.shields.io/badge/Spring_Boot-6DB33F?style=for-the-badge&logo=springboot&logoColor=white" alt="Spring Boot"></a>
+  <a href="https://openjdk.org"><img src="https://img.shields.io/badge/Java-ED8B00?style=for-the-badge&logo=openjdk&logoColor=white" alt="Java"></a>
+  <a href="https://vuejs.org"><img src="https://img.shields.io/badge/Vue.js-4FC08D?style=for-the-badge&logo=vuedotjs&logoColor=white" alt="Vue.js"></a>
+  <a href="https://inertiajs.com"><img src="https://img.shields.io/badge/Inertia.js-9553E9?style=for-the-badge&logo=inertia&logoColor=white" alt="Inertia.js"></a>
+  <a href="https://www.postgresql.org"><img src="https://img.shields.io/badge/PostgreSQL-4169E1?style=for-the-badge&logo=postgresql&logoColor=white" alt="PostgreSQL"></a>
+</p>
+
+## 기능 목록
 
 ```bash
 git clone https://github.com/escalated-dev/escalated-spring.git
@@ -63,180 +158,19 @@ cd escalated-spring
 ./gradlew publishToMavenLocal
 ```
 
-`build.gradle.kts`에 종속성을 추가합니다:
+그런 다음 `mavenLocal()`와 함께 `implementation("dev.escalated:escalated-spring:0.2.13")`를 앱에 추가하고 `escalated.enabled=true`를 설정하세요. Java 17 이상과 Spring Boot 4.1이 필요합니다. 설정, 데이터베이스, 로그인은 [시작 가이드](../getting-started.md)에서 다루며, [Inertia 페이지](../ui.md)는 `escalated.ui.enabled=true`로 공용 화면을 켭니다.
 
-```kotlin
-repositories {
-    mavenLocal()
-    mavenCentral()
-}
+## 그, 첨부 파일, 활동 타임라인
 
-dependencies {
-    implementation("dev.escalated:escalated-spring:0.2.13")
-}
-```
+- [전체 기능](../features.md) · [시작하기](../getting-started.md) · [Inertia 페이지](../ui.md)
+- [사용자 정의, 현지화, 실시간](../customization.md) · [아키텍처](../architecture.md) · [API 엔드포인트](../api-endpoints.md)
+- [접근 제어](../access-control.md) · [티켓 접근과 라우팅](../ticket-access-and-routing.md) · [사용자 정의 필드](../custom-fields.md)
+- [수신 이메일](../inbound-email.md) · [게스트 접근](../guest-access.md) · [위젯 삽입](../embedding-the-widget.md)
+- [관리자 화면 삽입](../embedding-admin.md) · [상담원 패널](../agent-panel.md) · [플러그인](../plugins.md)
+- [뉴스레터](../newsletters.md) · [개발](../development.md)
 
-또는 `pom.xml`:
+Escalated는 [Laravel](https://github.com/escalated-dev/escalated-laravel), [Rails](https://github.com/escalated-dev/escalated-rails), [Django](https://github.com/escalated-dev/escalated-django), [NestJS](https://github.com/escalated-dev/escalated-nestjs), [AdonisJS](https://github.com/escalated-dev/escalated-adonis), [Symfony](https://github.com/escalated-dev/escalated-symfony), [Phoenix](https://github.com/escalated-dev/escalated-phoenix), [Go](https://github.com/escalated-dev/escalated-go), [.NET](https://github.com/escalated-dev/escalated-dotnet), [WordPress](https://github.com/escalated-dev/escalated-wordpress), [Filament](https://github.com/escalated-dev/escalated-filament)용으로도 제공됩니다. UI는 [escalated](https://github.com/escalated-dev/escalated) 저장소에 있습니다.
 
-```xml
-<dependency>
-    <groupId>dev.escalated</groupId>
-    <artifactId>escalated-spring</artifactId>
-    <version>0.2.13</version>
-</dependency>
-```
+## 
 
-## 구성
-
-`application.properties` 또는 `application.yml`에 추가합니다:
-
-```properties
-# Enable/disable the helpdesk
-escalated.enabled=true
-
-# Route prefix (default: escalated)
-escalated.route-prefix=escalated
-
-# Feature toggles
-escalated.knowledge-base.enabled=true
-escalated.broadcasting.enabled=false
-escalated.two-factor.enabled=true
-escalated.widget.enabled=true
-escalated.guest-access.enabled=true
-
-# SLA checking interval
-escalated.sla.check-interval-seconds=60
-
-# Snooze wake-up interval
-escalated.snooze.check-interval-seconds=60
-
-# Webhook settings
-escalated.webhook.max-retries=3
-
-# Database (example for PostgreSQL)
-spring.datasource.url=jdbc:postgresql://localhost:5432/myapp
-spring.datasource.username=user
-spring.datasource.password=secret
-spring.jpa.hibernate.ddl-auto=validate
-spring.flyway.enabled=true
-```
-
-## 데이터베이스 설정
-
-Flyway 마이그레이션이 포함되어 자동으로 실행됩니다. 마이그레이션은 `escalated_` 접두사가 붙은 모든 테이블을 생성하고 기본 역할과 권한을 시드합니다.
-
-## API 엔드포인트
-
-### Admin (`/escalated/api/admin/`)
-| 메서드 | 경로 | 설명 |
-|--------|------|-------------|
-| GET | `/tickets` | 티켓 목록 (페이지네이션, 필터 가능) |
-| POST | `/tickets` | 티켓 생성 |
-| GET | `/tickets/{id}` | 티켓 조회 |
-| PUT | `/tickets/{id}` | 티켓 수정 |
-| POST | `/tickets/{id}/assign` | 티켓 할당 |
-| POST | `/tickets/{id}/status` | 상태 변경 |
-| POST | `/tickets/{id}/snooze` | 티켓 스누즈 |
-| POST | `/tickets/{id}/merge` | 티켓 병합 |
-| POST | `/tickets/{id}/split` | 티켓 분할 |
-| DELETE | `/tickets/{id}` | 티켓 삭제 |
-| GET/POST | `/departments` | 부서 관리 |
-| GET/POST | `/agents` | 에이전트 관리 |
-| GET/POST | `/webhooks` | Webhook 관리 |
-| GET/POST | `/roles` | 역할 관리 |
-| GET/POST | `/custom-fields` | 사용자 정의 필드 관리 |
-| GET/POST | `/settings` | 설정 관리 |
-| GET | `/audit-logs` | 감사 로그 보기 |
-| POST | `/import/tickets` | 티켓 가져오기 |
-| GET/POST | `/kb/categories` | KB 카테고리 관리 |
-| GET/POST | `/kb/articles` | KB 기사 관리 |
-
-### Agent (`/escalated/api/agent/`)
-| 메서드 | 경로 | 설명 |
-|--------|------|-------------|
-| GET | `/tickets` | 할당/필터된 티켓 목록 |
-| GET | `/tickets/{id}` | 티켓 보기 |
-| POST | `/tickets/{id}/replies` | 답변 추가 |
-| POST | `/tickets/{id}/macro/{macroId}` | 매크로 적용 |
-| POST | `/tickets/{id}/side-conversations` | 사이드 대화 생성 |
-| POST | `/tickets/{id}/links` | 티켓 연결 |
-| GET/POST | `/saved-views` | 저장된 뷰 관리 |
-| GET/POST | `/canned-responses` | 정형 응답 관리 |
-
-### Customer (`/escalated/api/customer/`)
-| 메서드 | 경로 | 설명 |
-|--------|------|-------------|
-| GET | `/tickets?email=` | 고객 티켓 목록 |
-| POST | `/tickets` | 티켓 생성 |
-| POST | `/tickets/{id}/replies` | 답변 추가 |
-
-### Widget (`/escalated/api/widget/`)
-| 메서드 | 경로 | 설명 |
-|--------|------|-------------|
-| POST | `/tickets` | 티켓 생성 (공개) |
-| GET | `/tickets/{token}` | 게스트 토큰으로 티켓 보기 |
-| POST | `/tickets/{token}/replies` | 게스트 토큰으로 답변 |
-| GET | `/kb/search?query=` | 지식 베이스 검색 |
-| POST | `/csat/{token}` | 만족도 평가 제출 |
-
-### Guest (`/escalated/api/guest/`)
-| 메서드 | 경로 | 설명 |
-|--------|------|-------------|
-| GET | `/tickets/{token}` | 티켓 보기 |
-| GET | `/tickets/{token}/replies` | 답변 보기 |
-| POST | `/tickets/{token}/replies` | 답변 추가 |
-
-## 아키텍처
-
-```
-dev.escalated/
-  config/              자동 구성, 속성, WebSocket 구성
-  models/              완전한 관계를 가진 JPA 엔티티
-  repositories/        Spring Data JPA 리포지토리
-  services/            비즈니스 로직 (트랜잭션)
-  controllers/
-    admin/             관리자 REST API
-    agent/             에이전트 REST API
-    customer/          고객 REST API
-    widget/            공개 위젯 API
-  events/              Spring 애플리케이션 이벤트 + Webhook 리스너
-  security/            API 토큰 인증 필터, 보안 구성, 2FA
-  scheduling/          @Scheduled 작업 (스누즈, SLA, 자동화)
-```
-
-## 인증
-
-API 엔드포인트는 Bearer 토큰 인증을 사용합니다. 관리자 API를 통해 토큰을 생성합니다:
-
-```bash
-curl -X POST /escalated/api/admin/tokens \
-  -H "Content-Type: application/json" \
-  -d '{"name": "My API Token", "agent_id": 1}'
-```
-
-응답에는 평문 토큰이 포함됩니다 (한 번만 표시). 후속 요청에서 사용합니다:
-
-```bash
-curl -H "Authorization: Bearer <token>" /escalated/api/agent/tickets
-```
-
-## WebSocket (실시간)
-
-`escalated.broadcasting.enabled=true`로 활성화합니다. SockJS/STOMP를 통해 `/escalated/ws`에 연결합니다.
-
-## 개발
-
-```bash
-# Build
-./gradlew build
-
-# Run tests
-./gradlew test
-
-# Run checkstyle
-./gradlew checkstyleMain checkstyleTest
-```
-
-## 라이선스
-
-MIT 라이선스. 자세한 내용은 [LICENSE](LICENSE)를 참조하세요.
+MIT. Copyright (c) 2026 Escalated.dev. [LICENSE](../../LICENSE)를 참고하세요.
