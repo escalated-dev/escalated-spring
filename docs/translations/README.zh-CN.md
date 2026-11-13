@@ -158,6 +158,17 @@ cd escalated-spring
 ./gradlew publishToMavenLocal
 ```
 
+```kotlin
+repositories {
+    mavenLocal()
+    mavenCentral()
+}
+
+dependencies {
+    implementation("dev.escalated:escalated-spring:0.2.13")
+}
+```
+
 然后在你的应用中添加 `implementation("dev.escalated:escalated-spring:0.2.13")` 和 `mavenLocal()`，并设置 `escalated.enabled=true`。需要 Java 17+ 和 Spring Boot 4.1。[入门指南](../getting-started.md)介绍了配置、数据库和登录，[Inertia 页面](../ui.md)说明如何用 `escalated.ui.enabled=true` 启用共享界面。
 
 ## 签、附件、活动时间线

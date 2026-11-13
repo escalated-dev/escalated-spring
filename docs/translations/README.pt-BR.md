@@ -158,6 +158,17 @@ cd escalated-spring
 ./gradlew publishToMavenLocal
 ```
 
+```kotlin
+repositories {
+    mavenLocal()
+    mavenCentral()
+}
+
+dependencies {
+    implementation("dev.escalated:escalated-spring:0.2.13")
+}
+```
+
 Depois adicione `implementation("dev.escalated:escalated-spring:0.2.13")` com `mavenLocal()` ao seu app e defina `escalated.enabled=true`. Requer Java 17+ e Spring Boot 4.1. O [guia de primeiros passos](../getting-started.md) explica a configuração, o banco de dados e o login, e [as páginas Inertia](../ui.md) ativam as telas compartilhadas com `escalated.ui.enabled=true`.
 
 ## ags, anexos, linha do tempo de atividades

@@ -158,6 +158,17 @@ cd escalated-spring
 ./gradlew publishToMavenLocal
 ```
 
+```kotlin
+repositories {
+    mavenLocal()
+    mavenCentral()
+}
+
+dependencies {
+    implementation("dev.escalated:escalated-spring:0.2.13")
+}
+```
+
 Ardından `implementation("dev.escalated:escalated-spring:0.2.13")` satırını `mavenLocal()` ile birlikte uygulamanıza ekleyin ve `escalated.enabled=true` ayarını yapın. Java 17+ ve Spring Boot 4.1 gerekir. [Başlangıç kılavuzu](../getting-started.md) yapılandırmayı, veritabanını ve oturum açmayı anlatır; [Inertia sayfaları](../ui.md) ise `escalated.ui.enabled=true` ile ortak ekranları açar.
 
 ## tiketler, ekler, etkinlik zaman çizelgesi
