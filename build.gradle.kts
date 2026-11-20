@@ -121,7 +121,7 @@ dependencies {
         // Align compile-time API constraints with the published runtime versions.
         add("api", "org.apache.tomcat.embed:tomcat-embed-core:11.0.27")
         add("api", "org.apache.tomcat.embed:tomcat-embed-el:11.0.27")
-        add("api", "org.apache.tomcat.embed:tomcat-embed-websocket:11.0.27")
+        add("api", "org.apache.tomcat.embed:tomcat-embed-websocket:11.0.29")
         add("checkstyle", "commons-beanutils:commons-beanutils:1.11.0") {
             because("GHSA-wxr5-93ph-8wr9")
         }
