@@ -28,6 +28,10 @@ public class ReportsUiController {
     private final ReportsUiPages pages;
     private final ReportAnalyticsUiPages analytics;
 
+    /** The {@code scheduler} prop on the report overview and dashboard. */
+    @org.springframework.beans.factory.annotation.Autowired(required = false)
+    private dev.escalated.scheduling.SchedulerHeartbeat heartbeat;
+
     public ReportsUiController(EscalatedUiRenderer renderer, ReportsUiPages pages, ReportAnalyticsUiPages analytics) {
         this.renderer = renderer;
         this.pages = pages;
@@ -36,12 +40,22 @@ public class ReportsUiController {
 
     @GetMapping({"", "/"})
     public Object overview(@RequestParam Map<String, String> query) {
-        return renderer.render("Escalated/Admin/Reports", pages.overview(ReportsUiPages.days(query)));
+        return renderer.render("Escalated/Admin/Reports", withScheduler(pages.overview(ReportsUiPages.days(query))));
+    }
+
+    private Map<String, Object> withScheduler(Map<String, Object> props) {
+        if (heartbeat == null) {
+            return props;
+        }
+        Map<String, Object> withStatus = new java.util.LinkedHashMap<>(props);
+        withStatus.put("scheduler", heartbeat.status());
+        return withStatus;
     }
 
     @GetMapping("/dashboard")
     public Object dashboard(@RequestParam Map<String, String> query) {
-        return renderer.render("Escalated/Admin/Reports/Dashboard", pages.dashboard(ReportsUiPages.days(query)));
+        return renderer.render("Escalated/Admin/Reports/Dashboard",
+                withScheduler(pages.dashboard(ReportsUiPages.days(query))));
     }
 
     @GetMapping("/agents")

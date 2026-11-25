@@ -50,6 +50,10 @@ public class SlaScheduler {
     private final ApplicationEventPublisher events;
     private final EscalatedProperties properties;
 
+    /** Records each run, so admins are warned when the sweep stops. Absent where built by hand. */
+    @org.springframework.beans.factory.annotation.Autowired(required = false)
+    private SchedulerHeartbeat heartbeat;
+
     public SlaScheduler(SlaService slaService,
                         TicketService ticketService,
                         EscalationRuleRepository escalationRuleRepository,
@@ -68,6 +72,9 @@ public class SlaScheduler {
 
     @Scheduled(fixedDelayString = "${escalated.sla.check-interval-seconds:60}000")
     public synchronized void checkSlaBreaches() {
+        if (heartbeat != null) {
+            heartbeat.beat();
+        }
         // Import mode (ImportContext): imported history is not breached.
         if (dev.escalated.services.ImportContext.isImporting()) {
             return;
