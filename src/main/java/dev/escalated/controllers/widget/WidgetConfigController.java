@@ -19,6 +19,7 @@ import org.springframework.web.bind.annotation.RestController;
  * answers 403 with {@code {"enabled": false}}.
  */
 @RestController
+@org.springframework.context.annotation.Conditional(dev.escalated.config.WidgetRoutesCondition.class)
 @RequestMapping("/escalated/api/widget")
 public class WidgetConfigController {
 

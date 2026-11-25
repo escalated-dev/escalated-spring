@@ -7,17 +7,22 @@ import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.TestPropertySource;
+import org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping;
 
 /**
  * {@code escalated.widget.enabled=false} switches the whole widget API off,
  * not only {@code /config}. Ticket creation, chat and the article routes used
- * to stay open to anyone on a helpdesk that had turned the widget off.
+ * to stay open to anyone on a helpdesk that had turned the widget off. None of
+ * them is mounted at all now; a request under the widget prefix is still
+ * answered 403 {@code {"enabled": false}}, as before.
  *
  * <p>Same properties as {@link dev.escalated.security.StompAuthorizationTest},
  * so both share one context.
@@ -37,6 +42,15 @@ class WidgetDisabledTest {
     private static final String CHAT = "{\"name\":\"G\",\"email\":\"g@example.com\",\"message\":\"Hi\"}";
 
     @LocalServerPort private int port;
+    @Autowired private RequestMappingHandlerMapping requestMappingHandlerMapping;
+
+    @Test
+    void noWidgetRouteIsRegistered() {
+        assertThat(requestMappingHandlerMapping.getHandlerMethods().keySet().stream()
+                .flatMap(info -> info.getPatternValues().stream()))
+                .isNotEmpty()
+                .noneMatch(pattern -> pattern.startsWith("/escalated/api/widget"));
+    }
 
     @ParameterizedTest
     @CsvSource({
@@ -49,6 +63,9 @@ class WidgetDisabledTest {
         "GET, /escalated/api/widget/kb/search?query=reset",
         "GET, /escalated/api/widget/tickets/some-token",
         "POST, /escalated/api/widget/csat/some-token",
+        "GET, /escalated/api/widget/embed.js",
+        "POST, /escalated/api/widget/verification",
+        "POST, /escalated/api/widget/lookup",
     })
     void everyWidgetRouteIsRefused(String method, String path) throws Exception {
         String body = path.endsWith("/chat/start") ? CHAT : path.contains("/csat/") ? "{\"rating\":5}" : TICKET;
