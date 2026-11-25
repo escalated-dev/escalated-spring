@@ -4200,6 +4200,20 @@
       }
     }
   }, {
+    "path" : "/escalated/api/admin/settings/scheduler",
+    "methods" : [ "GET" ],
+    "handler" : "dev.escalated.controllers.admin.AdminSettingsController#scheduler",
+    "guards" : {
+      "chain" : "Or [PathPattern [/escalated/api/**]]",
+      "filters" : [ "DisableEncodeUrlFilter", "WebAsyncManagerIntegrationFilter", "SecurityContextHolderFilter", "HeaderWriterFilter", "LogoutFilter", "ApiTokenAuthenticationFilter", "RequestCacheAwareFilter", "SecurityContextHolderAwareRequestFilter", "AnonymousAuthenticationFilter", "SessionManagementFilter", "ExceptionTranslationFilter", "EnsureAccessFeaturesFilter", "TicketVisibilityFilter", "AuthorizationFilter", "RequireTwoFactorFilter", "EnforceRoutePermissionsFilter" ],
+      "gate" : {
+        "anonymous" : "deny",
+        "user" : "deny",
+        "agent" : "deny",
+        "admin" : "grant"
+      }
+    }
+  }, {
     "path" : "/escalated/api/admin/settings/{key}",
     "methods" : [ "DELETE" ],
     "handler" : "dev.escalated.controllers.admin.AdminSettingsController#destroy",
@@ -5672,7 +5686,7 @@
   }, {
     "path" : "/escalated/api/widget/lookup",
     "methods" : [ "POST" ],
-    "handler" : "dev.escalated.controllers.widget.GuestVerificationController#lookup",
+    "handler" : "dev.escalated.controllers.widget.WidgetVerificationController#lookup",
     "guards" : {
       "chain" : "Or [PathPattern [/escalated/api/**]]",
       "filters" : [ "DisableEncodeUrlFilter", "WebAsyncManagerIntegrationFilter", "SecurityContextHolderFilter", "HeaderWriterFilter", "LogoutFilter", "ApiTokenAuthenticationFilter", "RequestCacheAwareFilter", "SecurityContextHolderAwareRequestFilter", "AnonymousAuthenticationFilter", "SessionManagementFilter", "ExceptionTranslationFilter", "EnsureAccessFeaturesFilter", "TicketVisibilityFilter", "AuthorizationFilter", "RequireTwoFactorFilter", "EnforceRoutePermissionsFilter" ],
@@ -5742,7 +5756,7 @@
   }, {
     "path" : "/escalated/api/widget/verification",
     "methods" : [ "POST" ],
-    "handler" : "dev.escalated.controllers.widget.GuestVerificationController#verification",
+    "handler" : "dev.escalated.controllers.widget.WidgetVerificationController#verification",
     "guards" : {
       "chain" : "Or [PathPattern [/escalated/api/**]]",
       "filters" : [ "DisableEncodeUrlFilter", "WebAsyncManagerIntegrationFilter", "SecurityContextHolderFilter", "HeaderWriterFilter", "LogoutFilter", "ApiTokenAuthenticationFilter", "RequestCacheAwareFilter", "SecurityContextHolderAwareRequestFilter", "AnonymousAuthenticationFilter", "SessionManagementFilter", "ExceptionTranslationFilter", "EnsureAccessFeaturesFilter", "TicketVisibilityFilter", "AuthorizationFilter", "RequireTwoFactorFilter", "EnforceRoutePermissionsFilter" ],

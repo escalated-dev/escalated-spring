@@ -34,6 +34,7 @@ import org.springframework.web.bind.annotation.RestController;
  * accepted here: an unknown token, numeric ids included, is a 404.
  */
 @RestController
+@org.springframework.context.annotation.Conditional(dev.escalated.config.WidgetRoutesCondition.class)
 @RequestMapping("/escalated/api/widget/chat")
 public class WidgetChatController {
 

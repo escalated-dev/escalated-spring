@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- `escalated.guest.routes-enabled` (default true, env `ESCALATED_GUEST_ROUTES`): false registers no guest route (`/escalated/guest/**`, `/escalated/api/guest/**`). The `guest_tickets_enabled` setting still works while they are mounted.
+- `escalated.routes.customer-middleware` (default empty): extra guards on the customer pages, `/escalated/api/customer/**` and the customer knowledge base, on top of being signed in. Each entry is `escalated-agent`, `escalated-admin` or the name of an `AuthorizationManager<RequestAuthorizationContext>` bean. `escalated-agent` makes the portal staff-only; see "A staff-only install" in docs/getting-started.md.
+- A scheduler heartbeat: the SLA check records `scheduler_heartbeat_at` each run. When it is missing or older than 15 minutes, `Escalated/Admin/Settings`, `Escalated/Admin/Reports` and `Escalated/Admin/Reports/Dashboard` get a `scheduler` prop (`{healthy, last_run_at, message, commands}`) that names the jobs, `GET /escalated/api/admin/settings/scheduler` returns the same object, and a warning is logged.
+
+### Changed
+- `escalated.widget.enabled=false` now registers no `/escalated/api/widget/**` route at all (the bundle, verification and lookup included) instead of mounting them and refusing each request. A request there still answers 403 `{"enabled": false}`.
+- The widget's verification and lookup routes are served by `WidgetVerificationController`; the guest ones stay on `GuestVerificationController`. Both use the new `GuestVerificationEndpoints`, which `MobileGuestController` now takes in place of `GuestVerificationController`.
+
 ## [0.2.13] - 2026-11-07
 
 ### Changed

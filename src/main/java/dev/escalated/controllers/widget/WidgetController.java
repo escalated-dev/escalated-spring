@@ -29,6 +29,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
+@org.springframework.context.annotation.Conditional(dev.escalated.config.WidgetRoutesCondition.class)
 @RequestMapping("/escalated/api/widget")
 public class WidgetController {
 

@@ -40,6 +40,10 @@ public class AdminUiController {
     private final AutomationAdminService automations;
     private final UiRoutes routes;
 
+    /** The {@code scheduler} prop: whether the recurring jobs are running. */
+    @org.springframework.beans.factory.annotation.Autowired(required = false)
+    private dev.escalated.scheduling.SchedulerHeartbeat heartbeat;
+
     public AdminUiController(
             EscalatedUiRenderer renderer,
             Inertia inertia,
@@ -59,7 +63,11 @@ public class AdminUiController {
 
     @GetMapping("/settings")
     public Object settings() {
-        return renderer.render("Escalated/Admin/Settings", pages.settings());
+        Map<String, Object> props = new LinkedHashMap<>(pages.settings());
+        if (heartbeat != null) {
+            props.put("scheduler", heartbeat.status());
+        }
+        return renderer.render("Escalated/Admin/Settings", props);
     }
 
     @PostMapping("/settings")

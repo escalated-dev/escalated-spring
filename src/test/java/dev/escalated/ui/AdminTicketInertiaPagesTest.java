@@ -28,6 +28,7 @@ import dev.escalated.repositories.SavedViewRepository;
 import dev.escalated.repositories.TagRepository;
 import dev.escalated.repositories.TicketRepository;
 import dev.escalated.services.TicketService;
+import dev.escalated.services.TicketSubjectService;
 import hostapp.HostApplication;
 import jakarta.servlet.http.Cookie;
 import java.time.Instant;
@@ -72,6 +73,7 @@ class AdminTicketInertiaPagesTest {
     @Autowired private MacroRepository macros;
     @Autowired private SavedViewRepository savedViews;
     @Autowired private UiRoutes routes;
+    @Autowired private TicketSubjectService ticketSubjects;
 
     private String unique;
     private AgentProfile admin;
@@ -150,6 +152,26 @@ class AdminTicketInertiaPagesTest {
         assertThat(fieldNames(find(props.get("tags"), tag.getId()))).containsExactly("id", "name", "color");
         assertThat(props.get("savedViews").isArray()).isTrue();
         assertThat(page.toString()).doesNotContain(totpSeed);
+    }
+
+    /** The sidebar's Related card: the agent and admin show pages carry the API resource's subjects. */
+    @Test
+    void bothTicketPagesCarryTheSubjectsAsTheApiSerialisesThem() throws Exception {
+        ticketSubjects.attach(ticket, "Order", "A-" + unique, "primary");
+        ticketSubjects.attach(ticket, "Customer", 42, null);
+
+        String api = mvc.perform(get("/escalated/api/agent/tickets/" + ticket.getId()).with(user(admin.getEmail())))
+                .andExpect(status().isOk()).andReturn().getResponse().getContentAsString();
+        JsonNode expected = JSON.readTree(api).get("subjects");
+        assertThat(expected).hasSize(2);
+        assertThat(expected.get(0).get("type").asText()).isEqualTo("Order");
+
+        JsonNode admin = inertia(get("/escalated/admin/tickets/" + ticket.getTicketNumber()))
+                .get("props").get("ticket").get("subjects");
+        JsonNode agentPage = inertia(get("/escalated/agent/tickets/" + ticket.getTicketNumber()))
+                .get("props").get("ticket").get("subjects");
+        assertThat(admin).isEqualTo(expected);
+        assertThat(agentPage).isEqualTo(expected);
     }
 
     @Test

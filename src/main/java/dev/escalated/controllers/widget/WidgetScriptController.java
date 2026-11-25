@@ -20,6 +20,7 @@ import org.springframework.web.bind.annotation.RestController;
  * data, so every origin may read it.
  */
 @RestController
+@org.springframework.context.annotation.Conditional(dev.escalated.config.WidgetRoutesCondition.class)
 @RequestMapping("/escalated/api/widget")
 public class WidgetScriptController {
 

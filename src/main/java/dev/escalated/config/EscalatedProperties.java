@@ -117,6 +117,8 @@ public class EscalatedProperties {
     private WebhookProperties webhook = new WebhookProperties();
     private WidgetProperties widget = new WidgetProperties();
     private GuestAccessProperties guestAccess = new GuestAccessProperties();
+    private GuestProperties guest = new GuestProperties();
+    private RoutesProperties routes = new RoutesProperties();
     private GuestRateLimitProperties guestRateLimit = new GuestRateLimitProperties();
     private EmailProperties email = new EmailProperties();
     private List<TicketActionProperties> ticketActions = new ArrayList<>();
@@ -756,6 +758,64 @@ public class EscalatedProperties {
         this.widget = widget;
     }
 
+    public GuestProperties getGuest() {
+        return guest;
+    }
+
+    public void setGuest(GuestProperties guest) {
+        this.guest = guest;
+    }
+
+    public RoutesProperties getRoutes() {
+        return routes;
+    }
+
+    public void setRoutes(RoutesProperties routes) {
+        this.routes = routes;
+    }
+
+    /**
+     * {@code escalated.guest.*}: the guest portal's routes. {@code routes-enabled} (also read from
+     * {@code ESCALATED_GUEST_ROUTES}) is true by default; false mounts no guest route at all (see
+     * {@link GuestRoutesCondition}). The runtime {@code guest_tickets_enabled} setting keeps working
+     * while the routes are mounted.
+     */
+    public static class GuestProperties {
+        private boolean routesEnabled = true;
+
+        public boolean isRoutesEnabled() {
+            return routesEnabled;
+        }
+
+        public void setRoutesEnabled(boolean routesEnabled) {
+            this.routesEnabled = routesEnabled;
+        }
+    }
+
+    /**
+     * {@code escalated.routes.*}: extra guards on route groups.
+     *
+     * <p>{@code customer-middleware} guards the customer portal (the customer pages, the customer
+     * ticket API under {@code /escalated/api/customer} and the customer knowledge base under
+     * {@code /escalated/kb}), in addition to being signed in. Empty by default: any signed-in user, as
+     * before. Each entry is {@code escalated-agent} or {@code escalated-admin} (Escalated's agent and
+     * admin gates) or the name of the host's {@code AuthorizationManager<RequestAuthorizationContext>}
+     * bean, and a request must pass every one. Set {@code [escalated-agent]} to make the portal
+     * staff-only. Spring Security answers a refusal: 403 for a signed-in user, the host's sign-in
+     * entry point for anyone else.
+     */
+    public static class RoutesProperties {
+        private List<String> customerMiddleware = new ArrayList<>();
+
+        public List<String> getCustomerMiddleware() {
+            return customerMiddleware;
+        }
+
+        public void setCustomerMiddleware(List<String> customerMiddleware) {
+            this.customerMiddleware = customerMiddleware == null ? new ArrayList<>() : customerMiddleware;
+        }
+    }
+
     public GuestAccessProperties getGuestAccess() {
         return guestAccess;
     }
@@ -1022,6 +1082,10 @@ public class EscalatedProperties {
     }
 
     public static class WidgetProperties {
+        /**
+         * Mounts the widget's routes ({@code ESCALATED_WIDGET_ENABLED}). False registers no
+         * {@code /escalated/api/widget/**} route at all (see {@link WidgetRoutesCondition}).
+         */
         private boolean enabled = true;
 
         /**

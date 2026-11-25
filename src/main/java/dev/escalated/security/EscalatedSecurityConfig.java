@@ -4,6 +4,7 @@ import dev.escalated.config.EscalatedProperties;
 import dev.escalated.ui.EscalatedEmbed;
 import dev.escalated.services.TicketStatuses;
 import dev.escalated.services.TwoFactorService;
+import org.springframework.beans.factory.ListableBeanFactory;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.security.web.access.intercept.AuthorizationFilter;
 
@@ -35,6 +36,13 @@ public class EscalatedSecurityConfig {
     private final EnforceRoutePermissionsFilter routePermissionsFilter;
     private final RequireTwoFactorFilter twoFactorFilter;
     private final ObjectProvider<EscalatedEmbed> embed;
+    private final CustomerRouteGuard customerGuard;
+
+    /** The customer pages (CustomerUiController): the ticket list, the form and a ticket by reference. */
+    private static final String[] CUSTOMER_PAGES = {
+        "/escalated", "/escalated/", "/escalated/create",
+        "/escalated/{ticket:[A-Za-z0-9]+-[0-9]+}", "/escalated/{ticket:[A-Za-z0-9]+-[0-9]+}/*",
+    };
 
     public EscalatedSecurityConfig(
             ApiTokenAuthenticationFilter apiTokenFilter,
@@ -45,8 +53,10 @@ public class EscalatedSecurityConfig {
             AccessControl accessControl,
             ObjectProvider<TicketStatuses> ticketStatuses,
             TwoFactorService twoFactor,
-            ObjectProvider<EscalatedEmbed> embed) {
+            ObjectProvider<EscalatedEmbed> embed,
+            ListableBeanFactory beans) {
         this.embed = embed;
+        this.customerGuard = new CustomerRouteGuard(properties, authorization, beans);
         this.ticketVisibilityFilter = new TicketVisibilityFilter(ticketAccess);
         this.apiTokenFilter = apiTokenFilter;
         this.authorization = authorization;
@@ -169,30 +179,36 @@ public class EscalatedSecurityConfig {
                         ticketVisibilityFilter,
                         org.springframework.security.web.access.intercept.AuthorizationFilter.class)
                 .authorizeHttpRequests(
-                        auth ->
-                                auth.requestMatchers("/escalated/api/widget/**")
-                                        .permitAll()
-                                        .requestMatchers("/escalated/api/csat/**")
-                                        .permitAll()
-                                        .requestMatchers("/escalated/api/guest/**")
-                                        .permitAll()
-                                        // The JSON auth endpoints carry tokens the host issued
-                                        // and check them through the host's
-                                        // EscalatedApiAuthenticator, answering 401 themselves.
-                                        .requestMatchers("/escalated/api/v1/auth/**")
-                                        .permitAll()
-                                        // Mobile guests hold a grant or an emailed code, never a principal.
-                                        .requestMatchers("/escalated/api/v1/mobile/guest/**")
-                                        .permitAll()
-                                        // Being logged in is not being staff. The same two
-                                        // gates as every other Escalated host: admin, and
-                                        // agent-or-admin.
-                                        .requestMatchers("/escalated/api/admin/**")
-                                        .access(authorization.admin())
-                                        .requestMatchers("/escalated/api/agent/**")
-                                        .access(authorization.agent())
-                                        .anyRequest()
-                                        .authenticated());
+                        auth -> {
+                            auth.requestMatchers("/escalated/api/widget/**")
+                                    .permitAll()
+                                    .requestMatchers("/escalated/api/csat/**")
+                                    .permitAll()
+                                    .requestMatchers("/escalated/api/guest/**")
+                                    .permitAll()
+                                    // The JSON auth endpoints carry tokens the host issued
+                                    // and check them through the host's
+                                    // EscalatedApiAuthenticator, answering 401 themselves.
+                                    .requestMatchers("/escalated/api/v1/auth/**")
+                                    .permitAll()
+                                    // Mobile guests hold a grant or an emailed code, never a principal.
+                                    .requestMatchers("/escalated/api/v1/mobile/guest/**")
+                                    .permitAll()
+                                    // Being logged in is not being staff. The same two
+                                    // gates as every other Escalated host: admin, and
+                                    // agent-or-admin.
+                                    .requestMatchers("/escalated/api/admin/**")
+                                    .access(authorization.admin())
+                                    .requestMatchers("/escalated/api/agent/**")
+                                    .access(authorization.agent());
+                            // escalated.routes.customer-middleware: the customer ticket API
+                            // takes the host's extra guards (none by default).
+                            if (customerGuard.configured()) {
+                                auth.requestMatchers("/escalated/api/customer", "/escalated/api/customer/**")
+                                        .access(customerGuard.manager());
+                            }
+                            auth.anyRequest().authenticated();
+                        });
         return http.build();
     }
 
@@ -238,6 +254,14 @@ public class EscalatedSecurityConfig {
                                         .permitAll()
                                         .requestMatchers("/escalated/agent", "/escalated/agent/**")
                                         .access(authorization.agent());
+                                if (customerGuard.configured()) {
+                                    // escalated.routes.customer-middleware: the customer pages.
+                                    auth.requestMatchers(CUSTOMER_PAGES).access(customerGuard.manager());
+                                }
+                            }
+                            if (customerGuard.configured()) {
+                                // ... and the customer knowledge base, otherwise public below.
+                                auth.requestMatchers("/escalated/kb", "/escalated/kb/**").access(customerGuard.manager());
                             }
                             // Single sign-on: guests sign in here (404 while ESCALATED_SSO is off).
                             auth.requestMatchers("/escalated/sso/**")

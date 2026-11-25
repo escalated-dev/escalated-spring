@@ -2,7 +2,7 @@ package dev.escalated.controllers.api;
 
 import dev.escalated.config.EscalatedProperties;
 import dev.escalated.controllers.widget.GuestThrottle;
-import dev.escalated.controllers.widget.GuestVerificationController;
+import dev.escalated.controllers.widget.GuestVerificationEndpoints;
 import dev.escalated.models.Department;
 import dev.escalated.models.Ticket;
 import dev.escalated.models.TicketPriority;
@@ -53,7 +53,7 @@ public class MobileGuestController {
     private static final int MAX_TEXT = 65_535;
     private static final Pattern EMAIL = Pattern.compile("^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$");
 
-    private final GuestVerificationController verificationEndpoints;
+    private final GuestVerificationEndpoints verificationEndpoints;
     private final GuestVerificationService verification;
     private final GuestAccessGrants grants;
     private final TicketService tickets;
@@ -62,7 +62,7 @@ public class MobileGuestController {
     private final SettingsService settings;
     private final EscalatedProperties properties;
 
-    public MobileGuestController(GuestVerificationController verificationEndpoints,
+    public MobileGuestController(GuestVerificationEndpoints verificationEndpoints,
                                  GuestVerificationService verification, GuestAccessGrants grants,
                                  TicketService tickets, MobileGuestTickets presenter,
                                  DepartmentService departments, SettingsService settings,
