@@ -66,6 +66,7 @@ escalated.debug=false
 escalated.knowledge-base.enabled=true
 escalated.broadcasting.enabled=false
 escalated.two-factor.enabled=true
+# The widget's routes (env ESCALATED_WIDGET_ENABLED). false mounts no /escalated/api/widget/** route
 escalated.widget.enabled=true
 # Other sites allowed to embed the widget (none by default); see docs/embedding-the-widget.md
 escalated.widget.allowed-origins=
@@ -75,6 +76,13 @@ escalated.guest-access.enabled=true
 escalated.guest-access.ttl-minutes=1440
 escalated.guest-access.secret=change-me
 escalated.guest-access.legacy-tokens=true
+# The guest portal's routes (env ESCALATED_GUEST_ROUTES). false mounts no /escalated/guest/** and
+# no /escalated/api/guest/** route; the guest_tickets_enabled setting still switches it at runtime
+escalated.guest.routes-enabled=true
+
+# Extra guards on the customer portal (customer pages, /escalated/api/customer/**, /escalated/kb/**),
+# on top of being signed in. Empty by default. See "A staff-only install" below
+escalated.routes.customer-middleware=
 
 # Per-client-IP limits on the public guest endpoints (429 + Retry-After when exceeded)
 escalated.guest-rate-limit.enabled=true
@@ -110,6 +118,28 @@ spring.datasource.password=secret
 # Escalated runs its own migrations; see Database Setup
 spring.jpa.hibernate.ddl-auto=validate
 ```
+
+## Required: schedule the recurring jobs
+
+SLA checks, escalation rules, automations and snooze wake-ups are recurring jobs. In this package
+they are `@Scheduled` methods that Escalated's auto-configuration registers with Spring's
+in-process scheduler (it turns on `@EnableScheduling`), so there is nothing to add to cron and no
+command to run. They need the application running with its task scheduler working:
+
+| Job | Interval |
+|---|---|
+| `SlaScheduler#checkSlaBreaches` (SLA checks and escalation rules) | `escalated.sla.check-interval-seconds`, default every 60 seconds |
+| `AutomationScheduler#runAutomations` (automations) | `escalated.automations.check-interval-seconds`, default every 60 seconds |
+| `AutomationScheduler#autoCloseResolvedTickets` (auto-close) | every 5 minutes |
+| `SnoozeScheduler#wakeUpSnoozedTickets` (snooze wake-ups) | `escalated.snooze.check-interval-seconds`, default every 60 seconds |
+
+Each SLA check records a heartbeat (the `scheduler_heartbeat_at` setting). When it is missing or
+more than 15 minutes old, admins see a warning naming these jobs: the `scheduler` prop on
+`Escalated/Admin/Settings`, `Escalated/Admin/Reports` and `Escalated/Admin/Reports/Dashboard`, and
+`GET /escalated/api/admin/settings/scheduler` for API-only installs, each
+`{healthy, last_run_at, message, commands: [{command, interval}]}`. A warning is logged too. The
+usual causes are a host that disables scheduling, a scheduler pool kept busy by other work, or a job
+that fails every time (check the log).
 
 ## Database Setup
 
@@ -169,7 +199,7 @@ Once Escalated has a database of its own, the two are separate transactions, bec
 |---|---|
 | `/escalated/api/admin/**` | an admin |
 | `/escalated/api/agent/**` | an agent or an admin |
-| `/escalated/api/customer/**` | any authenticated user; only their own tickets (requester email = principal name) |
+| `/escalated/api/customer/**` | any authenticated user, plus `escalated.routes.customer-middleware` when set; only their own tickets (requester email = principal name) |
 | `/escalated/api/attachments/{id}/download` | an agent who can see the ticket, or the ticket's requester (never an internal note's attachment). Always served as a download, `nosniff` |
 | `/escalated/api/widget/**`, `/escalated/api/guest/**`, `/escalated/api/csat/**` | nothing |
 | `/escalated/api/v1/auth/**` | nothing; the endpoints check host-issued tokens through your `EscalatedApiAuthenticator` |
@@ -178,6 +208,27 @@ Once Escalated has a database of its own, the two are separate transactions, bec
 An admin is a caller whose `escalated_agent_profiles` row, matched by principal name (email), is active with `is_admin` set; an agent is the same with `is_agent` or `is_admin`. If your roles live in your own user store instead, grant your users `ROLE_ESCALATED_ADMIN` or `ROLE_ESCALATED_AGENT` (`EscalatedAuthorization.ADMIN_ROLE` / `AGENT_ROLE`) and no profile lookup is made.
 
 The API chain is stateless: it authenticates Escalated API tokens and does not read your application's HTTP session.
+
+### A staff-only install
+
+By default the customer portal (the customer pages, `/escalated/api/customer/**` and the customer
+knowledge base under `/escalated/kb`) is open to any signed-in user, so where only staff use
+Escalated, a signed-in user who was never given Escalated access could still list and raise tickets.
+To close it:
+
+```properties
+# Customer routes: Escalated's agent gate on top of being signed in
+escalated.routes.customer-middleware=escalated-agent
+# No guest portal and no widget routes at all
+escalated.guest.routes-enabled=false
+escalated.widget.enabled=false
+```
+
+Each `customer-middleware` entry is `escalated-agent` or `escalated-admin` (Escalated's own gates)
+or the bean name of your own `AuthorizationManager<RequestAuthorizationContext>`; a request must pass
+every one. Spring Security answers a refusal: 403 for a signed-in user, your sign-in entry point for
+anyone else. With any entry set the knowledge base is no longer public. A name that is neither gate
+nor a bean stops the application at start-up.
 
 ### API tokens
 
