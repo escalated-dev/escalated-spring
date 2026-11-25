@@ -5,6 +5,13 @@ or look a ticket up, as in escalated-laravel's `docs/guest-access.md`. The
 shared widget (`@escalated-dev/escalated` 0.12.x) does this when `/config`
 answers `guest_verification_required: true`, which this backend now does.
 
+The guest portal's routes (`/escalated/guest/**` and `/escalated/api/guest/**`)
+are mounted unless `escalated.guest.routes-enabled=false` (env
+`ESCALATED_GUEST_ROUTES=false`); then none of them is registered. The widget's
+verification and lookup routes follow `escalated.widget.enabled` instead, and
+the mobile guest API is unaffected. With the routes mounted, the
+`guest_tickets_enabled` setting still turns guest tickets off at runtime.
+
 ## Email codes
 
 `POST /escalated/api/widget/verification` (or `/escalated/api/guest/verification`)

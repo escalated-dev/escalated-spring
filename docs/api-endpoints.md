@@ -36,6 +36,7 @@
 | GET/POST | `/custom-objects` | CRUD custom objects; `/custom-objects/{id}/records` for their records |
 | GET/POST | `/settings` | Manage settings |
 | GET/PUT | `/settings/public-tickets` | Runtime guest-policy mode (unassigned / guest_user / prompt_signup). See [docs.escalated.dev/public-tickets](https://docs.escalated.dev/public-tickets). |
+| GET | `/settings/scheduler` | Whether the recurring jobs are running: `{healthy, last_run_at, message, commands}`. Unhealthy when the SLA check has not run for 15 minutes. See [the job list](getting-started.md#required-schedule-the-recurring-jobs). |
 | GET | `/audit-logs` | View audit logs |
 | POST | `/import/tickets` | Import tickets |
 | GET/POST | `/kb/categories` | Manage KB categories |

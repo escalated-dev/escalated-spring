@@ -35,6 +35,7 @@ import org.springframework.web.multipart.MultipartHttpServletRequest;
  * expired or revoked link is a 404. Responses are not cached and send no referrer.
  */
 @Controller
+@org.springframework.context.annotation.Conditional(dev.escalated.config.GuestRoutesCondition.class)
 @ConditionalOnProperty(prefix = "escalated.ui", name = "enabled", havingValue = "true")
 @RequestMapping(UiRoutes.PREFIX + "/guest")
 public class GuestUiController {

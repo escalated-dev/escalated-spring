@@ -171,6 +171,8 @@ dependencies {
 
 Add that to your app's `build.gradle.kts` and set `escalated.enabled=true`. Needs Java 17+ and Spring Boot 4.1. The [getting started guide](docs/getting-started.md) covers configuration, the database and sign-in, and [the Inertia pages](docs/ui.md) turn on the shared screens with `escalated.ui.enabled=true`.
 
+**Required: schedule the recurring jobs.** SLA checks, escalation rules, automations and snooze wake-ups run in-process on Spring's scheduler, which Escalated turns on itself; keep it running. Admins are warned when the SLA check has not run for 15 minutes. See [the job list](docs/getting-started.md#required-schedule-the-recurring-jobs).
+
 ## Learn more
 
 - [All features](docs/features.md) · [Getting started](docs/getting-started.md) · [The Inertia pages](docs/ui.md)

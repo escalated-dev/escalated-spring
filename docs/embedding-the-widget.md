@@ -111,8 +111,9 @@ renders:
 Colour, position and greeting come from the `widget_color`,
 `widget_position` and `widget_greeting` settings; `departments` lists active
 departments; `kb_enabled` is `escalated.knowledge-base.enabled`. With
-`escalated.widget.enabled=false` every `/escalated/api/widget/**` route answers
-403 with `{"enabled": false, ...}`. While `escalated.knowledge-base.enabled` is
+`escalated.widget.enabled=false` (env `ESCALATED_WIDGET_ENABLED`) no
+`/escalated/api/widget/**` route is registered at all, the bundle included; a
+request there still answers 403 with `{"enabled": false, ...}`. While `escalated.knowledge-base.enabled` is
 `false` (the default) the article routes (`/articles`, `/kb/search`) answer 404.
 `guest_verification_required` and `status_lookup_enabled` are `true`: tickets,
 chats and the Check Status tab need an emailed code. See

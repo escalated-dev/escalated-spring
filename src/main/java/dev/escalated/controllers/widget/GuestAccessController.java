@@ -22,6 +22,7 @@ import org.springframework.web.bind.annotation.RestController;
  * no bearer is sent, a ticket's permanent guest token.
  */
 @RestController
+@org.springframework.context.annotation.Conditional(dev.escalated.config.GuestRoutesCondition.class)
 @RequestMapping("/escalated/api/guest")
 public class GuestAccessController {
 

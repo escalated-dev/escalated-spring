@@ -14,8 +14,9 @@ import org.springframework.web.servlet.HandlerInterceptor;
  *
  * <p>{@code escalated.widget.enabled=false} used to be read by {@code /config}
  * alone, so ticket creation, chat and the article search stayed open to anyone
- * on a helpdesk that had turned the widget off. Now every widget route answers
- * 403, as in the Laravel reference.
+ * on a helpdesk that had turned the widget off. Now no widget route is even
+ * registered while it is off ({@code WidgetRoutesCondition}), and a request
+ * under the widget prefix still answers 403 here, as in the Laravel reference.
  *
  * <p>The knowledge-base routes ({@code /articles}, {@code /kb/**}) also need
  * {@code escalated.knowledge-base.enabled}; with it off they answer 404, as

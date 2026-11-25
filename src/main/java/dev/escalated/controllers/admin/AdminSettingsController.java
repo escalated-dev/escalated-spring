@@ -33,6 +33,9 @@ public class AdminSettingsController {
 
     private final SettingsService settingsService;
 
+    @org.springframework.beans.factory.annotation.Autowired(required = false)
+    private dev.escalated.scheduling.SchedulerHeartbeat heartbeat;
+
     public AdminSettingsController(SettingsService settingsService) {
         this.settingsService = settingsService;
     }
@@ -43,6 +46,19 @@ public class AdminSettingsController {
             return ResponseEntity.ok(settingsService.findByGroup(group));
         }
         return ResponseEntity.ok(settingsService.findAll());
+    }
+
+    /**
+     * Whether the recurring jobs are running: {@code {healthy, last_run_at, message, commands}}, the
+     * same object the admin pages get as {@code scheduler}. Unhealthy when the SLA check has not run
+     * in 15 minutes, which is also logged as a warning.
+     */
+    @GetMapping("/scheduler")
+    public ResponseEntity<Map<String, Object>> scheduler() {
+        if (heartbeat == null) {
+            return ResponseEntity.notFound().build();
+        }
+        return ResponseEntity.ok(heartbeat.status());
     }
 
     @PostMapping
