@@ -165,7 +165,7 @@ repositories {
 }
 
 dependencies {
-    implementation("dev.escalated:escalated-spring:0.2.13")
+    implementation("dev.escalated:escalated-spring:0.2.14")
 }
 ```
 
