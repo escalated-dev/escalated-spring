@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.14] - 2026-11-25
 ### Added
 - `escalated.guest.routes-enabled` (default true, env `ESCALATED_GUEST_ROUTES`): false registers no guest route (`/escalated/guest/**`, `/escalated/api/guest/**`). The `guest_tickets_enabled` setting still works while they are mounted.
 - `escalated.routes.customer-middleware` (default empty): extra guards on the customer pages, `/escalated/api/customer/**` and the customer knowledge base, on top of being signed in. Each entry is `escalated-agent`, `escalated-admin` or the name of an `AuthorizationManager<RequestAuthorizationContext>` bean. `escalated-agent` makes the portal staff-only; see "A staff-only install" in docs/getting-started.md.
