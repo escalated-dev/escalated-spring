@@ -1,0 +1,88 @@
+name: Central bundle
+
+# Builds the signed Maven Central bundle exactly as publish.yml does, but with a
+# throwaway GPG key, and checks it the way the Central Portal will: every file
+# signed and checksummed, the sources and javadoc jars present, and every
+# signature valid. Nothing is uploaded. This keeps the first real release from
+# also being the first test of the bundle.
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+permissions:
+  contents: read
+
+jobs:
+  bundle:
+    name: signed bundle dry run
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7
+      - name: Set up JDK 17
+        uses: actions/setup-java@v6
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v6
+
+      - name: Create a throwaway signing key
+        run: |
+          export GNUPGHOME="$RUNNER_TEMP/gnupg"
+          mkdir -m 700 "$GNUPGHOME"
+          gpg --batch --passphrase '' --quick-gen-key "Central bundle CI <ci@example.invalid>" rsa3072 sign 1d
+          {
+            echo "GNUPGHOME=$GNUPGHOME"
+            echo "ORG_GRADLE_PROJECT_signingKey<<KEY_EOF"
+            gpg --batch --armor --export-secret-keys ci@example.invalid
+            echo "KEY_EOF"
+          } >> "$GITHUB_ENV"
+
+      - name: Build the signed Central bundle
+        env:
+          ORG_GRADLE_PROJECT_signingPassword: ''
+        run: |
+          ./gradlew centralBundle
+          unzip -l build/central-bundle.zip
+
+      - name: Check the bundle
+        run: |
+          set -euo pipefail
+          dir="$RUNNER_TEMP/bundle"
+          mkdir -p "$dir"
+          unzip -q build/central-bundle.zip -d "$dir"
+          cd "$dir"
+          version="$(find dev/escalated/escalated-spring -mindepth 1 -maxdepth 1 -type d -printf '%f\n')"
+          base="dev/escalated/escalated-spring/$version/escalated-spring-$version"
+          problems=0
+          for required in "$base.pom" "$base.jar" "$base-sources.jar" "$base-javadoc.jar"; do
+            if [ ! -f "$required" ]; then
+              echo "::error::missing $required"
+              problems=1
+            fi
+          done
+          while IFS= read -r file; do
+            for ext in asc md5 sha1; do
+              if [ ! -f "$file.$ext" ]; then
+                echo "::error::missing $file.$ext"
+                problems=1
+              fi
+            done
+            if [ -f "$file.asc" ] && ! gpg --batch --verify "$file.asc" "$file" 2>/dev/null; then
+              echo "::error::bad signature on $file"
+              problems=1
+            fi
+            if [ -f "$file.sha1" ] && [ "$(sha1sum "$file" | cut -d' ' -f1)" != "$(cut -d' ' -f1 "$file.sha1")" ]; then
+              echo "::error::sha1 does not match for $file"
+              problems=1
+            fi
+          done < <(find dev -type f ! -name '*.asc' ! -name '*.md5' ! -name '*.sha1' ! -name '*.sha256' ! -name '*.sha512')
+          if find . -name 'maven-metadata.xml*' | grep -q .; then
+            echo "::error::the bundle contains maven-metadata.xml, which Central rejects"
+            problems=1
+          fi
+          exit "$problems"
