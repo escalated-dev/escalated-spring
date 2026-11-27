@@ -89,7 +89,7 @@ jobs:
           missing=0
           for name in MAVEN_USERNAME MAVEN_PASSWORD MAVEN_GPG_PRIVATE_KEY MAVEN_GPG_PASSPHRASE; do
             if [ -z "${!name}" ]; then
-              echo "skipping: $name not configured"
+              echo "::warning title=Maven Central publish skipped::$name is not configured, so nothing was published."
               missing=1
             fi
           done
